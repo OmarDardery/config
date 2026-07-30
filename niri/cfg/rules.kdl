@@ -1,0 +1,49 @@
+// -------------------------
+// WINDOW RULES
+// -------------------------
+
+// Global: Applies to all windows
+window-rule {
+    geometry-corner-radius 8
+    clip-to-geometry true
+}
+
+// Terminals: Slightly more transparent (looks nicer with blur)
+window-rule {
+    match app-id="foot"
+    match app-id="kitty"
+    match app-id="alacritty"
+    opacity 0.88
+    background-effect {
+    	blur true
+    }
+}
+window-rule {
+    match app-id="nautilus"
+    opacity 0.8
+    background-effect {
+    	blur true
+    }
+}
+
+// Zen Browser: enable blur and prevent background color drawing behind transparent window
+window-rule {
+    match app-id=r"^zen"
+    draw-border-with-background false
+    shadow {
+        off
+    }
+    background-effect {
+        blur true
+    }
+}
+
+
+// -------------------------
+// LAYER RULES (WALLPAPER / BACKDROP)
+// ------------------------
+
+layer-rule {
+    match namespace="^noctalia-wallpaper.*"
+    place-within-backdrop true
+}

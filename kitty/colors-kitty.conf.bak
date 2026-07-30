@@ -1,0 +1,58 @@
+# Kitty Colorscheme - Midnight Pixel Ocean
+
+# The basic colors
+foreground              #e0e4e5
+background              #0a141e
+selection_foreground    #0a141e
+selection_background    #4a90e2
+
+# Cursor colors
+cursor                  #78e8ff
+cursor_text_color       #0a141e
+
+# URL underline color when hovering with mouse
+url_color               #4a90e2
+
+# Kitty window border colors
+active_border_color     #4a90e2
+inactive_border_color   #2c3e50
+
+# Tab bar colors
+active_tab_foreground   #0a141e
+active_tab_background   #4a90e2
+inactive_tab_foreground #e0e4e5
+inactive_tab_background #1b2735
+
+# The 16 terminal colors
+
+# black
+color0 #1b2735
+color8 #2c3e50
+
+# red (deep sunset/purple)
+color1 #6a4c93
+color9 #9b5de5
+
+# green (moonlight teal)
+color2  #2a9d8f
+color10 #48cae4
+
+# yellow (moon glow)
+color3  #e9c46a
+color11 #f4d35e
+
+# blue (ocean blue)
+color4  #0077b6
+color12 #00b4d8
+
+# magenta (cloud highlights)
+color5  #7209b7
+color13 #b5179e
+
+# cyan (bright moonlight)
+color6  #48cae4
+color14 #90e0ef
+
+# white
+color7  #e0e4e5
+color15 #ffffff
