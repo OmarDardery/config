@@ -110,6 +110,7 @@
   };
   # Enable networking
   networking.networkmanager.enable = true;
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
   programs.niri.enable = true;
   security.polkit.enable = true; # polkit
   services.gnome.gnome-keyring.enable = true; # secret service
@@ -226,6 +227,7 @@
     BUN_INSTALL = "$HOME/.bun";
     PATH = "$HOME/.local/bin:$BUN_INSTALL/bin:$PATH";
     STEAM_EXTRA_COMPAT_TOOLS_PATHS = "\${HOME}/.steam/root/compatibilitytools.d";
+    
   };
   
 
