@@ -43,7 +43,7 @@
   boot.loader.efi.canTouchEfiVariables = true;
   boot.kernelModules = [ "uinput"];
   # Use latest kernel.
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelPackages = pkgs.linuxPackages;
   programs.steam = {
     enable = true;
     remotePlay.openFirewall = true; # Open ports in the firewall for Steam Remote Play
@@ -240,7 +240,6 @@
     STEAM_EXTRA_COMPAT_TOOLS_PATHS = "\${HOME}/.steam/root/compatibilitytools.d";
     
   };
-  
 
 
   # Some programs need SUID wrappers, can be configured further or are
