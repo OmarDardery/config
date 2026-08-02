@@ -3,7 +3,6 @@
 # and in the NixOS manual (accessible by running ‘nixos-help’).
 
 { config, pkgs, inputs, ... }:
-
 {
   imports =
     [ # Include the results of the hardware scan.
@@ -14,6 +13,7 @@
   services.upower.enable = true;
   #tailscale
   services.tailscale.enable = true;
+  programs.localsend.enable = true;
   networking.nftables.enable = true;
   networking.firewall = {
     enable = true;
@@ -30,11 +30,18 @@
   # (Optional but recommended for faster boot with VPNs)
   systemd.network.wait-online.enable = false; 
   boot.initrd.systemd.network.wait-online.enable = false;
-
+  home-manager = {
+    useGlobalPkgs = true;
+    useUserPackages = true;
+    extraSpecialArgs = { inherit inputs; }; #If you want acc>
+    backupFileExtension = "bak"; 
+    users.oad = ./home.nix; # replace <USERNAME> with your a>
+  };
+  
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
-  
+  boot.kernelModules = [ "uinput"];
   # Use latest kernel.
   boot.kernelPackages = pkgs.linuxPackages_latest;
   programs.steam = {
@@ -64,6 +71,38 @@
         enable = true;
         enable32Bit = true;
     };
+    opentabletdriver.enable = true;
+    uinput.enable = true;
+    nvidia = {
+
+      # Modesetting is required.
+      modesetting.enable = true;
+
+      # Nvidia power management. Experimental, and can cause sleep/suspe>
+      # Enable this if you have graphical corruption issues or applicati>
+      # up from sleep. This fixes it by saving the entire VRAM memory to>
+      # of just the bare essentials.
+      powerManagement.enable = false;
+
+      # Fine-grained power management. Turns off GPU when not in use.
+      # Experimental and only works on modern Nvidia GPUs (Turing or new>
+      powerManagement.finegrained = false;
+
+      # Use the NVidia open source kernel module (not to be confused wit>
+      # independent third-party "nouveau" open source driver).
+      # Support is limited to the Turing and later architectures. Full l>
+      # supported GPUs is at: 
+      # https://github.com/NVIDIA/open-gpu-kernel-modules#compatible-gpu>
+      # Only available from driver 515.43.04+
+      open = false;
+
+      # Enable the Nvidia settings menu,
+        # accessible via `nvidia-settings`.
+      nvidiaSettings = true;
+
+      # Optionally, you may need to select the appropriate driver versio>
+        
+    };
   };
   fileSystems."/mnt/storage" = {
     device = "/dev/disk/by-uuid/6f5c1aad-2941-47f2-814b-b54123367d7b";  # Replace with your actual device identifier
@@ -78,36 +117,6 @@
   # Load nvidia driver for Xorg and Wayland
   services.xserver.videoDrivers = ["nvidia" "amdgpu"];
 
-  hardware.nvidia = {
-
-    # Modesetting is required.
-    modesetting.enable = true;
-
-    # Nvidia power management. Experimental, and can cause sleep/suspend to fail.
-    # Enable this if you have graphical corruption issues or application crashes after waking
-    # up from sleep. This fixes it by saving the entire VRAM memory to /tmp/ instead 
-    # of just the bare essentials.
-    powerManagement.enable = false;
-
-    # Fine-grained power management. Turns off GPU when not in use.
-    # Experimental and only works on modern Nvidia GPUs (Turing or newer).
-    powerManagement.finegrained = false;
-
-    # Use the NVidia open source kernel module (not to be confused with the
-    # independent third-party "nouveau" open source driver).
-    # Support is limited to the Turing and later architectures. Full list of 
-    # supported GPUs is at: 
-    # https://github.com/NVIDIA/open-gpu-kernel-modules#compatible-gpus 
-    # Only available from driver 515.43.04+
-    open = false;
-
-    # Enable the Nvidia settings menu,
-	# accessible via `nvidia-settings`.
-    nvidiaSettings = true;
-
-    # Optionally, you may need to select the appropriate driver version for your specific GPU.
-    
-  };
   # Enable networking
   networking.networkmanager.enable = true;
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
@@ -173,8 +182,8 @@
     shellAliases = {
       ll = "ls -l";
       edit = "sudo -e";
-      up = "sudo nixos-rebuild switch";
-      cnf = "sudo nano /etc/nixos/configuration.nix";
+      up = "sudo nixos-rebuild switch --flake /etc/nixos#nixos";
+      cnf = "sudo nano ~/configurations/nixos/configuration.nix";
       lc = "cd /mnt/storage/Coding";
     };
 
@@ -205,6 +214,8 @@
     gcc
     zsh
     go
+    bun
+    uv
     fastfetch
     xwayland-satellite
     protonup-ng
@@ -225,7 +236,7 @@
     # documented override for that lookup, pointed at the real Nix store path.
     XKB_CONFIG_ROOT = "${pkgs.xkeyboard-config}/share/X11/xkb";
     BUN_INSTALL = "$HOME/.bun";
-    PATH = "$HOME/.local/bin:$BUN_INSTALL/bin:$PATH";
+    PATH = "$HOME/.local/bin:$PATH";
     STEAM_EXTRA_COMPAT_TOOLS_PATHS = "\${HOME}/.steam/root/compatibilitytools.d";
     
   };
