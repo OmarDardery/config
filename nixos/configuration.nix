@@ -9,6 +9,7 @@
       ./hardware-configuration.nix
       ./display-manager.nix
       ./noctalia.nix
+      ./zsh.nix
     ];
   hardware.bluetooth.enable = true;
   services.power-profiles-daemon.enable = true;
@@ -161,30 +162,6 @@
     shell = pkgs.zsh;
     packages = with pkgs; [];
   };
-  #zsh config
-  programs.zsh = {
-    enable = true;
-    enableCompletion = true;
-    autosuggestions.enable = true;
-    syntaxHighlighting.enable = true;
-
-    shellAliases = {
-      ll = "ls -l";
-      edit = "sudo -e";
-      up = "sudo nixos-rebuild switch --flake /etc/nixos#nixos";
-      cnf = "sudo nano ~/configurations/nixos/configuration.nix";
-      lc = "cd /mnt/storage/Coding";
-    };
-
-    histSize = 10000;
-    histFile = "$HOME/.zsh_history";
-    setOptions = [
-      "HIST_IGNORE_ALL_DUPS"
-    ];
-  };
-  programs.starship.enable = true;
-  programs.atuin.enable = true;
-  programs.atuin.settings.search_mode = "fuzzy";
   programs.nix-ld.enable = true;
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
