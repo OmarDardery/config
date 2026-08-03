@@ -13,9 +13,9 @@
   hardware.bluetooth.enable = true;
   services.power-profiles-daemon.enable = true;
   services.upower.enable = true;
+  programs.localsend.enable = true;
   #tailscale
   services.tailscale.enable = true;
-  programs.localsend.enable = true;
   networking.nftables.enable = true;
   networking.firewall = {
     enable = true;
