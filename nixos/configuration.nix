@@ -7,7 +7,7 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
-      ./pixie.nix
+      ./display-manager.nix
       ./noctalia.nix
     ];
   hardware.bluetooth.enable = true;
@@ -126,19 +126,6 @@
   security.polkit.enable = true; # polkit
   services.gnome.gnome-keyring.enable = true; # secret service
   security.pam.services.swaylock = {};
-  services.displayManager.sddm = {
-    enable = true;
-    wayland.enable = true;
-    wayland.compositor = "kwin";
-
-    theme = "pixie";
-
-    settings.Theme = {
-      CursorTheme = "Bibata-Modern-Classic";
-      CursorSize = 24;
-    };
-    
-  };
   # Set your time zone.
   time.timeZone = "Africa/Cairo";
 
