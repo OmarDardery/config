@@ -8,6 +8,7 @@
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
       ./pixie.nix
+      ./noctalia.nix
     ];
   hardware.bluetooth.enable = true;
   services.power-profiles-daemon.enable = true;
@@ -227,7 +228,6 @@
     proton-vpn
     #flakes
     inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
-    inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
 
   environment.variables = {
