@@ -169,7 +169,7 @@
   users.users."oad" = {
     isNormalUser = true;
     description = "Omar Dardery";
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [ "networkmanager" "wheel" "dialout" ];
     shell = pkgs.zsh;
     packages = with pkgs; [];
   };
@@ -217,7 +217,7 @@
     go
     bun
     uv
-    arduino-ide
+    arduino-cli
     fastfetch
     xwayland-satellite
     protonup-ng
