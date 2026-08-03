@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, inputs, ... }:
 
 {
   home.username = "oad";
@@ -16,9 +16,7 @@
   #kitty
   xdg.configFile."kitty".source = ./modules/kitty;
 
-
-
-
+ 
   programs.git = {
     enable = true;
     settings.user.name = "OmarDardery";

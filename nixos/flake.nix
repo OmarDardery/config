@@ -13,8 +13,9 @@
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    pixie-sddm.url = "github:xCaptaiN09/pixie-sddm";
   };
-  outputs = { self, nixpkgs, zen-browser, noctalia, home-manager, ... }@inputs: {
+  outputs = { self, nixpkgs, zen-browser, noctalia, home-manager, pixie-sddm, ... }@inputs: {
     nixosConfigurations = {
       # Change "nixos" to your actual hostname if it is different
       "nixos" = nixpkgs.lib.nixosSystem {

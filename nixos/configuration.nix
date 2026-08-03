@@ -7,6 +7,7 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
+      ./pixie.nix
     ];
   hardware.bluetooth.enable = true;
   services.power-profiles-daemon.enable = true;
@@ -129,13 +130,13 @@
     wayland.enable = true;
     wayland.compositor = "kwin";
 
-    theme = "catppuccin-mocha-mauve";
+    theme = "pixie";
 
     settings.Theme = {
       CursorTheme = "Bibata-Modern-Classic";
       CursorSize = 24;
     };
-
+    
   };
   # Set your time zone.
   time.timeZone = "Africa/Cairo";
@@ -216,6 +217,7 @@
     go
     bun
     uv
+    arduino-ide
     fastfetch
     xwayland-satellite
     protonup-ng
@@ -227,7 +229,7 @@
     inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
     inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default
   ];
-  
+
   environment.variables = {
     XCURSOR_THEME = "Bibata-Modern-Classic";
     XCURSOR_SIZE = "24";
