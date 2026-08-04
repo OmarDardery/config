@@ -10,6 +10,7 @@
       ./display-manager.nix
       ./noctalia.nix
       ./zsh.nix
+      ./gaming.nix
     ];
   hardware.bluetooth.enable = true;
   services.power-profiles-daemon.enable = true;
@@ -47,12 +48,6 @@
   boot.kernelModules = [ "uinput"];
   # Use latest kernel.
   boot.kernelPackages = pkgs.linuxPackages;
-  programs.steam = {
-    enable = true;
-    remotePlay.openFirewall = true; # Open ports in the firewall for Steam Remote Play
-    dedicatedServer.openFirewall = true; # Open ports in the firewall for Source Dedicated Server
-    localNetworkGameTransfers.openFirewall = true; # Open ports in the firewall for Steam Local Network Game Transfers
-  };
   services.flatpak.enable = true;
   # Rootless containers; dockerCompat adds a `docker` alias for muscle memory,
   # dns_enabled lets containers on the same network resolve each other by name.
@@ -153,7 +148,6 @@
   
   #yazii
   programs.yazi.enable = true;
-  programs.gamemode.enable = true;
   # Define a user account. Don't forget to set a password with ‘passwd’.
   users.users."oad" = {
     isNormalUser = true;
@@ -165,7 +159,7 @@
   programs.nix-ld.enable = true;
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
-
+  services.udev.packages = [ pkgs.platformio-core.udev ];
   # List packages installed in system profile. To search, run:
   # $ nix search wget
   environment.systemPackages = with pkgs; [
@@ -179,6 +173,8 @@
     rustup
     gcc
     zsh
+    platformio-core
+    clang-tools
     go
     bun
     uv
