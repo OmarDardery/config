@@ -48,7 +48,7 @@
   boot.loader.efi.canTouchEfiVariables = true;
   boot.kernelModules = [ "uinput"];
   # Use latest kernel.
-  boot.kernelPackages = pkgs.linuxPackages;
+  boot.kernelPackages = pkgs.linuxPackages_latest;
   services.flatpak.enable = true;
   # Rootless containers; dockerCompat adds a `docker` alias for muscle memory,
   # dns_enabled lets containers on the same network resolve each other by name.
@@ -72,40 +72,57 @@
     };
     opentabletdriver.enable = true;
     uinput.enable = true;
+    # NVIDIA. On NixOS the kernel module is rebuilt against whatever
+    # boot.kernelPackages you pick, automatically, on every switch — that is
+    # the akmods equivalent and there is nothing to run by hand.
     nvidia = {
+      # Same derivation as .stable on this nixpkgs (both 595.71.05), so this
+      # line is currently a no-op. Harmless as documentation of intent.
+      package = config.boot.kernelPackages.nvidiaPackages.latest;
 
-      # Modesetting is required.
+      # Required for Wayland, and required for offload below — without it the
+      # dGPU is held awake permanently.
       modesetting.enable = true;
 
-      # Nvidia power management. Experimental, and can cause sleep/suspe>
-      # Enable this if you have graphical corruption issues or applicati>
-      # up from sleep. This fixes it by saving the entire VRAM memory to>
-      # of just the bare essentials.
-      powerManagement.enable = false;
+      # Your dGPU is 0x10de:0x28e0 — Ada Lovelace (AD107M, RTX 4060 Laptop).
+      # The wiki: "If you have a GPU with Turing architecture (RTX 20-Series)
+      # or newer set hardware.nvidia.open to true."
+      open = true;
 
-      # Fine-grained power management. Turns off GPU when not in use.
-      # Experimental and only works on modern Nvidia GPUs (Turing or new>
-      powerManagement.finegrained = false;
-
-      # Use the NVidia open source kernel module (not to be confused wit>
-      # independent third-party "nouveau" open source driver).
-      # Support is limited to the Turing and later architectures. Full l>
-      # supported GPUs is at: 
-      # https://github.com/NVIDIA/open-gpu-kernel-modules#compatible-gpu>
-      # Only available from driver 515.43.04+
-      open = false;
-
-      # Enable the Nvidia settings menu,
-        # accessible via `nvidia-settings`.
       nvidiaSettings = true;
 
-      # Optionally, you may need to select the appropriate driver versio>
-        
+      # Saves all of VRAM on suspend instead of the bare essentials. Fixes
+      # corruption/crashes after resume on some machines, but is itself known
+      # to cause suspend failures. Leave off unless resume actually misbehaves.
+      powerManagement.enable = false;
+
+      # Powers the dGPU down entirely when unused. Requires offload (below).
+      # Marked experimental upstream; flip to true if you want the battery win
+      # and are willing to test suspend/resume.
+      powerManagement.finegrained = false;
+
+      # ── Optimus PRIME: offload mode ──────────────────────────────────────
+      # The AMD iGPU renders everything and the dGPU sleeps until you launch
+      # something with `nvidia-offload <cmd>`.
+      #
+      # Bus IDs are DECIMAL conversions of the hex addresses in /sys — this is
+      # the step everyone gets wrong:
+      #   NVIDIA  0000:01:00.0 -> 0x01 =   1 -> "PCI:1:0:0"
+      #   AMD     0000:66:00.0 -> 0x66 = 102 -> "PCI:102:0:0"
+      prime = {
+        nvidiaBusId = "PCI:1:0:0";
+        amdgpuBusId = "PCI:102:0:0";
+
+        offload = {
+          enable = true;
+          enableOffloadCmd = true; # provides the `nvidia-offload` wrapper
+        };
+      };
     };
   };
   fileSystems."/mnt/storage" = {
-    device = "/dev/disk/by-uuid/6f5c1aad-2941-47f2-814b-b54123367d7b";  # Replace with your actual device identifier
-    fsType = "ext4";       # Replace with the appropriate filesystem type
+    device = "/dev/disk/by-uuid/71d4d606-a6ef-42bb-b63c-8f5a8fee4b24";
+    fsType = "xfs";
     options = [ # If you don't have this options attribute, it'll default to "defaults" 
      # boot options for fstab. Search up fstab mount options you can use
      #"users"  Allows any user to mount and unmount
@@ -113,8 +130,10 @@
      
    ];
   };
-  # Load nvidia driver for Xorg and Wayland
-  services.xserver.videoDrivers = ["nvidia" "amdgpu"];
+  # Order matters for PRIME offload: the iGPU driver must come FIRST, otherwise
+  # the X server runs permanently on the dGPU and it never sleeps (visible as
+  # a non-idle GPU in `nvidia-smi`).
+  services.xserver.videoDrivers = [ "amdgpu" "nvidia" ];
 
   # Enable networking
   networking.networkmanager.enable = true;
@@ -179,6 +198,7 @@
     go
     bun
     uv
+    lshw
     arduino-cli
     fastfetch
     xwayland-satellite

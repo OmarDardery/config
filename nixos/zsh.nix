@@ -22,6 +22,4 @@
     ];
   };
   programs.starship.enable = true;
-  programs.atuin.enable = true;
-  programs.atuin.settings.search_mode = "fuzzy";
 }
