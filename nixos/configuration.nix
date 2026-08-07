@@ -11,6 +11,7 @@
       ./noctalia.nix
       ./zsh.nix
       ./gaming.nix
+      ./productivity.nix
     ];
   hardware.bluetooth.enable = true;
   services.power-profiles-daemon.enable = true;
