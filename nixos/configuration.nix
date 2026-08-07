@@ -204,7 +204,7 @@
     xwayland-satellite
     protonup-ng
     bibata-cursors
-    jetbrains.rust-rover
+    jetbrains-toolbox
     nerd-fonts.jetbrains-mono
     proton-vpn
     #flakes
