@@ -1,6 +1,12 @@
-{ pkgs, inputs, ... }:
+{ pkgs, lib, inputs, ... }:
 
 {
+  imports = builtins.filter
+    (p: lib.hasSuffix ".nix" (toString p))
+    (lib.filesystem.listFilesRecursive ./modules);
+
+
+
   home.username = "oad";
   home.homeDirectory = "/home/oad";
 
@@ -10,11 +16,12 @@
 
   programs.home-manager.enable = true;
   
+  
 
   #niri
-  xdg.configFile."niri".source = ./modules/niri;
+  xdg.configFile."niri".source = ../modules/niri;
   #kitty
-  xdg.configFile."kitty".source = ./modules/kitty;
+  xdg.configFile."kitty".source = ../modules/kitty;
 
  
   programs.git = {

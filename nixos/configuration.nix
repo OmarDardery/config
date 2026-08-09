@@ -40,7 +40,7 @@
     useUserPackages = true;
     extraSpecialArgs = { inherit inputs; }; #If you want acc>
     backupFileExtension = "bak"; 
-    users.oad = ./home.nix; # replace <USERNAME> with your a>
+    users.oad = ./home; # replace <USERNAME> with your a>
   };
   
   # Bootloader.
@@ -48,7 +48,7 @@
   boot.loader.efi.canTouchEfiVariables = true;
   boot.kernelModules = [ "uinput"];
   # Use latest kernel.
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelPackages = pkgs.linuxPackages;
   services.flatpak.enable = true;
   # Rootless containers; dockerCompat adds a `docker` alias for muscle memory,
   # dns_enabled lets containers on the same network resolve each other by name.
@@ -221,8 +221,25 @@
     BUN_INSTALL = "$HOME/.bun";
     PATH = "$HOME/.local/bin:$PATH";
     STEAM_EXTRA_COMPAT_TOOLS_PATHS = "\${HOME}/.steam/root/compatibilitytools.d";
-    
+
   };
+
+  # ── AMD iGPU stripe corruption: DCC test ──────────────────────────────
+  # Pink/blue banded corruption on tiled windows, never on fullscreen games,
+  # never in screenshots. Fullscreen bypasses composite via direct scanout and
+  # redraws every block each frame; tiled windows repaint only damage rects
+  # into a DCC-compressed framebuffer. Stale per-block compression metadata on
+  # partially-damaged regions decompresses to banded colour — which matches the
+  # window-shaped artifacts exactly.
+  #
+  # `nodcc` disables Delta Color Compression in radeonsi (niri's GL renderer).
+  # Costs some iGPU memory bandwidth; no visual difference.
+  #
+  # sessionVariables, not variables: niri is launched by the display manager,
+  # so this needs a fresh LOGIN to take effect, not just a rebuild.
+  #
+  # If the stripes persist after a re-login, revert this — it isn't DCC.
+  environment.sessionVariables.AMD_DEBUG = "nodcc";
 
 
   # Some programs need SUID wrappers, can be configured further or are
