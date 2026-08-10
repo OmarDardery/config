@@ -5,10 +5,16 @@
       url = "github:youwen5/zen-browser-flake";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    noctalia = {
-      url = "github:noctalia-dev/noctalia";
-      inputs.nixpkgs.follows = "nixpkgs"; # this line is optional, prevents downloading two versions of nixpkgs but disables cache
-    };
+    # Two things here are required for the binary cache to actually hit, and
+    # both are easy to undo by accident:
+    #   - the `cachix` branch, not `main`. CI force-pushes that branch to the
+    #     commit it has finished building and uploading, so whatever you land
+    #     on is guaranteed to be in the cache. `main` can be ahead of CI.
+    #   - NO `inputs.nixpkgs.follows`. Overriding noctalia's inputs changes the
+    #     derivation hash, so every build would miss the cache and compile from
+    #     source. The cost is a second nixpkgs (it pins unstable).
+    # Cache itself is configured in nix.settings in configuration.nix.
+    noctalia.url = "github:noctalia-dev/noctalia/cachix";
     home-manager = {
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";

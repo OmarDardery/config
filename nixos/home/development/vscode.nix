@@ -1,4 +1,4 @@
-{config, pkgs, ...}:
+{ pkgs, ... }:
 {
   programs.vscode = {
     enable = true;
@@ -7,7 +7,6 @@
       platformio.platformio-vscode-ide
       golang.go
       rust-lang.rust-analyzer
-
     ];
   };
 }

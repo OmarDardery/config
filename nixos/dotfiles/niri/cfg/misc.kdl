@@ -14,11 +14,10 @@
         XDG_CURRENT_DESKTOP "niri"
         XDG_SESSION_TYPE "wayland"
 
-        // Cursor theme for XWayland / GTK / Qt clients (niri's own cursor comes
-        // from the cursor{} block below). Theme lives in ~/.icons so the xcursor
-        // loader finds it (it does not search ~/.local/share/icons here).
-        XCURSOR_THEME "Bibata-Modern-Ice"
-        XCURSOR_SIZE "24"
+        // XCURSOR_THEME/XCURSOR_SIZE deliberately not set here. They come from
+        // home.pointerCursor (home/desktop.nix), which is the single source of
+        // truth. This block used to set Ice while everything else said Classic,
+        // so clients got a different cursor from the compositor.
 }
 
     cursor {

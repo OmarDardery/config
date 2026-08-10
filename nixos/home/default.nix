@@ -1,32 +1,31 @@
-{ pkgs, lib, inputs, ... }:
-
+{ ... }:
 {
-  imports = builtins.filter
-    (p: lib.hasSuffix ".nix" (toString p))
-    (lib.filesystem.listFilesRecursive ./modules);
-
-
+  imports = [
+    ./development
+    ./apps.nix
+    ./shell.nix
+    ./nix-tools.nix
+    ./desktop.nix
+    ./host.nix
+  ];
 
   home.username = "oad";
   home.homeDirectory = "/home/oad";
 
   home.stateVersion = "26.05"; # Please read the comment before changing.
 
-  home.packages = with pkgs; [];
-
   programs.home-manager.enable = true;
-  
-  
 
-  #niri
-  xdg.configFile."niri".source = ../modules/niri;
-  #kitty
-  xdg.configFile."kitty".source = ../modules/kitty;
-
- 
   programs.git = {
     enable = true;
     settings.user.name = "OmarDardery";
     settings.user.email = "oadardery@gmail.com";
+  };
+
+  # Syntax-highlighted diffs. This is its own module rather than a git setting,
+  # and it needs to be told to hook into git explicitly.
+  programs.delta = {
+    enable = true;
+    enableGitIntegration = true;
   };
 }

@@ -15,10 +15,11 @@
   };
   environment.systemPackages = [
     (inputs.pixie-sddm.packages.${pkgs.stdenv.hostPlatform.system}.pixie-sddm.override {
-      background = ./modules/Pictures/Wallpapers/dark-mountain.jpg;
-      avatar = ./modules/Pictures/face.jpg;
+      background = ./dotfiles/Pictures/Wallpapers/dark-mountain.jpg;
+      avatar = ./dotfiles/Pictures/face.jpg;
       autoColor = true;
-      fontFamily = "JetBrains Mono";
+      # The nerd-fonts package provides this name, never "JetBrains Mono".
+      fontFamily = "JetBrainsMono Nerd Font";
     })
   ];
 }

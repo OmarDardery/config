@@ -1,0 +1,68 @@
+// -------------------------
+// WINDOW RULES
+// -------------------------
+//
+// ── FLICKER BISECTION ────────────────────────────────────────────────────
+// Windows flicker while typing and scrolling. VRR is off, the panel renders
+// and scans out on the same GPU, and the logs are clean — so the remaining
+// suspect is compositing cost. Typing dirties a small damage rect, but blur
+// has to resample a larger region around it, and rounded corners force an
+// offscreen pass per window, at 2560x1600 @ 165 Hz on a 15 W iGPU.
+//
+// All three suspects are disabled below, plus shadows in layout.kdl.
+// Re-enable ONE at a time, cheapest first, to find the culprit:
+//   1. geometry-corner-radius + clip-to-geometry (this file)
+//   2. shadow (layout.kdl)
+//   3. background-effect blur (this file)
+// ─────────────────────────────────────────────────────────────────────────
+
+// Global: Applies to all windows
+// BISECT step 1 — re-enable this block first.
+// window-rule {
+//     geometry-corner-radius 8
+//     clip-to-geometry true
+// }
+
+// Terminals: Slightly more transparent (looks nicer with blur)
+window-rule {
+    match app-id="foot"
+    match app-id="kitty"
+    match app-id="alacritty"
+    opacity 0.88
+    // BISECT step 3 — re-enable last.
+    // background-effect {
+    //     blur true
+    // }
+}
+
+window-rule {
+    match app-id="nautilus"
+    opacity 0.8
+    // BISECT step 3
+    // background-effect {
+    //     blur true
+    // }
+}
+
+// Zen Browser: prevent background color drawing behind transparent window
+window-rule {
+    match app-id=r"^zen"
+    draw-border-with-background false
+    shadow {
+        off
+    }
+    // BISECT step 3
+    // background-effect {
+    //     blur true
+    // }
+}
+
+
+// -------------------------
+// LAYER RULES (WALLPAPER / BACKDROP)
+// ------------------------
+
+layer-rule {
+    match namespace="^noctalia-wallpaper.*"
+    place-within-backdrop true
+}
