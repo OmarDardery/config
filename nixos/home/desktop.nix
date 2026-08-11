@@ -1,4 +1,4 @@
-{ pkgs, inputs, ... }:
+{ pkgs, ... }:
 {
   # Raw config trees, deployed as read-only symlinks into ~/.config.
   xdg.configFile."niri".source = ../dotfiles/niri;
@@ -26,8 +26,6 @@
     # shipped an Arabic face — fontconfig was falling back to DejaVu Sans,
     # which has no Arabic coverage, so Arabic rendered as boxes everywhere.
     noto-fonts
-
-    inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default
 
     # capture / selection
     slurp

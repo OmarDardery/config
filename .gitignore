@@ -1,0 +1,2 @@
+# nixos-rebuild build drops this symlink; it must never be committed.
+result

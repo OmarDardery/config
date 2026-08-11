@@ -37,10 +37,8 @@ layout {
         urgent-color "#5e0b52"
     }
 
-    // BISECT step 2 — see the flicker note at the top of rules.kdl.
-    // Change `off` back to `on` to test shadows.
     shadow {
-        off
+        on
         softness 20
         spread 3
         offset x=0 y=3

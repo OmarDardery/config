@@ -81,36 +81,68 @@
   # `nodcc` disables Delta Color Compression in radeonsi (niri's GL renderer).
   # Costs some iGPU memory bandwidth; no visual difference.
   #
-  # CONFIRMED to fix the corruption on this panel. Do not remove without
-  # retesting — the symptom takes a fresh login to reappear, not just a rebuild.
+  # CONFIRMED to fix the STRIPES, and only the stripes. The separate flicker
+  # bug predates this line and is unaffected by it — do not read this comment
+  # as evidence about the flicker in either direction.
+  #
+  # Do not remove without retesting — the stripes take a fresh login to
+  # reappear, not just a rebuild.
   #
   # sessionVariables, not variables: niri is launched by the display manager,
   # so this needs a fresh LOGIN to take effect, not just a rebuild.
   environment.sessionVariables.AMD_DEBUG = "nodcc";
 
-  # ── Window content flickering out: eDP panel power saving ─────────────
-  # UNDER TEST. Remove this line and reboot to go back.
-  #
+  # ── Window content flickering out: what has been ruled out ────────────
   # Symptom: window CONTENT vanishes in moving rectangular patches, showing
-  # the wallpaper behind it, while the borders and tab indicators keep drawing
-  # perfectly. Worse on battery. Ruled out first: niri's blur, shadows and
-  # rounded corners (all disabled, no change), VRR (off), cross-GPU scanout
-  # (the panel renders and scans out on the same GPU), adaptive backlight
-  # (panel_power_savings is 0), and display underflow (zero in dmesg).
+  # sharp wallpaper behind it, while borders and tab indicators keep drawing
+  # perfectly. Worse on battery. Appeared around 2026-08-06.
   #
-  # "Patches of stale content, worse on battery" is the signature of the eDP
-  # selective-update features: the panel is sent only the damaged rectangles,
-  # and everything else keeps whatever it had. These are exactly the features
-  # that engage harder when unplugged.
+  # Tested and NOT the cause — do not retry these:
+  #   * niri's blur, shadows, rounded corners and opacity. The untouched
+  #     config at codeberg.org/oadardery/dotfiles has all of them on and does
+  #     not flicker; disabling them here changed nothing.
+  #   * The kernel. The config was reset to the 2026-08-04 tree (which pins
+  #     pkgs.linuxPackages, 6.18) and the artifacts persisted, which is why
+  #     commit 1618a04 bumped to linuxPackages_latest as an attempted fix.
+  #   * AMD_DEBUG=nodcc above. It postdates the flicker and fixes only the
+  #     stripes.
+  #   * PSR, PSR-SU, Replay and IPS. amdgpu.dcdebugmask=0xE10 was applied and
+  #     verified in /proc/cmdline over a full reboot; no change.
+  #   * VRR (off), cross-GPU scanout (panel renders and scans out on the same
+  #     GPU), adaptive backlight (panel_power_savings is 0), and display
+  #     underflow (zero occurrences in dmesg).
   #
-  # 0xE10 turns off all four at once, so one reboot exonerates or convicts the
-  # whole family. Values are from DC_DEBUG_MASK in the kernel's amd_shared.h:
-  #   0x010 PSR          0x200 PSR_SU
-  #   0x400 Replay       0x800 IPS (idle power states)
-  # If this fixes it, bisect by trying each value alone to find the one that
-  # matters, then keep only that. If it changes nothing, delete this and the
-  # cause is not panel power saving.
-  boot.kernelParams = [ "amdgpu.dcdebugmask=0xE10" ];
+  # A full revert of the nix config AND flake.lock to a known-good tree did
+  # not clear it, so it is not the nix-managed software.
+  #
+  # ── What it actually looks like ───────────────────────────────────────
+  # On battery, power-profiles-daemon switches to power-saver on its own
+  # (`powerprofilesctl query-battery-aware` is True), which sets the ACPI
+  # platform profile to "quiet" and drops the APU's power budget. The iGPU then
+  # sits on DPM level 0 and never leaves it: 800 MHz core and 400 MHz memory,
+  # out of 2700/937, measured continuously with gpu_busy_percent at 16-22%.
+  #
+  # Low utilisation with pinned clocks is the tell. This is not a GPU that is
+  # too slow on average, it is a governor sitting at the floor: a burst of
+  # compositing work needs bandwidth before the SMU can ramp, and at 165 Hz the
+  # frame is due in 6 ms. Frames that miss leave the regions niri did not
+  # redraw composited as empty, and "empty" here is the wallpaper, because
+  # layout.kdl sets background-color "transparent" and rules.kdl puts the
+  # wallpaper in the backdrop. That is the sharp-wallpaper symptom exactly, and
+  # it is why the artifacts vanish under a game: the dGPU renders it, but the
+  # iGPU still composites every frame, so its clocks stay up.
+  #
+  # The fix is home/refresh-rate.nix, which widens the frame budget by dropping
+  # the refresh rate on the lower profiles rather than fighting the governor.
+  #
+  # ── Do not enable the amdgpu_dpm action ───────────────────────────────
+  # `powerprofilesctl list-actions` offers amdgpu_dpm, "Adjust GPU dynamic
+  # power management", and it is disabled. Leave it that way. It writes
+  # power_dpm_force_performance_level, and its mapping is power-saver -> "low",
+  # balanced and performance -> "auto". It never writes "high". Enabling it
+  # cannot raise the clocks on any profile, and on power-saver it would hard
+  # lock the iGPU at level 0 with no ramp at all, which is strictly worse than
+  # the "auto" it sits at today.
 
   # No swap device on this machine. Compressed RAM swap gives the Rust/Go/Nix
   # builds headroom on 14 GiB instead of hitting the OOM killer.
