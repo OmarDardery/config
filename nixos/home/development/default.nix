@@ -8,6 +8,7 @@
     go
     bun
     uv
+    python3
 
     # C/C++
     gcc
