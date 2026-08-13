@@ -7,6 +7,16 @@
     rustup
     go
     bun
+
+    # Not redundant with bun. `bun run` hands a script whose bin has a
+    # `#!/usr/bin/env node` shebang to the real node when one is on PATH, and
+    # runs it inside bun itself when one is not. With no node installed,
+    # `bun run build` in a Next.js project executed next-swc through bun's
+    # Node-API layer and died with SIGILL in napi_release_threadsafe_function
+    # — oven-sh/bun#24829, still open. Installing node is the fix; nothing
+    # about the project or bun's own package management changes.
+    nodejs
+
     uv
     python3
 

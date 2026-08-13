@@ -28,4 +28,24 @@
   # programs.noctalia.package to noctalia's own build with mkDefault, which is
   # what keeps the cachix substituter hitting. That is why it is no longer
   # listed by hand in desktop.nix.
+
+  # Inputs for the two user templates declared in config.toml. Read-only is
+  # correct here — noctalia only ever reads these and renders them somewhere
+  # writable. They are copies of noctalia's own builtin niri/kitty templates,
+  # which could not be used directly because those hardcode an output path
+  # inside the read-only trees deployed by desktop.nix.
+  xdg.configFile."noctalia/templates".source = ../dotfiles/noctalia/templates;
+
+  # The wallpapers config.toml points at. This is not decoration: theme.source
+  # is "wallpaper", so the entire palette is generated from whichever of these
+  # is selected. Without them deployed, a fresh machine gets no wallpaper and a
+  # fallback palette instead of yours.
+  #
+  # config.toml refers to them by their ~/Pictures path rather than a store
+  # path, because it is real TOML and cannot interpolate one. That also keeps
+  # switching wallpapers from the noctalia UI working.
+  #
+  # Read-only, like the niri and kitty trees, so adding a wallpaper means
+  # dropping it in dotfiles/Pictures/Wallpapers and rebuilding.
+  home.file."Pictures/Wallpapers".source = ../dotfiles/Pictures/Wallpapers;
 }

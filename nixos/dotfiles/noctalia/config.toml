@@ -159,8 +159,34 @@ source = "wallpaper"
 wallpaper_scheme = "m3-rainbow"
 
     [theme.templates]
-    builtin_ids = [ "gtk3", "gtk4", "kitty", "niri", "qt", "starship" ]
+    # "kitty" and "niri" are absent on purpose. Their builtin templates hardcode
+    # an output under $XDG_CONFIG_HOME (and the niri one also tries to append an
+    # include line to config.kdl), and home-manager deploys both of those trees
+    # as read-only store symlinks, so both templates always failed silently.
+    # They are re-implemented as user templates below, which is the same engine
+    # with an output path we get to choose.
+    builtin_ids = [ "gtk3", "gtk4", "qt", "starship" ]
     community_ids = [ "yazi" ]
+
+    # User templates: same rendering, writable destination. Both paths below
+    # expand at runtime — the engine handles the $XDG_* tokens and a leading ~,
+    # so nothing here hardcodes a home directory.
+    #
+    # ~/.local/state is the right side of the line: it is generated output that
+    # changes with the wallpaper, not configuration, so it does not belong in
+    # git and does not fight home-manager for ownership of a path.
+
+    [theme.templates.user.niri]
+    input_path = "$XDG_CONFIG_HOME/noctalia/templates/niri.kdl"
+    output_path = "$XDG_STATE_HOME/noctalia/theme/niri.kdl"
+    # No post_hook: niri watches every included file and live-reloads itself.
+
+    [theme.templates.user.kitty]
+    input_path = "$XDG_CONFIG_HOME/noctalia/templates/kitty.conf"
+    output_path = "$XDG_STATE_HOME/noctalia/theme/kitty.conf"
+    # kitty does not watch its includes. This is the same reload the builtin
+    # kitty template's apply.sh ends with.
+    post_hook = "pkill -USR1 kitty"
 
 [wallpaper]
 transition_on_startup = true

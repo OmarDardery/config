@@ -7,7 +7,6 @@
     ./nix-tools.nix
     ./desktop.nix
     ./noctalia.nix
-    ./refresh-rate.nix
     ./host.nix
   ];
 

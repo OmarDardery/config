@@ -111,29 +111,35 @@
   #   * VRR (off), cross-GPU scanout (panel renders and scans out on the same
   #     GPU), adaptive backlight (panel_power_savings is 0), and display
   #     underflow (zero occurrences in dmesg).
+  #   * Lowering the refresh rate per power profile. A systemd user service did
+  #     this for a while (60 on power-saver, 100 on balanced, 165 on
+  #     performance), on the iGPU theory taken apart below. It masks the symptom
+  #     by widening the frame budget and fixes nothing. Removed in this commit.
+  #     Do not rebuild it.
   #
   # A full revert of the nix config AND flake.lock to a known-good tree did
   # not clear it, so it is not the nix-managed software.
   #
-  # ── What it actually looks like ───────────────────────────────────────
-  # On battery, power-profiles-daemon switches to power-saver on its own
-  # (`powerprofilesctl query-battery-aware` is True), which sets the ACPI
-  # platform profile to "quiet" and drops the APU's power budget. The iGPU then
-  # sits on DPM level 0 and never leaves it: 800 MHz core and 400 MHz memory,
-  # out of 2700/937, measured continuously with gpu_busy_percent at 16-22%.
+  # ── It is niri, not this hardware ─────────────────────────────────────
+  # Upstream, still open: niri-wm/niri#2030, "Occasional single-frame flickers
+  # of arbitrary windows" — windows flicker to one frame of the background
+  # layer, mostly on focus change or after a window has sat idle a minute or
+  # two. Same symptom, and the reporter is on an RTX 3090 at 240 Hz. No AMD, no
+  # iGPU, no power management involved at all.
   #
-  # Low utilisation with pinned clocks is the tell. This is not a GPU that is
-  # too slow on average, it is a governor sitting at the floor: a burst of
-  # compositing work needs bandwidth before the SMU can ramp, and at 165 Hz the
-  # frame is due in 6 ms. Frames that miss leave the regions niri did not
-  # redraw composited as empty, and "empty" here is the wallpaper, because
-  # layout.kdl sets background-color "transparent" and rules.kdl puts the
-  # wallpaper in the backdrop. That is the sharp-wallpaper symptom exactly, and
-  # it is why the artifacts vanish under a game: the dGPU renders it, but the
-  # iGPU still composites every frame, so its clocks stay up.
+  # The iGPU measurements that led the earlier investigation astray are all
+  # accurate, so do not waste an afternoon re-taking them: on battery ppd
+  # switches to power-saver by itself, the ACPI profile goes to "quiet", and the
+  # iGPU then sits on DPM level 0 and never leaves it — 800 MHz core and 400 MHz
+  # memory out of 2700/937, with gpu_busy_percent only 16-22%.
   #
-  # The fix is home/refresh-rate.nix, which widens the frame budget by dropping
-  # the refresh rate on the lower profiles rather than fighting the governor.
+  # What made them look like an explanation is that the flicker really does get
+  # better at lower refresh rates. #2030 has that same correlation on completely
+  # different hardware — it reproduces at 240 Hz, not at 120 Hz, and not on the
+  # same monitor set lower — which is what clears the clocks: a longer frame
+  # budget hides a niri frame-scheduling bug on anyone's GPU.
+  #
+  # The workaround is in dotfiles/niri/cfg/misc.kdl.
   #
   # ── Do not enable the amdgpu_dpm action ───────────────────────────────
   # `powerprofilesctl list-actions` offers amdgpu_dpm, "Adjust GPU dynamic
