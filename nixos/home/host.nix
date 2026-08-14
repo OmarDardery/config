@@ -6,11 +6,11 @@
 {
   # Which flake `nh` acts on. This is the only place the repo path is written,
   # so `up` below no longer has to repeat it.
-  programs.nh.flake = "/home/oad/configurations/nixos";
+  programs.nh.flake = "/home/oad/configs/nixos";
 
   programs.zsh.shellAliases = {
     up = "nh os switch";
-    cnf = "sudo nano ~/configurations/nixos/configuration.nix";
+    cnf = "sudo nano ~/configs/nixos/configuration.nix";
     lc = "cd /mnt/storage/Coding";
   };
 }

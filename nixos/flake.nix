@@ -23,8 +23,21 @@
       url = "github:xCaptaiN09/pixie-sddm";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    # Doom Emacs with every elisp package resolved by Nix. The older
+    # nix-community/nix-doom-emacs is broken by its own admission and points
+    # here. This one runs Doom's CLI to export its dependency list, then feeds
+    # that to emacsWithPackages, so straight.el never runs.
+    #
+    # It pulls emacs-overlay, doomemacs/core and doomemacs/modules transitively.
+    # Unlike noctalia this costs no second nixpkgs: emacs-overlay leaves its own
+    # nixpkgs unset, so the `follows` below is inherited all the way down and
+    # everything builds against 26.05.
+    nix-doom-emacs-unstraightened = {
+      url = "github:marienz/nix-doom-emacs-unstraightened";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
-  outputs = { self, nixpkgs, zen-browser, noctalia, home-manager, pixie-sddm, ... }@inputs: {
+  outputs = { self, nixpkgs, zen-browser, noctalia, home-manager, pixie-sddm, nix-doom-emacs-unstraightened, ... }@inputs: {
     nixosConfigurations = {
       # Change "nixos" to your actual hostname if it is different
       "nixos" = nixpkgs.lib.nixosSystem {

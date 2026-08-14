@@ -1,6 +1,10 @@
 { pkgs, ... }:
 {
-  imports = [ ./vscode.nix ];
+  imports = [
+    ./vscode.nix
+    ./lazyvim.nix
+    ./doom-emacs.nix
+  ];
 
   home.packages = with pkgs; [
     # toolchains
@@ -29,7 +33,6 @@
     arduino-cli
 
     # editors
-    zed-editor
     jetbrains-toolbox
   ];
 
