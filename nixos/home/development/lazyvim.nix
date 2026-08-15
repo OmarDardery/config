@@ -200,7 +200,7 @@ in
       # Nix. statix is what the nix extra points nvim-lint at; without it every
       # write to a .nix file logs "Error running statix: ENOENT".
       nixd
-      nixfmt-rfc-style
+      nixfmt
       statix
       # Lua
       lua-language-server
@@ -238,7 +238,7 @@ in
       bash-language-server
       shfmt
       # Docker
-      dockerfile-language-server-nodejs
+      dockerfile-language-server
       hadolint
       # Notebooks need no CLI: molten talks to the Jupyter kernel directly
       # through the python provider below, and jupytext converts .ipynb on
@@ -259,7 +259,7 @@ in
       wget
     ];
 
-    extraLuaConfig = ''
+    initLua = ''
       -- Must be set before lazy.setup, or LazyVim's <leader> maps land on the
       -- wrong key.
       vim.g.mapleader = " "

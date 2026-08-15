@@ -19,12 +19,13 @@ let
   # Doom's `+lsp` flags call eglot, which finds servers by looking for known
   # binary names on PATH. These are those binaries. Names were checked against
   # eglot's own `eglot-server-programs` table in Emacs 30, so they match what it
-  # actually searches for — `docker-langserver`, not `dockerfile-language-server`.
+  # actually searches for — e.g. `docker-langserver`, which is the binary the
+  # dockerfile-language-server package ships under.
   languageServers = with pkgs; [
     # Nix — eglot tries nil, then rnix-lsp, then nixd. Only nixd is installed,
     # so that is what it picks.
     nixd
-    nixfmt-rfc-style
+    nixfmt
     # Lua
     lua-language-server
     stylua
@@ -62,7 +63,7 @@ let
     # Dockerfile — provides the `docker-langserver` binary eglot looks for.
     # No hadolint: nothing in Doom's docker module references it, so it would
     # only be a binary on PATH that never runs. LazyVim wires it into nvim-lint.
-    dockerfile-language-server-nodejs
+    dockerfile-language-server
     # Embedded. platformio-mode shells out to `platformio`.
     platformio-core
     # Doom itself leans on these for search, project detection and :tools magit.
