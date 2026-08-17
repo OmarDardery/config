@@ -2,7 +2,7 @@
 {
   programs.vscode = {
     enable = true;
-    package = pkgs.vscode.fhs;
+    package = pkgs.vscodium.fhs;
     profiles.default.extensions = with pkgs.vscode-extensions; [
       platformio.platformio-vscode-ide
       golang.go

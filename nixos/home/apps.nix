@@ -1,6 +1,9 @@
 { pkgs, inputs, ... }:
 {
   home.packages = with pkgs; [
+    # Google Antigravity CLI, built from ../pkgs/antigravity-cli.nix via the
+    # overlay in configuration.nix. Installs the binary as `agy`.
+    antigravity-cli
     inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
     kitty
     libreoffice-qt
@@ -24,7 +27,6 @@
     pavucontrol
     brightnessctl
     playerctl
-
     # Windows apps in a container. Needs a container socket — see the podman
     # block in configuration.nix. KVM needs nothing: /dev/kvm and /dev/net/tun
     # are already world-accessible here.

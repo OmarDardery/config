@@ -168,6 +168,14 @@
 
   nixpkgs.config.allowUnfree = true;
 
+  # Packages this repo builds itself, exposed on `pkgs` so home-manager modules
+  # can reach them (home-manager runs with useGlobalPkgs, so it shares this set).
+  nixpkgs.overlays = [
+    (final: _prev: {
+      antigravity-cli = final.callPackage ./pkgs/antigravity-cli.nix { };
+    })
+  ];
+
   # WinBoat is an Electron app and nixpkgs pins it to a branch upstream has
   # stopped supporting, so it is marked insecure. The issue is "EOL", not a
   # specific CVE — it means an unmaintained Chromium, which matters because

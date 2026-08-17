@@ -20,7 +20,6 @@
     # — oven-sh/bun#24829, still open. Installing node is the fix; nothing
     # about the project or bun's own package management changes.
     nodejs
-
     uv
     python3
 
@@ -41,5 +40,6 @@
     # data, which doesn't exist on NixOS (no /usr). This is libxkbcommon's own
     # documented override for that lookup, pointed at the real Nix store path.
     XKB_CONFIG_ROOT = "${pkgs.xkeyboard-config}/share/X11/xkb";
+    PATH = "/home/oad/.bun/bin:$PATH";
   };
 }
