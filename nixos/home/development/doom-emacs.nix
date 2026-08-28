@@ -15,55 +15,22 @@
 # move when you bump the flake.
 { pkgs, lib, inputs, config, ... }:
 let
+  toolchain = import ./toolchain.nix { inherit pkgs; };
+
   # ── Language servers and tools ────────────────────────────────────────
   # Doom's `+lsp` flags call eglot, which finds servers by looking for known
-  # binary names on PATH. These are those binaries. Names were checked against
-  # eglot's own `eglot-server-programs` table in Emacs 30, so they match what it
-  # actually searches for — e.g. `docker-langserver`, which is the binary the
-  # dockerfile-language-server package ships under.
-  languageServers = with pkgs; [
-    # Nix — eglot tries nil, then rnix-lsp, then nixd. Only nixd is installed,
-    # so that is what it picks.
-    nixd
-    nixfmt
-    # Lua
-    lua-language-server
-    stylua
-    # C / C++ — eglot tries clangd then ccls
-    clang-tools
-    # Go. gopls only: apheleia's table maps go-ts-mode to plain `gofmt', which
-    # already resolves from the `go' package in ./default.nix. gofumpt and
-    # goimports would sit here unused, and flycheck-golangci-lint is gated on
-    # `:checkers syntax -flymake' (lang/go/config.el:77) while this config runs
-    # +flymake. All three stay in ../development/lazyvim.nix, which does use them.
-    gopls
-    # Rust
-    rust-analyzer
-    # TypeScript / JavaScript. Note this is NOT vtsls, which the Neovim config
-    # uses: eglot's built-in entry is typescript-language-server, and teaching it
-    # about vtsls would be extra config for no gain.
+  # binary names on PATH. The shared set in ./toolchain.nix covers almost all of
+  # them — names there were checked against eglot's own `eglot-server-programs`
+  # table in Emacs 30, so they match what it actually searches for (e.g.
+  # `docker-langserver`, which is the binary the dockerfile-language-server
+  # package ships under). Listed here is only what Doom needs on top, and the
+  # one place where Doom and the other editors genuinely want different tools.
+  languageServers = toolchain.languageServers ++ (with pkgs; [
+    # TypeScript / JavaScript. Note this is NOT vtsls, which the Neovim and
+    # VSCodium configs use: eglot's built-in entry is
+    # typescript-language-server, and teaching it about vtsls would be extra
+    # config for no gain. Both are on PATH; eglot simply picks this one.
     typescript-language-server
-    prettier
-    # Python — eglot's list is pylsp, pyls, basedpyright-langserver, ... so with
-    # only basedpyright present it resolves there.
-    basedpyright
-    ruff
-    # Markdown — marksman is not in eglot's table; see the config.el entry below
-    marksman
-    # JSON — provides vscode-json-language-server
-    vscode-langservers-extracted
-    # YAML
-    yaml-language-server
-    # TOML — also absent from eglot's table, wired up in config.el
-    taplo
-    # Bash
-    bash-language-server
-    shfmt
-    shellcheck
-    # Dockerfile — provides the `docker-langserver` binary eglot looks for.
-    # No hadolint: nothing in Doom's docker module references it, so it would
-    # only be a binary on PATH that never runs. LazyVim wires it into nvim-lint.
-    dockerfile-language-server
     # Embedded. platformio-mode shells out to `platformio`.
     platformio-core
     # Doom itself leans on these for search, project detection and :tools magit.
@@ -72,28 +39,19 @@ let
     git
     coreutils
     gnutls
-  ];
+  ]);
 
   # ── Notebook support ──────────────────────────────────────────────────
   # `:lang org +jupyter` drives kernels through emacs-jupyter, which talks to a
-  # real Jupyter install over ZeroMQ. That install is this python env.
+  # real Jupyter install over ZeroMQ. That install is the shared env from
+  # ./toolchain.nix — VSCodium's Jupyter extension runs against the same one, so
+  # a notebook opened in either editor sees the same packages.
   #
   # Deliberately not using `:tools ein`: its own module README says "This module
   # is deprecated and will be replaced with a new module based on code-cells.el"
   # and "This module needs a maintainer." org-babel is the path that is actually
   # maintained, and is the reason to run Emacs for notebooks in the first place.
-  jupyterPython = pkgs.python3.withPackages (ps: with ps; [
-    jupyter-client
-    ipykernel
-    ipython
-    jupytext
-    nbformat
-    pyzmq
-    matplotlib
-    plotly
-    pillow
-    requests
-  ]);
+  inherit (toolchain) jupyterPython;
 
   # The kernelspec nixpkgs ships inside the python env has `"python"` as its
   # argv[0] — a bare name, resolved against PATH at launch. Doom's PATH puts the

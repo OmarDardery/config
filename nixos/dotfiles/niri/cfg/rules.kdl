@@ -49,6 +49,31 @@ window-rule {
 }
 
 
+// Steam games: open fullscreen.
+// Steam launches games under XWayland with app-id "steam_app_<appid>";
+// the Steam client itself is app-id "steam" and is deliberately not matched.
+
+
+// ── Presenting onto HDMI ─────────────────────────────────────────────────
+// Normally nothing is needed here. LibreOffice's gtk3 backend asks the
+// compositor to fullscreen the slide window on a named output
+// (xdg_toplevel.set_fullscreen with a wl_output), and niri honours that —
+// which is what SAL_USE_VCLPLUGIN=gtk3 in home/apps.nix restored. The Qt
+// backend never sends the output at all, which is why this used to need
+// wl-mirror.
+//
+// If a deck still opens on the laptop panel, niri can place it instead. Start
+// a presentation, run `niri msg windows`, and copy the REAL app-id and title
+// into the rule below before uncommenting — Impress puts the slides and the
+// presenter console in two separate toplevels, and only the slides should
+// move. Guessing here silently moves the wrong one.
+//
+// window-rule {
+//     match app-id=r"libreoffice" title=r"<the title niri msg windows printed>"
+//     open-on-output "HDMI-A-1"
+//     open-fullscreen true
+// }
+
 // -------------------------
 // LAYER RULES (WALLPAPER / BACKDROP)
 // ------------------------

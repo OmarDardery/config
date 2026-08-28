@@ -1,14 +1,28 @@
-{ pkgs, ... }:
+{ pkgs, lib, ... }:
+let
+  toolchain = import ./toolchain.nix { inherit pkgs; };
+in
 {
   imports = [
+    ./clangd.nix
+    ./platformio.nix
     ./vscode.nix
     ./lazyvim.nix
     ./doom-emacs.nix
   ];
 
-  home.packages = with pkgs; [
-    # toolchains
-    rustup
+  # Language servers, formatters and linters. These are installed rather than
+  # left on the editor wrappers' private PATHs because VSCodium's extensions
+  # spawn them from the session PATH — see ./toolchain.nix.
+  home.packages = toolchain.languageServers ++ (with pkgs; [
+    # toolchains.
+    #
+    # rustup is lowPrio because it ships a `rust-analyzer` shim that collides
+    # with the real rust-analyzer in ./toolchain.nix. The shim is the wrong one
+    # to keep: it only forwards to a component rustup has been told to install,
+    # which this setup never does, so it fails at startup. lowPrio applies only
+    # where there is a conflict — cargo, rustc and rustup itself are unaffected.
+    (lib.lowPrio rustup)
     go
     bun
 
@@ -23,9 +37,8 @@
     uv
     python3
 
-    # C/C++
+    # C/C++. clangd and clang-format come from clang-tools in ./toolchain.nix.
     gcc
-    clang-tools
 
     # embedded
     platformio-core
@@ -33,7 +46,7 @@
 
     # editors
     jetbrains-toolbox
-  ];
+  ]);
 
   home.sessionVariables = {
     # Foreign binaries (Zed, etc.) hardcode /usr/share/X11/xkb for keyboard layout

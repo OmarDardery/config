@@ -18,6 +18,17 @@ binds {
     // Please choose your own file manager.
     Mod+E hotkey-overlay-title="File Manager: Nautilus" { spawn "nautilus"; }
 
+    // ─── Displays ───
+    // Mirror the laptop panel onto HDMI. niri has no native mirroring, so this
+    // is wl-mirror showing one output inside a window that is then fullscreened
+    // on the other. Presenting no longer needs it (see cfg/rules.kdl), but a
+    // projector that refuses an extended desktop still does.
+    // The positional argument is the output being COPIED (the laptop panel);
+    // --fullscreen-output is where the copy is SHOWN. Note `-f` is --freeze,
+    // not fullscreen — the fullscreen short flag is `-F`.
+    Mod+Shift+M hotkey-overlay-title="Mirror Display: wl-mirror" { spawn-sh "wl-mirror --fullscreen-output HDMI-A-1 'BOE NE140QDM-NX7 Unknown'"; }
+    Mod+Shift+D hotkey-overlay-title="Display Settings: nwg-displays" { spawn "nwg-displays"; }
+
     // ─── Media Controls ───
     XF86AudioRaiseVolume allow-when-locked=true { spawn-sh "noctalia msg volume-up"; }
     XF86AudioLowerVolume allow-when-locked=true { spawn-sh "noctalia msg volume-down"; }

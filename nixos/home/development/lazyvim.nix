@@ -11,8 +11,17 @@
 # The trade-off, stated plainly: `:Lazy update` and `:LazyExtras` no longer
 # change anything. Plugins move when nixpkgs moves, and enabling an extra means
 # editing the `spec` and `plugins` lists in this file.
-{ pkgs, lib, ... }:
+{ pkgs, lib, config, ... }:
 let
+  toolchain = import ./toolchain.nix { inherit pkgs; };
+
+  # Rendered into the Lua below. Same flags VSCodium passes — see
+  # ./toolchain.nix for what --query-driver buys and ./clangd.nix for the
+  # editor-independent half.
+  clangdArgs = lib.concatMapStringsSep ", " (arg: "\"${arg}\"") (
+    toolchain.clangdArgs config.home.homeDirectory
+  );
+
   # Not in nixpkgs, so it is pinned by hand. This is the only plugin here not
   # coming from the flake's nixpkgs.
   nvim-platformio = pkgs.vimUtils.buildVimPlugin {
@@ -195,51 +204,11 @@ in
     plugins = [ pkgs.vimPlugins.lazy-nvim ];
 
     # Mason is disabled in the spec below, so every binary LazyVim would have
-    # asked Mason for is listed here instead.
-    extraPackages = with pkgs; [
-      # Nix. statix is what the nix extra points nvim-lint at; without it every
-      # write to a .nix file logs "Error running statix: ENOENT".
-      nixd
-      nixfmt
-      statix
-      # Lua
-      lua-language-server
-      stylua
-      # C/C++ (clangd + clang-format both live in clang-tools)
-      clang-tools
-      # Go. gotools carries goimports, which the go extra formats with.
-      gopls
-      gofumpt
-      gotools
-      golangci-lint
-      # Rust. Rust itself comes from rustup, which does not put rust-analyzer
-      # on PATH unless the component is added, so the package is used instead.
-      rust-analyzer
-      # TypeScript / JavaScript. Both prettiers are needed: conform runs the
-      # fast prettierd daemon, but the prettier extra shells out to plain
-      # `prettier --find-config-path` to decide whether a file is formattable.
-      vtsls
-      prettierd
-      prettier
-      # Python
-      basedpyright
-      ruff
-      # Markdown
-      marksman
-      markdownlint-cli2
-      markdown-toc
-      # JSON / YAML. jsonls is vscode-json-language-server, which only ships as
-      # part of vscode-langservers-extracted.
-      yaml-language-server
-      vscode-langservers-extracted
-      # TOML
-      taplo
-      # Bash — LazyVim has no bash extra, so it is wired in overrides.lua
-      bash-language-server
-      shfmt
-      # Docker
-      dockerfile-language-server
-      hadolint
+    # asked Mason for is listed here instead. The servers, formatters and
+    # linters are the shared set from ./toolchain.nix — which language gets
+    # which tool, and why, is documented there. Only the entries LazyVim needs
+    # and the other editors do not are listed below.
+    extraPackages = toolchain.languageServers ++ (with pkgs; [
       # Notebooks need no CLI: molten talks to the Jupyter kernel directly
       # through the python provider below, and jupytext converts .ipynb on
       # open. The quarto CLI was here for .qmd rendering and pulled in R,
@@ -257,7 +226,7 @@ in
       tree-sitter
       gnumake
       wget
-    ];
+    ]);
 
     initLua = ''
       -- Must be set before lazy.setup, or LazyVim's <leader> maps land on the
@@ -557,8 +526,8 @@ in
   '';
 
   xdg.configFile."nvim/lua/plugins/platformio.lua".text = ''
-    -- Embedded work. clangd already gives IntelliSense once the project has a
-    -- compile_commands.json — generate one with `pio project init --ide vim`.
+    -- Embedded work. clangd needs a compile_commands.json before it can
+    -- resolve <Arduino.h>; `:PioLSP` writes one, and the opts below decide how.
     -- This adds the build/upload/monitor side, driven through toggleterm.
     --
     -- The pio CLI comes from programs.neovim.extraPackages (platformio-core);
@@ -585,9 +554,38 @@ in
           "PioTermList",
         },
         dependencies = { "akinsho/toggleterm.nvim" },
-        opts = {},
+        -- The plugin defaults to lsp = "ccls", and on that path :PioLSP writes
+        -- a .ccls file and nothing else. clangd cannot read .ccls, so it finds
+        -- no compilation database, falls back to a bare host `clang` with none
+        -- of the framework's include paths, and every <Arduino.h> comes back
+        -- "file not found".
+        --
+        -- clangd_source = "compiledb" runs `pio run -t compiledb`, which emits
+        -- the real build command line for every translation unit — the
+        -- framework's sources included, so `gd` reaches them. It is also the
+        -- file VSCodium's clangd reads, so the two editors cannot disagree.
+        -- The plugin's own :help warns this combination breaks on Espressif
+        -- boards: the xtensa build line carries GCC-only flags that clang
+        -- rejects outright. That is what ../clangd.nix removes.
+        opts = {
+          lsp = "clangd",
+          clangd_source = "compiledb",
+        },
       },
       { "akinsho/toggleterm.nvim", opts = {} },
+      {
+        -- clangd resolves <Arduino.h> from the database above, then dies on
+        -- <stdio.h> unless it can ask the cross-compiler where newlib is.
+        -- LazyVim's clangd extra owns `cmd`, so append rather than replace.
+        "neovim/nvim-lspconfig",
+        opts = function(_, opts)
+          local clangd = opts.servers and opts.servers.clangd
+          if not clangd then
+            return
+          end
+          clangd.cmd = vim.list_extend(vim.deepcopy(clangd.cmd or { "clangd" }), { ${clangdArgs} })
+        end,
+      },
     }
   '';
 }

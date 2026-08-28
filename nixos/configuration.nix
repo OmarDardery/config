@@ -30,14 +30,14 @@
   networking.networkmanager.enable = true;
   networking.nftables.enable = true;
 
-  services.tailscale.enable = true;
-  networking.firewall = {
-    enable = true;
-    # Always allow traffic from your Tailscale network
-    trustedInterfaces = [ config.services.tailscale.interfaceName ];
-    # Allow the Tailscale UDP port through the firewall
-    allowedUDPPorts = [ config.services.tailscale.port ];
-  };
+  # services.tailscale.enable = true;
+  #networking.firewall = {
+  # enable = true;
+  # Always allow traffic from your Tailscale network
+  # trustedInterfaces = [ config.services.tailscale.interfaceName ];
+  # Allow the Tailscale UDP port through the firewall
+  # allowedUDPPorts = [ config.services.tailscale.port ];
+  #};
   systemd.services.tailscaled.serviceConfig.Environment = [
     "TS_DEBUG_FIREWALL_MODE=nftables"
   ];
@@ -63,6 +63,14 @@
 
   services.flatpak.enable = true;
   programs.localsend.enable = true;
+
+  # Phone and tablet integration — clipboard sync, notification mirroring, file
+  # transfer, and a slideshow remote that drives Impress from the phone. System
+  # level rather than home-manager because the module opens the UDP and TCP port
+  # ranges KDE Connect discovers peers on; the home-manager version cannot touch
+  # the firewall. Pairs with LocalSend above rather than replacing it: LocalSend
+  # is one-shot file transfer, this is a persistent link.
+  programs.kdeconnect.enable = true;
   services.power-profiles-daemon.enable = true;
   services.upower.enable = true;
 
@@ -78,6 +86,7 @@
       "networkmanager"
       "wheel"
       "dialout"
+      "docker"
     ];
     shell = pkgs.zsh;
   };
@@ -109,18 +118,9 @@
   programs.nix-ld.enable = true; # provides /lib64/ld-linux for foreign binaries
   services.udev.packages = [ pkgs.platformio-core.udev ]; # udev rules are system-global
 
-  # Rootless containers; dockerCompat adds a `docker` alias for muscle memory,
-  # dns_enabled lets containers on the same network resolve each other by name.
-  virtualisation.podman = {
+  # Docker daemon and container virtualization
+  virtualisation.docker = {
     enable = true;
-    dockerCompat = true;
-    defaultNetwork.settings.dns_enabled = true;
-
-    # dockerSocket.enable is deliberately NOT set. It symlinks the ROOTFUL
-    # socket to /run/docker.sock, owned root:podman — and using it would mean
-    # joining the podman group, which grants control of root containers. Tools
-    # that want an API socket get the rootless one via DOCKER_HOST instead;
-    # see home/apps.nix.
   };
 
   # ── Locale ─────────────────────────────────────────────────────────────

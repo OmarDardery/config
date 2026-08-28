@@ -1,16 +1,35 @@
 # Everything bound to this specific laptop: GPUs, peripherals, extra disks.
-{ config, pkgs, ... }:
+{ config, ... }:
 {
   boot.kernelModules = [ "uinput" ];
 
   hardware = {
-    bluetooth.enable = true;
+    bluetooth = {
+      enable = true;
+
+      # Battery percentage for Bluetooth peripherals — the Sony headphones and
+      # the Xbox pads. BlueZ implements this through its Battery Provider API,
+      # which is gated behind the experimental flag; without it upower has
+      # nothing to report and the bar shows no level at all. "Experimental"
+      # names the D-Bus interface's stability, not the feature's reliability.
+      settings.General.Experimental = true;
+    };
+
+    # Xbox controllers over Bluetooth. USB is fine on the in-kernel xpad
+    # driver, but over BT that driver mis-maps the buttons, exposes no rumble
+    # and reports no battery. xpadneo fixes all three and leaves USB alone.
+    # hardware.xone is deliberately NOT enabled — that is for the proprietary
+    # 2.4GHz Xbox Wireless dongle, which is a different device.
+    xpadneo.enable = true;
 
     graphics = {
       enable = true;
       enable32Bit = true;
     };
 
+    # The XP-Pen tablet. The kernel's HID driver gives cursor movement and
+    # nothing else — no pressure curve, no button mapping, no area cropping.
+    # OpenTabletDriver is what makes it a graphics tablet rather than a mouse.
     opentabletdriver.enable = true;
     uinput.enable = true;
 
@@ -22,8 +41,23 @@
       # 595.71.05), so pinning to .stable is a no-op today. It stops a future
       # `nix flake update` pairing a too-new kernel with a driver that has no
       # matching release yet.
-      package = config.boot.kernelPackages.nvidiaPackages.stable;
-
+      #package = config.boot.kernelPackages.nvidiaPackages.stable;
+      #package = config.boot.kernelPackages.nvidiaPackages.mkDriver {
+      # version = "610.57.04";
+      # sha256_64bit = "sha256-suk1xmuDuwDAyFe8jg7g/VLekoa0DJzB7sKafOfrEW0=";
+      # sha256_aarch64 = "sha256-QCefrMBCmpOwuOyXv1k5Gj0iB2CYlPgnG3JToUw/j54=";
+      # openSha256 = "sha256-rQHOOOY4KL92Ww3KDwh+j4eGU7oNAH8LutZC5wmFnPo=";
+      # settingsSha256 = "sha256-ZEMo8I8Zc2Tq6RVDNYpAH+f094dUaZiBqO+5f6lIjRI=";
+      #  persistencedSha256 = "sha256-aXmD2VY1RLlgAnlHhOUMWzvMyhI6JTClcFLm4imF/mA=";
+      #};
+      package = config.boot.kernelPackages.nvidiaPackages.mkDriver {
+        version = "595.91.07";
+        sha256_64bit = "sha256-yiPIjdJLB6GRZE4eEc+3vN11NzBXSa9A+YABiwleYxM=";
+        sha256_aarch64 = "sha256-fqkN7ONFXtTeXyu2mQxorrk362Epxq3bz88hhKYQzwQ=";
+        openSha256 = "sha256-OB8Epd+qn/WywxsPiFpxEOAzlJqb6I1SyRoV3a8l71k=";
+        settingsSha256 = "sha256-QzT8Cw1luuZGP9DUje3HN/0ngiayqHURj+bqPsxlJ5w=";
+        persistencedSha256 = "sha256-3JQBaNmkwxvCXv9q8aHKas6VZM/JjLsuilC2t7ET0u0=";
+      };
       # Required for Wayland, and required for offload below — without it the
       # dGPU is held awake permanently.
       modesetting.enable = true;
@@ -68,7 +102,10 @@
   # Order matters for PRIME offload: the iGPU driver must come FIRST, otherwise
   # the X server runs permanently on the dGPU and it never sleeps (visible as
   # a non-idle GPU in `nvidia-smi`).
-  services.xserver.videoDrivers = [ "amdgpu" "nvidia" ];
+  services.xserver.videoDrivers = [
+    "amdgpu"
+    "nvidia"
+  ];
 
   # ── AMD iGPU stripe corruption: DCC ───────────────────────────────────
   # Pink/blue banded corruption on tiled windows, never on fullscreen games,
