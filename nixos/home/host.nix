@@ -3,10 +3,14 @@
 # called, and which disks are mounted. Everything else in home/ is portable —
 # drop this file and replace it when moving to another machine.
 { ... }:
+let
+  configRepo = "/home/oad/configs/nixos";
+in
 {
-  # Which flake `nh` acts on. This is the only place the repo path is written,
-  # so `up` below no longer has to repeat it.
-  programs.nh.flake = "/home/oad/configs/nixos";
+  # Make the machine-specific repository location available to editor modules
+  # as well as nh, without repeating it in otherwise portable files.
+  _module.args = { inherit configRepo; };
+  programs.nh.flake = configRepo;
 
   programs.zsh.shellAliases = {
     up = "nh os switch";

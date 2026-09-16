@@ -39,7 +39,14 @@
     hyprpicker
 
     # processing
-    tesseract # OCR (all language packs by default)
+    # The default includes every OCR model (about 1 GiB). These are the two
+    # languages used on this machine; Tesseract requires English to be present.
+    (tesseract.override {
+      enableLanguages = [
+        "eng"
+        "ara"
+      ];
+    })
     imagemagick
     zbar # zbarimg for QR/barcode
     bc

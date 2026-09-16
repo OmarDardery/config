@@ -48,8 +48,8 @@
       # sha256_aarch64 = "sha256-QCefrMBCmpOwuOyXv1k5Gj0iB2CYlPgnG3JToUw/j54=";
       # openSha256 = "sha256-rQHOOOY4KL92Ww3KDwh+j4eGU7oNAH8LutZC5wmFnPo=";
       # settingsSha256 = "sha256-ZEMo8I8Zc2Tq6RVDNYpAH+f094dUaZiBqO+5f6lIjRI=";
-      #  persistencedSha256 = "sha256-aXmD2VY1RLlgAnlHhOUMWzvMyhI6JTClcFLm4imF/mA=";
-      #};
+      # persistencedSha256 = "sha256-aXmD2VY1RLlgAnlHhOUMWzvMyhI6JTClcFLm4imF/mA=";
+      # };
       package = config.boot.kernelPackages.nvidiaPackages.mkDriver {
         version = "595.91.07";
         sha256_64bit = "sha256-yiPIjdJLB6GRZE4eEc+3vN11NzBXSa9A+YABiwleYxM=";
@@ -196,6 +196,8 @@
     fsType = "xfs";
     options = [
       "nofail" # Prevent system from failing if this drive doesn't mount
+      "x-systemd.automount"
+      "x-systemd.device-timeout=5s"
     ];
   };
 }

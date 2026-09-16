@@ -21,7 +21,12 @@
 # ./toolchain.nix. Paths below are absolute store paths rather than bare names —
 # an extension that spawns `ruff` picks up whatever PATH ordering gives it,
 # which is how you end up debugging why one editor formats differently.
-{ pkgs, config, ... }:
+{
+  pkgs,
+  config,
+  configRepo,
+  ...
+}:
 let
   toolchain = import ./toolchain.nix { inherit pkgs; };
 
@@ -216,11 +221,11 @@ in
         "nix.formatterPath" = bin pkgs.nixfmt "nixfmt";
         # The same flake-aware options completion ./lazyvim.nix gives nixd.
         "nix.serverSettings".nixd = {
-          nixpkgs.expr = "import <nixpkgs> { }";
+          nixpkgs.expr = ''(builtins.getFlake "${configRepo}").nixosConfigurations.nixos.pkgs'';
           formatting.command = [ (bin pkgs.nixfmt "nixfmt") ];
           options = {
-            nixos.expr = ''(builtins.getFlake "/home/oad/configs/nixos").nixosConfigurations.nixos.options'';
-            home_manager.expr = ''(builtins.getFlake "/home/oad/configs/nixos").nixosConfigurations.nixos.options.home-manager.users.type.getSubOptions []'';
+            nixos.expr = ''(builtins.getFlake "${configRepo}").nixosConfigurations.nixos.options'';
+            home_manager.expr = ''(builtins.getFlake "${configRepo}").nixosConfigurations.nixos.options.home-manager.users.type.getSubOptions []'';
           };
         };
 

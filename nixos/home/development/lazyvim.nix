@@ -11,7 +11,13 @@
 # The trade-off, stated plainly: `:Lazy update` and `:LazyExtras` no longer
 # change anything. Plugins move when nixpkgs moves, and enabling an extra means
 # editing the `spec` and `plugins` lists in this file.
-{ pkgs, lib, config, ... }:
+{
+  pkgs,
+  lib,
+  config,
+  configRepo,
+  ...
+}:
 let
   toolchain = import ./toolchain.nix { inherit pkgs; };
 
@@ -396,13 +402,15 @@ in
             nixd = {
               settings = {
                 nixd = {
-                  nixpkgs = { expr = "import <nixpkgs> { }" },
+                  nixpkgs = {
+                    expr = "(builtins.getFlake \"${configRepo}\").nixosConfigurations.nixos.pkgs",
+                  },
                   options = {
                     nixos = {
-                      expr = "(builtins.getFlake \"/home/oad/configs/nixos\").nixosConfigurations.nixos.options",
+                      expr = "(builtins.getFlake \"${configRepo}\").nixosConfigurations.nixos.options",
                     },
                     home_manager = {
-                      expr = "(builtins.getFlake \"/home/oad/configs/nixos\").nixosConfigurations.nixos.options.home-manager.users.type.getSubOptions []",
+                      expr = "(builtins.getFlake \"${configRepo}\").nixosConfigurations.nixos.options.home-manager.users.type.getSubOptions []",
                     },
                   },
                 },

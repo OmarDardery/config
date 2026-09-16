@@ -3,7 +3,6 @@
 # Help is available in the configuration.nix(5) man page and `nixos-help`.
 
 {
-  config,
   pkgs,
   inputs,
   ...
@@ -15,6 +14,8 @@
     ./display-manager.nix
     ./gnome.nix
     ./gaming.nix
+    # ./optional/tailscale.nix
+    # ./optional/antigravity.nix
   ];
 
   # ── Boot ───────────────────────────────────────────────────────────────
@@ -29,18 +30,6 @@
   networking.hostName = "nixos";
   networking.networkmanager.enable = true;
   networking.nftables.enable = true;
-
-  # services.tailscale.enable = true;
-  #networking.firewall = {
-  # enable = true;
-  # Always allow traffic from your Tailscale network
-  # trustedInterfaces = [ config.services.tailscale.interfaceName ];
-  # Allow the Tailscale UDP port through the firewall
-  # allowedUDPPorts = [ config.services.tailscale.port ];
-  #};
-  systemd.services.tailscaled.serviceConfig.Environment = [
-    "TS_DEBUG_FIREWALL_MODE=nftables"
-  ];
 
   # Faster boot: this is the unit that actually blocks, since we use
   # NetworkManager rather than systemd-networkd.
@@ -73,6 +62,7 @@
   programs.kdeconnect.enable = true;
   services.power-profiles-daemon.enable = true;
   services.upower.enable = true;
+  services.fwupd.enable = true;
 
   # SDDM runs as its own user before any home profile exists, so the login
   # screen's font has to come from the system font path.
@@ -167,14 +157,6 @@
   };
 
   nixpkgs.config.allowUnfree = true;
-
-  # Packages this repo builds itself, exposed on `pkgs` so home-manager modules
-  # can reach them (home-manager runs with useGlobalPkgs, so it shares this set).
-  nixpkgs.overlays = [
-    (final: _prev: {
-      antigravity-cli = final.callPackage ./pkgs/antigravity-cli.nix { };
-    })
-  ];
 
   # WinBoat is an Electron app and nixpkgs pins it to a branch upstream has
   # stopped supporting, so it is marked insecure. The issue is "EOL", not a

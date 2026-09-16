@@ -1,6 +1,6 @@
 # GNOME, as a second session next to niri. SDDM already runs and already lists
 # every session it finds — see display-manager.nix — so this is the whole thing.
-{ ... }:
+{ pkgs, ... }:
 {
   # Unlike the plasma6 module, this one does not set
   # services.displayManager.defaultSession and does not enable GDM, so niri stays
@@ -9,6 +9,12 @@
   # GNOME 50 is Wayland-only: gnome-session ships share/wayland-sessions/gnome.desktop
   # and no xsessions entry at all. There is no GNOME-on-X11 to fall back to.
   services.desktopManager.gnome.enable = true;
+
+  # The fallback session does not need a screen reader. GNOME enables Orca and
+  # speech-dispatcher by default; the latter pulls roughly 645 MiB of MBROLA
+  # voices into the system closure.
+  environment.gnome.excludePackages = [ pkgs.orca ];
+  services.speechd.enable = false;
 
   # services.gnome.core-apps defaults on, which is deliberate — a fallback
   # session you cannot open a file or a text editor in is not much of a fallback.

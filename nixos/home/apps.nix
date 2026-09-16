@@ -1,10 +1,12 @@
-{ pkgs, inputs, ... }:
+{
+  pkgs,
+  inputs,
+  ...
+}:
 {
   home.packages = with pkgs; [
-    # Google Antigravity CLI, built from ../pkgs/antigravity-cli.nix via the
-    # overlay in configuration.nix. Installs the binary as `agy`.
-    antigravity-cli
     inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
+    inputs.webos-dev-manager.packages.${pkgs.stdenv.hostPlatform.system}.webos-dev-manager
     kitty
     # The gtk3-default build, not libreoffice-qt — see SAL_USE_VCLPLUGIN below
     # for why the VCL backend decides whether Impress can present onto HDMI.
@@ -29,7 +31,7 @@
     pavucontrol
     brightnessctl
     playerctl
-
+    opencode
     # ── Chat ───────────────────────────────────────────────────────────
     # Official: the derivation fetches from stable.dl2.discordapp.net, which is
     # Discord's own CDN, not a repackage.
@@ -48,7 +50,6 @@
     # expect to be swapping into zram with a browser and an IDE already open.
     winboat
   ];
-
   home.sessionVariables = {
     # ── Why "click Present" lands on the projector ─────────────────────────
     # Under Wayland a client cannot position its own windows. The one exception

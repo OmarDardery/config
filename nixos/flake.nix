@@ -1,6 +1,9 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+
+    # Required by home/optional/brave-origin.nix when its import is enabled.
+    # nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     zen-browser = {
       url = "github:youwen5/zen-browser-flake";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -23,6 +26,7 @@
       url = "github:xCaptaiN09/pixie-sddm";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    webos-dev-manager.url = "github:OmarDardery/dev-manager-desktop/b7afa5dc41b46d057db751dcbc32e70ef3d57d60";
     # Doom Emacs with every elisp package resolved by Nix. The older
     # nix-community/nix-doom-emacs is broken by its own admission and points
     # here. This one runs Doom's CLI to export its dependency list, then feeds
@@ -32,21 +36,54 @@
     # Unlike noctalia this costs no second nixpkgs: emacs-overlay leaves its own
     # nixpkgs unset, so the `follows` below is inherited all the way down and
     # everything builds against 26.05.
-    nix-doom-emacs-unstraightened = {
-      url = "github:marienz/nix-doom-emacs-unstraightened";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
+    #nix-doom-emacs-unstraightened = {
+    # url = "github:marienz/nix-doom-emacs-unstraightened";
+    # inputs.nixpkgs.follows = "nixpkgs";
+    #};
   };
-  outputs = { self, nixpkgs, zen-browser, noctalia, home-manager, pixie-sddm, nix-doom-emacs-unstraightened, ... }@inputs: {
-    nixosConfigurations = {
-      # Change "nixos" to your actual hostname if it is different
-      "nixos" = nixpkgs.lib.nixosSystem {
-        specialArgs = { inherit inputs; };
-        modules = [
-          ./configuration.nix
-          home-manager.nixosModules.home-manager
-        ];
+  outputs =
+    {
+      self,
+      nixpkgs,
+      zen-browser,
+      noctalia,
+      home-manager,
+      pixie-sddm,
+      webos-dev-manager,
+      #nix-doom-emacs-unstraightened,
+      ...
+    }@inputs:
+    let
+      system = "x86_64-linux";
+      pkgs = nixpkgs.legacyPackages.${system};
+      homePkgs = import nixpkgs {
+        inherit system;
+        config = {
+          allowUnfree = true;
+          permittedInsecurePackages = [ "electron-40.10.5" ];
+        };
+      };
+    in
+    {
+      devShells.${system} = import ./dev-shells.nix { inherit pkgs; };
+
+      # The same Home Manager configuration can be activated directly on any
+      # Linux distribution with Nix, without evaluating or rebuilding NixOS.
+      homeConfigurations.oad = home-manager.lib.homeManagerConfiguration {
+        pkgs = homePkgs;
+        extraSpecialArgs = { inherit inputs; };
+        modules = [ ./home ];
+      };
+
+      nixosConfigurations = {
+        # Change "nixos" to your actual hostname if it is different
+        "nixos" = nixpkgs.lib.nixosSystem {
+          specialArgs = { inherit inputs; };
+          modules = [
+            ./configuration.nix
+            home-manager.nixosModules.home-manager
+          ];
+        };
       };
     };
-  };
 }
