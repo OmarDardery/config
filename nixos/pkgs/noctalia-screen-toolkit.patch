@@ -1,0 +1,208 @@
+--- a/screen-toolkit/service.luau
++++ b/screen-toolkit/service.luau
+@@ -30,3 +30,5 @@
+-local COLOR_PNG = "/tmp/screen-toolkit-colorpicker.png"
+-local QR_PNG = "/tmp/screen-toolkit-qr.png"
+-local ANNOTATE_PNG = "/tmp/screen-toolkit-annotate.png"
++-- One private directory per service instance; publish it for the UI entries.
++local TEMP_DIR = nil
++local COLOR_PNG = nil
++local QR_PNG = nil
++local ANNOTATE_PNG = nil
+@@ -55,3 +57,2 @@
+--- Compositor detection. `niri msg` talks over a socket whose path niri exports
+--- as NIRI_SOCKET; when that is set we route annotate-window through the niri
+--- capture script, otherwise we fall back to the Hyprland path (hyprctl).
++-- Route window capture through the active compositor's IPC socket.
++-- Keep generic Niri and Hyprland adapters for other sessions.
+@@ -86,4 +88,4 @@
+-  if cursorHidden then return argv end
+-  table.insert(argv, 1, "SCREEN_TOOLKIT_CAPTURE_CURSOR=1")
++  table.insert(argv, 1, "SCREEN_TOOLKIT_TMPDIR=" .. TEMP_DIR)
++  table.insert(argv, 1, "SCREEN_TOOLKIT_CAPTURE_CURSOR=" .. (if cursorHidden then "0" else "1"))
+   table.insert(argv, 1, "env")
+   return argv
+@@ -295,3 +298,3 @@
+-  -- shell form. COLOR_PNG is a constant without spaces, needing no quoting.
++  -- shell form. mktemp uses a fixed absolute template containing no shell syntax.
+   local pickerPrefix = if cursorHidden then "" else "SCREEN_TOOLKIT_CAPTURE_CURSOR=1 "
+   noctalia.runStream(`sleep {CAPTURE_DELAY}; {pickerPrefix}{SCRIPT_PICKER} {COLOR_PNG}`, function(line)
+@@ -356 +359 @@
+-    local ocrPath = "/tmp/screen-toolkit-ocr-" .. tostring(os.time()) .. "-" .. tostring(ocrSerial) .. ".png"
++    local ocrPath = TEMP_DIR .. "/screen-toolkit-ocr-" .. tostring(os.time()) .. "-" .. tostring(ocrSerial) .. ".png"
+@@ -576,2 +578,5 @@
+-  local script, dep
+-  if isNiri() then
++  local script, dep
++  local action = "annotate-window"
++  if (noctalia.getenv("UMBRIEL_SOCKET") or "") ~= "" then
++    script, dep, action = SCRIPT_CAPTURE, "umbriel", "annotate-window-umbriel"
++  elseif isNiri() then
+@@ -587 +592 @@
+-    noctalia.runAsync(withCaptureEnv({ script, "annotate-window" }), function(res)
++    noctalia.runAsync(withCaptureEnv({ script, action, ANNOTATE_PNG }), function(res)
+@@ -784 +787 @@
+-  rawPath = `/tmp/screen-toolkit-record-{os.time()}.mp4`
++  rawPath = `{TEMP_DIR}/screen-toolkit-record-{os.time()}.mp4`
+@@ -887 +890 @@
+-  noctalia.runAsync(argv, function(res)
++  noctalia.runAsync(withCaptureEnv(argv), function(res)
+@@ -928 +931 @@
+-        noctalia.runAsync({ SCRIPT_RECORD, "thumb", rawPath }, function()
++        noctalia.runAsync(withCaptureEnv({ SCRIPT_RECORD, "thumb", rawPath }), function()
+@@ -1069 +1072,5 @@
+   if event == nil then return end
++  if TEMP_DIR == nil then
++    noctalia.notifyError("Screen Toolkit private temporary directory is not ready")
++    return
++  end
+@@ -1096 +1103,16 @@
+   noctalia.mkdirAll(DATA_DIR)
++  local launched = noctalia.runAsync({ "mktemp", "-d", "/tmp/noctalia-screen-toolkit.XXXXXXXXXXXX" }, function(res)
++    local dir = trim(res.stdout or "")
++    if res.exitCode ~= 0 or not dir:match("^/tmp/noctalia%-screen%-toolkit%.[%w]+$") then
++      noctalia.notifyError("Could not create Screen Toolkit private temporary directory")
++      return
++    end
++    TEMP_DIR = dir
++    COLOR_PNG = dir .. "/screen-toolkit-colorpicker.png"
++    QR_PNG = dir .. "/screen-toolkit-qr.png"
++    ANNOTATE_PNG = dir .. "/screen-toolkit-annotate.png"
++    publish("tempDir", dir)
++  end)
++  if not launched then
++    noctalia.notifyError("Could not start Screen Toolkit temporary directory creation")
++  end
+--- a/screen-toolkit/panel.luau
++++ b/screen-toolkit/panel.luau
+@@ -60,2 +60,8 @@
+-local RECORD_THUMB = "/tmp/screen-toolkit-record-thumb.png"
+-local ANNOTATE_THUMB = "/tmp/screen-toolkit-annotate.png"
++local RECORD_THUMB = ""
++local ANNOTATE_THUMB = ""
++noctalia.state.watch("tempDir", function(dir)
++  RECORD_THUMB = (dir or "") .. "/screen-toolkit-record-thumb.png"
++  ANNOTATE_THUMB = (dir or "") .. "/screen-toolkit-annotate.png"
++end)
++local tempDir = noctalia.state.get("tempDir") or ""
++RECORD_THUMB, ANNOTATE_THUMB = tempDir .. "/screen-toolkit-record-thumb.png", tempDir .. "/screen-toolkit-annotate.png"
+--- a/screen-toolkit/result.luau
++++ b/screen-toolkit/result.luau
+@@ -191 +191,4 @@
+-local RECORD_THUMB_PATH = "/tmp/screen-toolkit-record-thumb.png"
++local RECORD_THUMB_PATH = (noctalia.state.get("tempDir") or "") .. "/screen-toolkit-record-thumb.png"
++noctalia.state.watch("tempDir", function(dir)
++  RECORD_THUMB_PATH = (dir or "") .. "/screen-toolkit-record-thumb.png"
++end)
+@@ -517 +521 @@
+-      actionButton("share", tr("panel.share"), function() send("share", "/tmp/screen-toolkit-palette.png") end),
++      actionButton("share", tr("panel.share"), function() send("share", (noctalia.state.get("tempDir") or "") .. "/screen-toolkit-palette.png") end),
+--- a/screen-toolkit/scripts/capture.sh
++++ b/screen-toolkit/scripts/capture.sh
+@@ -20 +20,3 @@
+ set -euo pipefail
++umask 077
++: "${SCREEN_TOOLKIT_TMPDIR:?private temporary directory required}"
+@@ -33 +35,25 @@
++  annotate-window-umbriel)
++    _require umbriel
++    _require jq
++    _require grim
++    TARGET="${2:?missing preview target}"
++    IDENTIFIER=$(umbriel windows --json | jq -er '
++        [.[] | select(.active == true)]
++        | if length == 1 then .[0].id else error("Expected one active window") end
++        | if type == "string" and length > 0 then . else error("Missing window identifier") end
++    ') || { echo "ERROR: could not identify active Umbriel window" >&2; exit 2; }
++    WORK=$(mktemp -d "$SCREEN_TOOLKIT_TMPDIR/umbriel.XXXXXXXXXXXX")
++    trap 'rm -rf -- "$WORK"' EXIT
++    trap 'exit 130' INT
++    trap 'exit 143' TERM
++    # Capture the isolated client, never a geometry crop of overlapping windows.
++    grim "${GRIM_CURSOR_ARGS[@]}" -T "$IDENTIFIER" "$WORK/capture.png" \
++        || { echo "ERROR: Umbriel window capture failed" >&2; exit 2; }
++    [ -s "$WORK/capture.png" ] \
++        || { echo "ERROR: Umbriel window capture is empty" >&2; exit 2; }
++    mv -- "$WORK/capture.png" "$TARGET" \
++        || { echo "ERROR: could not publish Umbriel preview" >&2; exit 2; }
++    printf '%s\n' "0,0 0x0"
++    ;;
++
+   annotate-window)
+@@ -58 +60 @@
+-     grim "${GRIM_CURSOR_ARGS[@]}" -g "$GEOM" /tmp/screen-toolkit-annotate.png 2>/dev/null \
++     grim "${GRIM_CURSOR_ARGS[@]}" -g "$GEOM" "$SCREEN_TOOLKIT_TMPDIR/screen-toolkit-annotate.png" 2>/dev/null \
+@@ -69 +71 @@
+-    FILE="/tmp/screen-toolkit-palette.png"
++    FILE="$SCREEN_TOOLKIT_TMPDIR/screen-toolkit-palette.png"
+@@ -88 +90 @@
+-     grim "${GRIM_CURSOR_ARGS[@]}" -g "$GEOMETRY" /tmp/screen-toolkit-qr.png 2>/dev/null \
++     grim "${GRIM_CURSOR_ARGS[@]}" -g "$GEOMETRY" "$SCREEN_TOOLKIT_TMPDIR/screen-toolkit-qr.png" 2>/dev/null \
+@@ -91 +93 @@
+-    zbarimg -q --raw /tmp/screen-toolkit-qr.png 2>/dev/null
++    zbarimg -q --raw "$SCREEN_TOOLKIT_TMPDIR/screen-toolkit-qr.png" 2>/dev/null
+--- a/screen-toolkit/scripts/capture-niri.sh
++++ b/screen-toolkit/scripts/capture-niri.sh
+@@ -19 +19,3 @@
+ set -euo pipefail
++umask 077
++: "${SCREEN_TOOLKIT_TMPDIR:?private temporary directory required}"
+@@ -39,2 +41,5 @@
+-    _tmp="/tmp/screen-toolkit-annotate-tmp-$$.png"
+-    rm -f "$_tmp"
++    _work=$(mktemp -d "$SCREEN_TOOLKIT_TMPDIR/niri.XXXXXXXXXXXX")
++    trap 'rm -rf -- "$_work"' EXIT
++    trap 'exit 130' INT
++    trap 'exit 143' TERM
++    _tmp="$_work/capture.png"
+@@ -50 +54 @@
+-    mv "$_tmp" /tmp/screen-toolkit-annotate.png
++    mv "$_tmp" "$SCREEN_TOOLKIT_TMPDIR/screen-toolkit-annotate.png"
+--- a/screen-toolkit/scripts/ocr.sh
++++ b/screen-toolkit/scripts/ocr.sh
+@@ -11 +11,3 @@
++umask 077
++: "${SCREEN_TOOLKIT_TMPDIR:?private temporary directory required}"
+ GX="$1"; GY="$2"; GW="$3"; GH="$4"
+@@ -15,4 +17,4 @@
+-FILE="${8:-/tmp/screen-toolkit-ocr.png}"
+-TMP_BASE="/tmp/screen-toolkit-ocr-work-$$"
+-TMP="${TMP_BASE}.pnm"
+-TMP_NOISE="${TMP_BASE}-nr.pnm"
++FILE="${8:-$SCREEN_TOOLKIT_TMPDIR/screen-toolkit-ocr.png}"
++WORK=$(mktemp -d "$SCREEN_TOOLKIT_TMPDIR/ocr.XXXXXXXXXXXX") || exit 4
++TMP="$WORK/image.pnm"
++TMP_NOISE="$WORK/noise.pnm"
+@@ -22,2 +24,4 @@
+-cleanup() { rm -f "$TMP" "$TMP_NOISE"; }
++cleanup() { rm -rf -- "$WORK"; }
+ trap cleanup EXIT
++trap 'exit 130' INT
++trap 'exit 143' TERM
+--- a/screen-toolkit/scripts/record.sh
++++ b/screen-toolkit/scripts/record.sh
+@@ -19 +19,3 @@
+ set -euo pipefail
++umask 077
++: "${SCREEN_TOOLKIT_TMPDIR:?private temporary directory required}"
+@@ -21,2 +23,6 @@
+-THUMB_OUT="/tmp/screen-toolkit-record-thumb.png"
+-PALETTE="/tmp/screen-toolkit-record-palette-$$.png"
++THUMB_OUT="$SCREEN_TOOLKIT_TMPDIR/screen-toolkit-record-thumb.png"
++WORK=$(mktemp -d "$SCREEN_TOOLKIT_TMPDIR/record.XXXXXXXXXXXX")
++trap 'rm -rf -- "$WORK"' EXIT
++trap 'exit 130' INT
++trap 'exit 143' TERM
++PALETTE="$WORK/palette.png"
+--- a/screen-toolkit/scripts/lens-upload.sh
++++ b/screen-toolkit/scripts/lens-upload.sh
+@@ -9,2 +9,8 @@
++umask 077
++: "${SCREEN_TOOLKIT_TMPDIR:?private temporary directory required}"
+ GX="$1"; GY="$2"; GW="$3"; GH="$4"
+-FILE="/tmp/screen-toolkit-lens.png"
++WORK=$(mktemp -d "$SCREEN_TOOLKIT_TMPDIR/lens.XXXXXXXXXXXX")
++trap 'rm -rf -- "$WORK"' EXIT
++trap 'exit 130' INT
++trap 'exit 143' TERM
++FILE="$WORK/capture.png"

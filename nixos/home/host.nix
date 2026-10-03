@@ -1,20 +1,21 @@
-# Machine-specific settings. This is the only file under home/ that assumes
-# anything about THIS laptop: where the config repo lives, what the flake is
-# called, and which disks are mounted. Everything else in home/ is portable —
-# drop this file and replace it when moving to another machine.
-{ ... }:
-let
-  configRepo = "/home/oad/configs/nixos";
-in
+# Host/backend settings; standalone Linux does not assume this laptop's disks.
 {
-  # Make the machine-specific repository location available to editor modules
-  # as well as nh, without repeating it in otherwise portable files.
-  _module.args = { inherit configRepo; };
-  programs.nh.flake = configRepo;
+  profile,
+  isNixOS,
+  isLaptop,
+  lib,
+  ...
+}:
+{
+  programs.nh.flake = "path:${profile.configRepo}";
 
-  programs.zsh.shellAliases = {
-    up = "nh os switch";
-    cnf = "sudo nano ~/configs/nixos/configuration.nix";
-    lc = "cd /mnt/storage/Coding";
-  };
+  home.shellAliases = {
+    up =
+      if isNixOS then
+        "nh os switch --hostname ${lib.escapeShellArg profile.hostName}"
+      else
+        "nh home switch -c ${lib.escapeShellArg profile.profileName}";
+    cnf = "\${EDITOR:-nvim} ${lib.escapeShellArg "${profile.configRepo}/${if isNixOS then "configuration.nix" else "profile.nix"}"}";
+  }
+  // lib.optionalAttrs isLaptop { lc = "cd /mnt/storage/Coding"; };
 }

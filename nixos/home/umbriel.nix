@@ -1,0 +1,384 @@
+{
+  inputs,
+  pkgs,
+  config,
+  lib,
+  isLaptop,
+  isNixOS,
+  ...
+}:
+let
+  once = action: {
+    inherit action;
+    repeat = false;
+  };
+  locked = command: {
+    action = "spawn:noctalia msg ${command}";
+    allow_when_locked = true;
+  };
+  rowNavigation = pkgs.writeShellApplication {
+    name = "umbriel-row-action";
+    runtimeInputs = [
+      config.programs.umbriel.package
+      pkgs.jq
+    ];
+    text = ''
+      case "''${1:-}" in
+        focus-up) tab_action=column-focus-tab-previous ;;
+        focus-down) tab_action=column-focus-tab-next ;;
+        move-up) tab_action=column-move-tab-previous ;;
+        move-down) tab_action=column-move-tab-next ;;
+        *) printf '%s\n' 'Expected focus-up, focus-down, move-up or move-down' >&2; exit 2 ;;
+      esac
+      tabbed=$(umbriel windows --json | jq -er '
+        [.[] | select(.active)]
+        | if length == 1 then .[0].tabbed | tostring else error("Expected one active window") end
+      ')
+      if [[ "$tabbed" == true ]]; then
+        exec umbriel msg "$tab_action"
+      else
+        exec umbriel msg "window-$1"
+      fi
+    '';
+  };
+  rowAction = action: "spawn:${rowNavigation}/bin/umbriel-row-action ${action}";
+  nativePolkitAgent = pkgs.writeShellScript "umbriel-native-polkit-agent" ''
+    # Native agents use the distro's privileged helper, not NixOS's wrapper path.
+    for agent in \
+      /usr/libexec/polkit-gnome-authentication-agent-1 \
+      /usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1 \
+      /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1; do
+      if [ -x "$agent" ]; then
+        exec "$agent"
+      fi
+    done
+    printf '%s\n' 'Native polkit agent missing: review bootstrap.sh --setup-host prerequisites.' >&2
+    exit 1
+  '';
+  screenshotWindow = pkgs.writeShellApplication {
+    name = "screenshot-window-umbriel";
+    runtimeInputs = [
+      config.programs.umbriel.package
+      pkgs.jq
+      pkgs.grim
+      pkgs.wl-clipboard
+    ];
+    text = ''
+      identifier=$(umbriel windows --json | jq -er '
+        [.[] | select(.active)]
+        | if length == 1 then .[0].id else error("Expected one active window") end
+        | if type == "string" and length > 0 then . else error("Missing window identifier") end
+      ')
+      image=$(mktemp --suffix=.png)
+      trap 'rm -f "$image"' EXIT
+      # Capture the isolated client surface, not a crop containing other windows.
+      grim -T "$identifier" "$image"
+      wl-copy --type image/png < "$image"
+    '';
+  };
+in
+{
+  imports = [ inputs.umbriel.homeModules.default ];
+  systemd.user.packages = [ config.programs.umbriel.package ];
+  programs.umbriel = {
+    enable = true;
+    settings = {
+      # No independent palette: Noctalia owns colors; native defaults before rendering.
+      include.optional.files = [ "${config.xdg.stateHome}/noctalia/theme/umbriel.toml" ];
+      general = {
+        autostart = [
+          "${config.programs.noctalia.package}/bin/noctalia"
+        ]
+        ++ lib.optionals (!isNixOS) [ (toString nativePolkitAgent) ];
+        mod_key = "Super";
+        show_cheatsheet = false;
+        focus_on_activate = true;
+      };
+      input = {
+        keyboard = {
+          layout = "us,ara";
+          options = "grp:alt_shift_toggle";
+          numlock_toggle = true;
+        };
+        touchpad = {
+          tap = true;
+          natural_scroll = true;
+        };
+        mouse.accel_profile = "flat";
+        focus.follows_mouse = true;
+        cursor = {
+          theme = config.home.pointerCursor.name;
+          size = config.home.pointerCursor.size;
+        };
+      };
+      workspaces = {
+        back_and_forth = true;
+        empty_above = true;
+      };
+      layout = {
+        mode = "scrolling";
+        gap = 6;
+        extent_presets = [
+          0.33333
+          0.5
+          0.66667
+        ];
+        scrolling = {
+          default_extent_fraction = 0.5;
+          center_focused = "never";
+          center_underfull_strip = true;
+        };
+        tabs = {
+          default_display = "tabbed";
+          wrap_focus = false;
+        };
+      };
+      appearance = {
+        prefer_no_csd = true;
+        border_width = 1;
+        outer_border_width = 1;
+        corner_radius = 8;
+        shadow = {
+          enabled = true;
+          softness = 20;
+          offset_x = 0;
+          offset_y = 3;
+        };
+        tab_bar = {
+          style = "indicator";
+          position = "right";
+          height = 2;
+          hide_when_single = true;
+          tab_gap = 2;
+          corner_radius = 4;
+        };
+      };
+      animation = {
+        windows_in.curve = "spring:1,800";
+        windows_out.curve = "spring:1,800";
+        windows_move.curve = "spring:1,900";
+        workspaces.curve = "spring:1,1000";
+        overview = {
+          curve = "spring:1,900";
+          workspace_curve = "spring:1,1000";
+        };
+      };
+      environment = {
+        ELECTRON_OZONE_PLATFORM_HINT = "wayland";
+        QT_QPA_PLATFORM = "wayland";
+        QT_QPA_PLATFORMTHEME = "kde";
+        QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
+        _JAVA_AWT_WM_NONREPARENTING = "1";
+      };
+      # Explicit navigation takes precedence over Umbriel's built-in bindings.
+      keybinds = {
+        "Mod+Shift+Escape" = once "cheatsheet-open";
+        "Mod+T" = once "spawn:${pkgs.kitty}/bin/kitty";
+        "Mod+Space" = once "spawn:noctalia msg panel-toggle launcher";
+        "Mod+B" = once "spawn:zen";
+        "Mod+Alt+L" = once "spawn:noctalia msg session lock";
+        "Mod+Shift+Q" = once "spawn:noctalia msg panel-toggle session";
+        "Mod+Shift+F23" = once "spawn:${pkgs.kitty}/bin/kitty";
+        "Mod+E" = once "spawn:nautilus";
+        "Mod+Shift+D" = once "spawn:nwg-displays";
+
+        "XF86AudioRaiseVolume" = locked "volume-up";
+        "XF86AudioLowerVolume" = locked "volume-down";
+        "XF86AudioMute" = (locked "volume-mute") // {
+          repeat = false;
+        };
+        "XF86AudioMicMute" = (locked "mic-mute") // {
+          repeat = false;
+        };
+        "XF86AudioNext" = locked "media next";
+        "XF86AudioPrev" = locked "media previous";
+        "XF86AudioPlay" = (locked "media toggle") // {
+          repeat = false;
+        };
+        "XF86AudioPause" = (locked "media toggle") // {
+          repeat = false;
+        };
+        "XF86MonBrightnessUp" = locked "brightness-up";
+        "XF86MonBrightnessDown" = locked "brightness-down";
+
+        "Mod+Q" = once "window-close";
+        "Mod+Left" = "window-focus-left";
+        "Mod+H" = "window-focus-left";
+        "Mod+Right" = "window-focus-right";
+        "Mod+L" = "window-focus-right";
+        "Mod+Up" = "workspace-previous";
+        "Mod+K" = rowAction "focus-up";
+        "Mod+Down" = "workspace-next";
+        "Mod+J" = rowAction "focus-down";
+        "Mod+Ctrl+Left" = "column-move-left";
+        "Mod+Ctrl+H" = "column-move-left";
+        "Mod+Ctrl+Right" = "column-move-right";
+        "Mod+Ctrl+L" = "column-move-right";
+        "Mod+Ctrl+Up" = rowAction "move-up";
+        "Mod+Ctrl+K" = rowAction "move-up";
+        "Mod+Ctrl+Down" = rowAction "move-down";
+        "Mod+Ctrl+J" = rowAction "move-down";
+        "Mod+Home" = "column-focus-first";
+        "Mod+End" = "column-focus-last";
+        "Mod+Ctrl+Home" = "column-move-to-first";
+        "Mod+Ctrl+End" = "column-move-to-last";
+        "Mod+Shift+Left" = "output-focus-left";
+        "Mod+Shift+Right" = "output-focus-right";
+        "Mod+Shift+Up" = "output-focus-up";
+        "Mod+Shift+Down" = "output-focus-down";
+        "Mod+Ctrl+Shift+Left" = "column-move-to-output-left";
+        "Mod+Ctrl+Shift+Right" = "column-move-to-output-right";
+        "Mod+Ctrl+Shift+Up" = "column-move-to-output-up";
+        "Mod+Ctrl+Shift+Down" = "column-move-to-output-down";
+
+        "Mod+WheelDown" = {
+          action = rowAction "focus-down";
+          cooldown_ms = 150;
+        };
+        "Mod+WheelUp" = {
+          action = rowAction "focus-up";
+          cooldown_ms = 150;
+        };
+        "Mod+Ctrl+WheelDown" = {
+          action = "column-move-to-workspace-next";
+          cooldown_ms = 150;
+        };
+        "Mod+Ctrl+WheelUp" = {
+          action = "column-move-to-workspace-previous";
+          cooldown_ms = 150;
+        };
+        "Mod+WheelRight" = "window-focus-right";
+        "Mod+WheelLeft" = "window-focus-left";
+        "Mod+Ctrl+WheelRight" = "column-move-right";
+        "Mod+Ctrl+WheelLeft" = "column-move-left";
+        "Mod+Shift+WheelDown" = "window-focus-right";
+        "Mod+Shift+WheelUp" = "window-focus-left";
+        "Mod+Ctrl+Shift+WheelDown" = "column-move-right";
+        "Mod+Ctrl+Shift+WheelUp" = "column-move-left";
+        "Mod+Tab" = "workspace-focus-last";
+
+        # Maximize and center the focused column.
+        "Mod+Ctrl+F" = once "window-toggle-maximize";
+        "Mod+Ctrl+C" = "column-center";
+        "Mod+C" = "column-center";
+        "Mod+Minus" = "window-modify-primary-extent:-0.1";
+        "Mod+Equal" = "window-modify-primary-extent:+0.1";
+        "Mod+Shift+Minus" = "window-modify-secondary-extent:-0.1";
+        "Mod+Shift+Equal" = "window-modify-secondary-extent:+0.1";
+        "Mod+Return" = once "window-toggle-floating";
+        "Mod+Shift+F" = once "window-toggle-fullscreen";
+        "Mod+F" = once "window-toggle-maximize";
+        "Mod+W" = once "column-toggle-tabbed";
+        "Mod+D" = once "workspace-set-layout:toggle";
+        "Mod+S" = once "spawn:noctalia msg screenshot-region";
+        "Ctrl+Shift+2" = once "spawn:noctalia msg screenshot-fullscreen";
+        "Ctrl+Shift+3" = once "spawn:${screenshotWindow}/bin/screenshot-window-umbriel";
+        "Mod+Escape" = (once "shortcuts-inhibit-toggle") // {
+          allow_when_inhibited = true;
+        };
+        "Ctrl+Alt+Delete" = once "session-quit";
+        "Mod+Shift+P" = once "dpms-off";
+        "Mod+O" = once "overview-toggle";
+      }
+      // lib.listToAttrs (
+        lib.concatMap (n: [
+          {
+            name = "Mod+${toString n}";
+            value = "workspace-switch:${toString n}";
+          }
+          {
+            name = "Mod+Ctrl+${toString n}";
+            value = "column-move-to-workspace:${toString n}";
+          }
+        ]) (lib.range 1 9)
+      )
+      // lib.optionalAttrs isLaptop {
+        "Mod+Shift+M" = once "spawn:mirror-laptop";
+      };
+      window_rule = [
+        {
+          match.app_id = "^(foot|kitty|alacritty)$";
+          opacity = 0.88;
+          blur = true;
+        }
+        {
+          match.app_id = "^org\\.gnome\\.Nautilus$";
+          opacity = 0.8;
+          blur = true;
+        }
+        {
+          match.app_id = "^zen";
+          blur = true;
+          shadow = false;
+        }
+        # Retain Umbriel's shell and share-picker placement rules.
+        {
+          match.app_id = "^dev.noctalia.Noctalia$";
+          default_floating = true;
+          default_floating_size_px = {
+            width = 1020;
+            height = 900;
+          };
+        }
+        {
+          match.app_id = "^dev.noctalia.UmbrielSharePicker$";
+          default_floating = true;
+          default_floating_size_px = {
+            width = 800;
+            height = 600;
+          };
+        }
+        {
+          match.title = "^(Picture-in-Picture|Picture in picture)$";
+          default_floating = true;
+          default_maximize = false;
+          default_position = {
+            x = 20;
+            y = 20;
+            anchor = "bottom_right";
+          };
+        }
+        {
+          match.title = "^notificationtoasts_.+_desktop";
+          default_position = {
+            x = 0;
+            y = 0;
+            anchor = "bottom_right";
+          };
+          default_focused = false;
+          default_pinned = true;
+        }
+      ];
+      layer_rule = [
+        {
+          match.namespace = "^noctalia-(bar-[^\"]+|notification|dock|panel|attached-panel|osd|desktop-widget-[^\"]*)$";
+          blur = true;
+          blur_ignore_alpha = 0.5;
+          blur_popups = true;
+          blur_optimized = false;
+        }
+      ];
+    }
+    // lib.optionalAttrs isLaptop {
+      output = {
+        # Match the display identity, not the racing eDP connector number.
+        "BOE NE140QDM-NX7 Unknown" = {
+          mode = "2560x1600@165";
+          scale = 1.5;
+          position = [
+            0
+            0
+          ];
+        };
+        "HDMI-A-1" = {
+          mode = "1920x1080@60";
+          scale = 1.0;
+          position = [
+            1706
+            0
+          ];
+        };
+      };
+    };
+  };
+}

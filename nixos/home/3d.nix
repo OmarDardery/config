@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, isLaptop, ... }:
 let
   # This laptop uses PRIME offload, so make Blender consistently use the RTX
   # GPU whether it is started from a terminal or a desktop launcher.
@@ -17,7 +17,7 @@ let
 in
 {
   home.packages = [
-    blenderNvidia
-    pkgs.orca-slicer
+    (if isLaptop then blenderNvidia else pkgs.blender)
+    pkgs.freecad
   ];
 }

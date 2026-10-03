@@ -4,7 +4,10 @@
 
 {
   pkgs,
+  config,
   inputs,
+  lib,
+  profile,
   ...
 }:
 {
@@ -14,20 +17,22 @@
     ./display-manager.nix
     ./gnome.nix
     ./gaming.nix
+    ./uni.nix
     # ./optional/tailscale.nix
-    # ./optional/antigravity.nix
+    ./umbriel-session.nix
   ];
 
   # ── Boot ───────────────────────────────────────────────────────────────
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
   # /boot is a 1 GB ESP and systemd-boot keeps a kernel per generation. Without
-  # a limit it fills up and a rebuild fails partway through.
-  boot.loader.systemd-boot.configurationLimit = 20;
+  # a limit it fills up and a rebuild fails partway through. Ten entries leave
+  # headroom for roughly 55 MiB per distinct kernel/initrd pair.
+  boot.loader.systemd-boot.configurationLimit = 10;
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
   # ── Networking ─────────────────────────────────────────────────────────
-  networking.hostName = "nixos";
+  networking.hostName = profile.hostName;
   networking.networkmanager.enable = true;
   networking.nftables.enable = true;
 
@@ -36,30 +41,37 @@
   systemd.services.NetworkManager-wait-online.enable = false;
 
   # ── Desktop session ────────────────────────────────────────────────────
-  programs.niri.enable = true; # registers the Wayland session with the DM
-  programs.gpu-screen-recorder.enable = true; # needs a setuid wrapper for KMS capture
+  # The recorder app is home-owned; only the privileged KMS helper is global.
+  # KMS capture needs CAP_SYS_ADMIN; do not expose the helper to every user.
+  users.groups.recording = { };
+  security.wrappers.gsr-kms-server = {
+    owner = "root";
+    group = "recording";
+    permissions = "u+rx,g+rx,o-rwx";
+    capabilities = "cap_sys_admin+ep";
+    source = lib.getExe' (pkgs.gpu-screen-recorder.override {
+      inherit (config.security) wrapperDir;
+    }) "gsr-kms-server";
+  };
   security.polkit.enable = true;
   # Secret service. PAM unlocking is already handled: /etc/pam.d/sddm substacks
   # /etc/pam.d/login, which carries the pam_gnome_keyring.so auth/session lines.
   # Nothing extra is needed here.
   services.gnome.gnome-keyring.enable = true;
 
-  # What a file manager needs to be more than a directory lister: gvfs gives it
-  # trash, sftp and smb; udisks2 lets it mount removable drives. Both are
-  # daemons, so they cannot live in home-manager.
-  services.gvfs.enable = true;
+  # GVfs is a user service; UDisks2 and MTP device rules require host privileges.
+  services.gvfs.enable = lib.mkForce false;
   services.udisks2.enable = true;
 
-  services.flatpak.enable = true;
-  programs.localsend.enable = true;
+  # Flatpak installations, remotes, updates and CLI are all user-owned.
+  programs.localsend.enable = false;
 
-  # Phone and tablet integration — clipboard sync, notification mirroring, file
-  # transfer, and a slideshow remote that drives Impress from the phone. System
-  # level rather than home-manager because the module opens the UDP and TCP port
-  # ranges KDE Connect discovers peers on; the home-manager version cannot touch
-  # the firewall. Pairs with LocalSend above rather than replacing it: LocalSend
-  # is one-shot file transfer, this is a persistent link.
-  programs.kdeconnect.enable = true;
+  # Retain discovery/transfer ports on all networks, without installing a
+  # global app or daemon. Home Manager owns KDE Connect for this user.
+  programs.kdeconnect = {
+    enable = true;
+    package = null;
+  };
   services.power-profiles-daemon.enable = true;
   services.upower.enable = true;
   services.fwupd.enable = true;
@@ -67,46 +79,49 @@
   # SDDM runs as its own user before any home profile exists, so the login
   # screen's font has to come from the system font path.
   fonts.packages = [ pkgs.nerd-fonts.jetbrains-mono ];
+  fonts.fontDir.enable = true; # preserve native/Flatpak discovery of host greeter fonts
 
   # ── Users ──────────────────────────────────────────────────────────────
-  users.users."oad" = {
+  users.users.${profile.username} = {
     isNormalUser = true;
-    description = "Omar Dardery";
+    home = profile.homeDirectory;
+    description = profile.displayName;
     extraGroups = [
       "networkmanager"
       "wheel"
       "dialout"
       "docker"
+      "recording"
     ];
     shell = pkgs.zsh;
   };
 
   # Stub only — NixOS requires the shell to be enabled here for
-  # users.users.oad.shell above. All zsh config lives in home/shell.nix.
+  # the configured login shell above. All zsh config lives in home/shell.nix.
   programs.zsh.enable = true;
+  # Home Manager initializes completion after adding its own completion paths.
+  programs.zsh.enableGlobalCompInit = false;
 
   home-manager = {
-    useGlobalPkgs = true;
+    useGlobalPkgs = false;
     useUserPackages = true;
-    extraSpecialArgs = { inherit inputs; };
+    extraSpecialArgs = {
+      inherit inputs profile;
+      isNixOS = true;
+      isLaptop = true;
+    };
     backupFileExtension = "bak";
-    users.oad = ./home;
+    sharedModules = [ { nixpkgs.config = import ./package-policy.nix; } ];
+    users.${profile.username} = ./home;
   };
 
-  # ── System packages ────────────────────────────────────────────────────
-  # Deliberately short: user-facing tools belong in home/, not here.
-  environment.systemPackages = with pkgs; [
-    git # needed before home-manager activation, e.g. to clone this repo
-    xwayland-satellite # must be on niri's PATH; niri is a system service
-  ];
-
-  # Adds ~/.local/bin to PATH properly, instead of hand-writing
-  # environment.variables.PATH (which duplicated the whole profile chain and
-  # shadowed every Nix-provided binary).
-  environment.localBinInPath = true;
+  # Git is home-owned; bootstrap supplies it temporarily before activation.
 
   programs.nix-ld.enable = true; # provides /lib64/ld-linux for foreign binaries
-  services.udev.packages = [ pkgs.platformio-core.udev ]; # udev rules are system-global
+  services.udev.packages = [
+    pkgs.platformio-core.udev
+    pkgs.libmtp.out
+  ];
 
   # Docker daemon and container virtualization
   virtualisation.docker = {
@@ -114,19 +129,10 @@
   };
 
   # ── Locale ─────────────────────────────────────────────────────────────
+  # Location and locale are independent: keep Cairo's clock and timezone,
+  # while applications consistently use English text, digits, and formats.
   time.timeZone = "Africa/Cairo";
   i18n.defaultLocale = "en_US.UTF-8";
-  i18n.extraLocaleSettings = {
-    LC_ADDRESS = "ar_EG.UTF-8";
-    LC_IDENTIFICATION = "ar_EG.UTF-8";
-    LC_MEASUREMENT = "ar_EG.UTF-8";
-    LC_MONETARY = "ar_EG.UTF-8";
-    LC_NAME = "ar_EG.UTF-8";
-    LC_NUMERIC = "ar_EG.UTF-8";
-    LC_PAPER = "ar_EG.UTF-8";
-    LC_TELEPHONE = "ar_EG.UTF-8";
-    LC_TIME = "ar_EG.UTF-8";
-  };
 
   services.xserver.xkb = {
     layout = "us";
@@ -136,6 +142,10 @@
   # ── Nix ────────────────────────────────────────────────────────────────
   nix = {
     settings = {
+      # Keep parallel native builds from exhausting this laptop's 14 GiB RAM.
+      max-jobs = 2;
+      cores = 4;
+
       experimental-features = [
         "nix-command"
         "flakes"
@@ -156,14 +166,8 @@
     optimise.automatic = true;
   };
 
+  # Proprietary drivers are native; user-only insecure app exceptions stay in HM.
   nixpkgs.config.allowUnfree = true;
-
-  # WinBoat is an Electron app and nixpkgs pins it to a branch upstream has
-  # stopped supporting, so it is marked insecure. The issue is "EOL", not a
-  # specific CVE — it means an unmaintained Chromium, which matters because
-  # WinBoat's UI is the only thing that renders in it. Nothing else needs this;
-  # drop winboat from home/apps.nix and this line goes with it.
-  nixpkgs.config.permittedInsecurePackages = [ "electron-40.10.5" ];
 
   # Nothing was collecting garbage: 94 generations and a 54 GB store.
 

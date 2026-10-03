@@ -22,16 +22,26 @@ blur_intensity = 0.5599999874830246
 tint_intensity = 0.34999999217689037
 
 [bar.default]
-background_opacity = 0.21999999508261681
+background_opacity = 0.59999998658895493
+border = "on_primary"
 capsule = true
 capsule_border = "on_primary"
 capsule_foreground = "primary"
 capsule_opacity = 0.3899999912828207
 capsule_thickness = 0.60999999009072781
-end = [ "media", "tray", "notifications", "clipboard", "group:g1", "power_profile", "battery", "control-center", "session" ]
+center = []
+concave_edge_corners = false
+end = [ "media", "tray", "notifications", "clipboard", "group:g1", "session" ]
+margin_edge = 5
+margin_ends = 400
+padding = 6
+position = "bottom"
+radius = 13
+shadow = false
+thickness = 29
 reserve_space = false
 smart_auto_hide = true
-start = [ "launcher", "wallpaper", "workspaces", "nix-monitor", "status", "widget" ]
+start = [ "clock", "launcher", "wallpaper", "workspaces", "nix-monitor", "bar", "launcher_2", "widget_2" ]
 
     [[bar.default.capsule_group]]
     accordion = false
@@ -41,11 +51,28 @@ start = [ "launcher", "wallpaper", "workspaces", "nix-monitor", "status", "widge
     fill = "surface_variant"
     foreground = "primary"
     id = "g1"
-    members = [ "network", "bluetooth" ]
+    members = [ "network", "bluetooth", "power_profile", "battery", "control-center" ]
     opacity = 0.38999998569488525
     padding = 6.0
 
+[control_center]
+show_shortcut_labels = false
+
+    [[control_center.shortcuts]]
+    type = "wifi"
+    [[control_center.shortcuts]]
+    type = "bluetooth"
+    [[control_center.shortcuts]]
+    type = "nightlight"
+    [[control_center.shortcuts]]
+    type = "notification"
+    [[control_center.shortcuts]]
+    type = "alexander/screen-toolkit:toggle"
+    [[control_center.shortcuts]]
+    type = "caffeine"
+
 [desktop_widgets]
+enabled = false
 schema_version = 2
 widget_order = [ "desktop-widget-0000000000000002", "desktop-widget-0000000000000003" ]
 
@@ -59,7 +86,8 @@ widget_order = [ "desktop-widget-0000000000000002", "desktop-widget-000000000000
     box_width = 240.0
     cx = 205.5
     cy = 181.5
-    output = "eDP-1"
+    placement_height = 1067.0
+    placement_width = 1707.0
     rotation = 0.0
     type = "sysmon"
 
@@ -73,7 +101,8 @@ widget_order = [ "desktop-widget-0000000000000002", "desktop-widget-000000000000
     box_width = 0.0
     cx = 1499.5
     cy = 869.5
-    output = "eDP-1"
+    placement_height = 1067.0
+    placement_width = 1707.0
     rotation = 0.0
     type = "fancy_audio_visualizer"
 
@@ -84,6 +113,7 @@ widget_order = [ "desktop-widget-0000000000000002", "desktop-widget-000000000000
 enabled = true
 icon_size = 31
 launcher_icon = "gpu-usage"
+position = "right"
 reserve_space = false
 smart_auto_hide = true
 
@@ -98,11 +128,13 @@ widget_order = [ "lockscreen-login-box@eDP-1", "lockscreen-login-box@eDP-2" ]
     visible = true
 
     [lockscreen_widgets.widget."lockscreen-login-box@eDP-1"]
-    box_height = 229.0
+    box_height = 196.0
     box_width = 810.0
     cx = 854.0
     cy = 868.5
     output = "eDP-1"
+    placement_height = 1067.0
+    placement_width = 1707.0
     rotation = 0.0
     type = "login_box"
 
@@ -119,14 +151,17 @@ widget_order = [ "lockscreen-login-box@eDP-1", "lockscreen-login-box@eDP-2" ]
         show_login_button = true
         show_media = true
         show_session_buttons = true
+        show_unlock_hint = true
         show_weather = true
 
     [lockscreen_widgets.widget."lockscreen-login-box@eDP-2"]
-    box_height = 229.0
+    box_height = 196.0
     box_width = 810.0
     cx = 854.0
     cy = 868.5
     output = "eDP-2"
+    placement_height = 1067.0
+    placement_width = 1707.0
     rotation = 0.0
     type = "login_box"
 
@@ -143,30 +178,39 @@ widget_order = [ "lockscreen-login-box@eDP-1", "lockscreen-login-box@eDP-2" ]
         show_login_button = true
         show_media = true
         show_session_buttons = true
+        show_unlock_hint = true
         show_weather = true
 
 [plugin_settings."avivbintangaringga/nix-monitor"]
 branch = "nixos-26.05"
+system_stats_check_mode = "off"
 
 [plugins]
-enabled = [ "alexander/screen-toolkit", "avivbintangaringga/nix-monitor", "davemhammer/tailscale" ]
+enabled = [ "alexander/screen-toolkit", "avivbintangaringga/nix-monitor", "icefish/phone-connect", "thepunkoff/pomodoro", "alexander/game-launcher" ]
+source = []
+auto_update = "none"
+
+[shell]
+polkit_agent = true
 
 [shell.animation]
 speed = 2.0000000298023224
+
+[shell.panel]
+launcher_placement = "attached"
+open_near_click_launcher = true
+open_near_click_wallpaper = true
+transparency_mode = "glass"
 
 [theme]
 source = "wallpaper"
 wallpaper_scheme = "m3-rainbow"
 
     [theme.templates]
-    # "kitty" and "niri" are absent on purpose. Their builtin templates hardcode
-    # an output under $XDG_CONFIG_HOME (and the niri one also tries to append an
-    # include line to config.kdl), and home-manager deploys both of those trees
-    # as read-only store symlinks, so both templates always failed silently.
-    # They are re-implemented as user templates below, which is the same engine
-    # with an output path we get to choose.
-    builtin_ids = [ "gtk3", "gtk4", "qt", "starship" ]
-    community_ids = [ "yazi" ]
+    # Noctalia owns color generation, not immutable application configuration.
+    # Application templates and hooks use pinned sources in home/noctalia.nix.
+    builtin_ids = [ "gtk3", "gtk4", "kcolorscheme", "starship" ]
+    community_ids = []
 
     # User templates: same rendering, writable destination. Both paths below
     # expand at runtime — the engine handles the $XDG_* tokens and a leading ~,
@@ -175,11 +219,6 @@ wallpaper_scheme = "m3-rainbow"
     # ~/.local/state is the right side of the line: it is generated output that
     # changes with the wallpaper, not configuration, so it does not belong in
     # git and does not fight home-manager for ownership of a path.
-
-    [theme.templates.user.niri]
-    input_path = "$XDG_CONFIG_HOME/noctalia/templates/niri.kdl"
-    output_path = "$XDG_STATE_HOME/noctalia/theme/niri.kdl"
-    # No post_hook: niri watches every included file and live-reloads itself.
 
     [theme.templates.user.kitty]
     input_path = "$XDG_CONFIG_HOME/noctalia/templates/kitty.conf"
@@ -192,19 +231,13 @@ wallpaper_scheme = "m3-rainbow"
 transition_on_startup = true
 
     [wallpaper.automation]
-    interval_seconds = 5
+    interval_seconds = 300
 
     [wallpaper.default]
-    path = "/home/oad/Pictures/Wallpapers/wp9432445-4k-mountains-desktop-wallpapers.jpg"
+    path = "~/Pictures/Wallpapers/wp9432445-4k-mountains-desktop-wallpapers.jpg"
 
     [wallpaper.last]
-    path = "/home/oad/Pictures/Wallpapers/wp9432445-4k-mountains-desktop-wallpapers.jpg"
-
-    [wallpaper.monitors.eDP-1]
-    path = "/home/oad/Pictures/Wallpapers/wp9432445-4k-mountains-desktop-wallpapers.jpg"
-
-    [wallpaper.monitors.eDP-2]
-    path = "/home/oad/Pictures/Wallpapers/wp9432445-4k-mountains-desktop-wallpapers.jpg"
+    path = "~/Pictures/Wallpapers/wp9432445-4k-mountains-desktop-wallpapers.jpg"
 
 [widget.control-center]
 glyph = "settings"
@@ -213,9 +246,14 @@ glyph = "settings"
 show_text = false
 type = "avivbintangaringga/nix-monitor:nix-monitor"
 
-[widget.status]
-show_counts = false
-type = "davemhammer/tailscale:status"
-
 [widget.widget]
 type = "alexander/screen-toolkit:widget"
+
+[widget.bar]
+type = "icefish/phone-connect:bar"
+
+[widget.launcher_2]
+type = "alexander/game-launcher:launcher"
+
+[widget.widget_2]
+type = "thepunkoff/pomodoro:widget"

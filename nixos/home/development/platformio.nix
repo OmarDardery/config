@@ -1,8 +1,8 @@
 # PlatformIO, on the IDE side.
 #
 # The CLI and its udev rules are installed elsewhere — platformio-core in
-# ./default.nix, the rules in ../../configuration.nix, which has to be
-# system-wide. What is left is the one thing PlatformIO does not do for you:
+# Neovim's wrapper in ./lazyvim.nix, the rules in ../../configuration.nix.
+# Rules have to be system-wide. What is left is the one thing PlatformIO does not do for you:
 # keep a compilation database around for clangd.
 #
 # Why it is needed at all: PlatformIO generates c_cpp_properties.json, which
@@ -13,10 +13,11 @@
 # per-project artifact and cannot be pinned in Nix: its include paths come from
 # that project's board and framework.
 #
-# So instead of generating it by hand per project, every build generates it.
+# Ordinary targetless builds generate it instead of needing a manual step.
 # `pio run -t compiledb` is not a separate mode — it just loads a SCons tool
 # and asks for one extra target (builder/main.py:157,198). A pre-script can do
 # the same for an ordinary `pio run`, which is what this is.
+# Explicit targets such as upload need `pio run -t compiledb` to refresh it.
 #
 # The flag removals that make the result readable by clang live in
 # ./clangd.nix; the --query-driver that finds the cross-compiler's own headers

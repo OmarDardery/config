@@ -14,6 +14,44 @@
 # Plain function, not a NixOS module: it is `import`ed, not `imports`ed.
 { pkgs }:
 {
+  # Shared by GUI editors and the general development shells.
+  runtimes = with pkgs; [
+    go
+    uv
+    bun
+    python3
+    # Node-shebang tools must not depend on Bun's Node-API compatibility layer.
+    nodejs
+  ];
+
+  nixdSettings =
+    { profile, isNixOS }:
+    let
+      # JSON quotes strings; additionally escape Nix interpolation in names/paths.
+      quote = value: builtins.replaceStrings [ "\${" ] [ "\\\${" ] (builtins.toJSON value);
+      flakeConfig = "(builtins.getFlake ${quote "path:${profile.configRepo}"}).${
+        if isNixOS then
+          "nixosConfigurations.${quote profile.hostName}"
+        else
+          "homeConfigurations.${quote profile.profileName}"
+      }";
+    in
+    {
+      # Applications use Home Manager's policy-scoped set, even on NixOS.
+      nixpkgs.expr = "(builtins.getFlake ${quote "path:${profile.configRepo}"}).homeConfigurations.${quote profile.profileName}.pkgs";
+      formatting.command = [ "${pkgs.nixfmt}/bin/nixfmt" ];
+      options = {
+        home_manager.expr =
+          if isNixOS then
+            "${flakeConfig}.options.home-manager.users.type.getSubOptions []"
+          else
+            "${flakeConfig}.options";
+      }
+      // pkgs.lib.optionalAttrs isNixOS {
+        nixos.expr = "${flakeConfig}.options";
+      };
+    };
+
   # Servers, formatters and linters shared by Neovim, Doom and VSCodium.
   languageServers = with pkgs; [
     # Nix. nixd over nil/rnix-lsp: it is the only one of the three installed, so
@@ -73,30 +111,50 @@
   # system headers live. Without it an ESP32 translation unit resolves
   # <Arduino.h> from compile_commands.json and then dies on <stdio.h>: clang
   # looks for newlib in its own resource dir, which has no xtensa sysroot in it.
-  # The glob covers every toolchain PlatformIO downloads — xtensa, riscv, avr —
-  # not only the one installed today.
+  # Only cross GCC drivers may be executed, not arbitrary package binaries.
+  # Cover xtensa, riscv, avr and arm toolchains, not only today's installation.
   #
   # A function of the home dir rather than a hardcoded path: clangd expands
   # neither ~ nor $HOME here, so callers pass config.home.homeDirectory.
   # Flag removals for those toolchains are editor-independent and live in
   # ./clangd.nix instead.
   clangdArgs = homeDir: [
-    "--query-driver=${homeDir}/.platformio/packages/**/bin/*"
+    (
+      "--query-driver="
+      + builtins.concatStringsSep "," (
+        builtins.concatMap
+          (
+            target:
+            map (compiler: "${homeDir}/.platformio/packages/**/bin/${target}-${compiler}") [
+              "gcc"
+              "g++"
+            ]
+          )
+          [
+            "xtensa-*"
+            "riscv*"
+            "avr"
+            "arm-*"
+          ]
+      )
+    )
   ];
 
   # Notebook support. Doom's `:lang org +jupyter` talks to a real Jupyter over
   # ZeroMQ, and VSCodium's ms-toolsai.jupyter needs an interpreter with
   # ipykernel in it. Same env for both.
-  jupyterPython = pkgs.python3.withPackages (ps: with ps; [
-    jupyter-client
-    ipykernel
-    ipython
-    jupytext
-    nbformat
-    pyzmq
-    matplotlib
-    plotly
-    pillow
-    requests
-  ]);
+  jupyterPython = pkgs.python3.withPackages (
+    ps: with ps; [
+      jupyter-client
+      ipykernel
+      ipython
+      jupytext
+      nbformat
+      pyzmq
+      matplotlib
+      plotly
+      pillow
+      requests
+    ]
+  );
 }

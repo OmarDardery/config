@@ -1,0 +1,19 @@
+--- a/game-launcher/panel.luau
++++ b/game-launcher/panel.luau
+@@ -55,9 +55,4 @@
+ local function binaryReady()
+-  if not noctalia.fileExists(binary) then return false end
+-  if not buildTagFile then return true end
+-  if noctalia.readFile(buildTagFile) ~= buildCommand() then
+-    noctalia.removeFile(binary)
+-    return false
+-  end
+-  return true
++  -- The helper is compiled and versioned together with this immutable plugin.
++  return noctalia.fileExists(binary)
+ end
+--- a/game-launcher/plugin.toml
++++ b/game-launcher/plugin.toml
+@@ -9 +9 @@
+-dependencies = ["cc", "xdg-utils"]
++dependencies = ["xdg-utils"]

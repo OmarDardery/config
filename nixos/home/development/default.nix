@@ -1,5 +1,7 @@
 {
   pkgs,
+  lib,
+  isNixOS,
   ...
 }:
 let
@@ -21,17 +23,18 @@ in
   home = {
     packages =
       toolchain.languageServers
+      ++ toolchain.runtimes
       ++ (with pkgs; [
-        # Compilers and runtimes live in the flake's devShells. Language servers
-        # stay global because graphical VSCodium sessions need them on PATH.
-        # editors
         jetbrains-toolbox
+        platformio-core
       ]);
 
     # Foreign binaries (Zed, etc.) hardcode /usr/share/X11/xkb for keyboard layout
     # data, which doesn't exist on NixOS (no /usr). This is libxkbcommon's own
     # documented override for that lookup, pointed at the real Nix store path.
-    sessionVariables.XKB_CONFIG_ROOT = "${pkgs.xkeyboard-config}/share/X11/xkb";
+    sessionVariables = lib.optionalAttrs isNixOS {
+      XKB_CONFIG_ROOT = "${pkgs.xkeyboard-config}/share/X11/xkb";
+    };
     sessionPath = [ "$HOME/.bun/bin" ];
   };
 }

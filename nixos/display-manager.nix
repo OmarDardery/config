@@ -17,7 +17,7 @@
   # Which session SDDM preselects. Without this it is empty and SDDM falls back
   # to whichever session was used last, which stopped being obvious the moment
   # gnome.nix added a second one.
-  services.displayManager.defaultSession = "niri";
+  services.displayManager.defaultSession = "umbriel";
 
   # The cursor theme named above has to exist in the SYSTEM icon path. SDDM runs
   # as its own user, so home.pointerCursor in home/desktop.nix — which puts

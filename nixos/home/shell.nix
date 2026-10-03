@@ -1,15 +1,32 @@
-{ pkgs, ... }:
 {
+  config,
+  lib,
+  pkgs,
+  isNixOS,
+  ...
+}:
+let
+  themeDir = "${config.xdg.stateHome}/noctalia/theme";
+  fzfTheme = ''
+    if [ -r ${lib.escapeShellArg "${themeDir}/fzf.sh"} ]; then
+      . ${lib.escapeShellArg "${themeDir}/fzf.sh"}
+    fi
+  '';
+in
+{
+  home.sessionPath = [ "${config.home.homeDirectory}/.local/bin" ];
+  programs.bash.enable = !isNixOS;
+  programs.bash.initExtra = lib.mkAfter fzfTheme;
+  home.shellAliases = {
+    ll = "ls -l";
+    edit = "sudo -e";
+  };
   programs.zsh = {
     enable = true;
     enableCompletion = true;
     autosuggestion.enable = true; # singular here; the NixOS option is plural
     syntaxHighlighting.enable = true;
-
-    shellAliases = {
-      ll = "ls -l";
-      edit = "sudo -e";
-    };
+    initContent = lib.mkAfter fzfTheme;
 
     history = {
       size = 10000;
@@ -19,22 +36,57 @@
   };
 
   programs.starship.enable = true;
-  programs.yazi.enable = true;
+  programs.yazi = {
+    enable = true;
+    theme.flavor = {
+      dark = "noctalia";
+      light = "noctalia";
+    };
+  };
 
   # These are declared as programs rather than packages so home-manager writes
   # the zsh integration itself — the zoxide hook, the fzf ctrl-r/ctrl-t
   # bindings — instead of us hand-writing rc lines that then drift.
   programs.zoxide.enable = true;
   programs.fzf.enable = true;
-  programs.bat.enable = true;
+  programs.bat = {
+    enable = true;
+    config.theme = "noctalia";
+  };
   programs.eza.enable = true;
-  programs.lazygit.enable = true;
+  programs.lazygit = {
+    enable = true;
+    # Resolve the overlay at launch, including when invoked by Neovim. Never
+    # replace the user's config or require a theme before the first render.
+    package = pkgs.symlinkJoin {
+      name = "lazygit-noctalia";
+      paths = [ pkgs.lazygit ];
+      nativeBuildInputs = [ pkgs.makeWrapper ];
+      inherit (pkgs.lazygit) meta;
+      postBuild = ''
+        wrapProgram "$out/bin/lazygit" --run ${lib.escapeShellArg ''
+          theme=${lib.escapeShellArg "${themeDir}/lazygit.yml"}
+          if [ -r "$theme" ]; then
+            base=${lib.escapeShellArg "${config.xdg.configHome}/lazygit/config.yml"}
+            configs="''${LG_CONFIG_FILE:-}"
+            if [ -z "$configs" ] && [ -f "$base" ]; then
+              configs="$base"
+            fi
+            export LG_CONFIG_FILE="''${configs:+$configs,}$theme"
+          fi
+        ''}
+      '';
+    };
+  };
+  programs.btop = {
+    enable = true;
+    settings.color_theme = "noctalia";
+  };
 
   # No shell integration to speak of, so plain packages.
   home.packages = with pkgs; [
     ripgrep
     fd
-    btop
     tealdeer # `tldr`
   ];
 }

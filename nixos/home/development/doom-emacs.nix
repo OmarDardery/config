@@ -13,7 +13,14 @@
 # a store path rather than kept as loose dotfiles, which is why it is read-only
 # and why `doom sync` / `doom upgrade` are neither needed nor possible: packages
 # move when you bump the flake.
-{ pkgs, lib, inputs, config, ... }:
+{
+  pkgs,
+  lib,
+  inputs,
+  config,
+  profile,
+  ...
+}:
 let
   toolchain = import ./toolchain.nix { inherit pkgs; };
 
@@ -25,21 +32,23 @@ let
   # `docker-langserver`, which is the binary the dockerfile-language-server
   # package ships under). Listed here is only what Doom needs on top, and the
   # one place where Doom and the other editors genuinely want different tools.
-  languageServers = toolchain.languageServers ++ (with pkgs; [
-    # TypeScript / JavaScript. Note this is NOT vtsls, which the Neovim and
-    # VSCodium configs use: eglot's built-in entry is
-    # typescript-language-server, and teaching it about vtsls would be extra
-    # config for no gain. Both are on PATH; eglot simply picks this one.
-    typescript-language-server
-    # Embedded. platformio-mode shells out to `platformio`.
-    platformio-core
-    # Doom itself leans on these for search, project detection and :tools magit.
-    ripgrep
-    fd
-    git
-    coreutils
-    gnutls
-  ]);
+  languageServers =
+    toolchain.languageServers
+    ++ (with pkgs; [
+      # TypeScript / JavaScript. Note this is NOT vtsls, which the Neovim and
+      # VSCodium configs use: eglot's built-in entry is
+      # typescript-language-server, and teaching it about vtsls would be extra
+      # config for no gain. Both are on PATH; eglot simply picks this one.
+      typescript-language-server
+      # Embedded. platformio-mode shells out to `platformio`.
+      platformio-core
+      # Doom itself leans on these for search, project detection and :tools magit.
+      ripgrep
+      fd
+      git
+      coreutils
+      gnutls
+    ]);
 
   # ── Notebook support ──────────────────────────────────────────────────
   # `:lang org +jupyter` drives kernels through emacs-jupyter, which talks to a
@@ -59,17 +68,19 @@ let
   # python3 from ./default.nix, which has no ipykernel, and every kernel start
   # fails with ModuleNotFoundError. Naming the interpreter absolutely removes
   # the ambiguity; JUPYTER_PATH below puts this ahead of the env's own copy.
-  jupyterKernels = pkgs.writeTextDir "kernels/python3/kernel.json" (builtins.toJSON {
-    argv = [
-      "${jupyterPython}/bin/python3"
-      "-m"
-      "ipykernel_launcher"
-      "-f"
-      "{connection_file}"
-    ];
-    display_name = "Python 3 (nix)";
-    language = "python";
-  });
+  jupyterKernels = pkgs.writeTextDir "kernels/python3/kernel.json" (
+    builtins.toJSON {
+      argv = [
+        "${jupyterPython}/bin/python3"
+        "-m"
+        "ipykernel_launcher"
+        "-f"
+        "{connection_file}"
+      ];
+      display_name = "Python 3 (nix)";
+      language = "python";
+    }
+  );
 
   # ── DOOMDIR ───────────────────────────────────────────────────────────
   # init.el chooses modules, packages.el adds anything Doom has no module for,
@@ -173,8 +184,12 @@ let
   configEl = pkgs.writeText "config.el" ''
     ;;; config.el -*- lexical-binding: t; -*-
 
-    (setq user-full-name "OmarDardery"
-          user-mail-address "oadardery@gmail.com")
+    ${lib.optionalString (profile.gitName != null) ''
+      (setq user-full-name ${builtins.toJSON profile.gitName})
+    ''}
+    ${lib.optionalString (profile.gitEmail != null) ''
+      (setq user-mail-address ${builtins.toJSON profile.gitEmail})
+    ''}
 
     ;; JetBrains Mono Nerd Font is installed system-wide in ../desktop.nix, and
     ;; doom-modeline wants the Nerd Font glyphs.
@@ -345,29 +360,31 @@ in
     # actually enabled above, so it is exactly the set that can ever be loaded:
     # ~13 MiB. Adding a `+tree-sitter` language means adding its grammar here.
     extraPackages = epkgs: [
-      (epkgs.treesit-grammars.with-grammars (g: with g; [
-        tree-sitter-bash
-        tree-sitter-c # :lang cc
-        tree-sitter-cmake
-        tree-sitter-cpp
-        tree-sitter-dockerfile # :tools docker
-        tree-sitter-go # :lang go
-        tree-sitter-gomod
-        tree-sitter-gowork
-        tree-sitter-javascript # :lang javascript
-        tree-sitter-jsdoc
-        tree-sitter-json # :lang json
-        tree-sitter-lua # :lang lua
-        tree-sitter-markdown # :lang markdown
-        tree-sitter-markdown-inline
-        tree-sitter-nix # :lang nix
-        tree-sitter-python # :lang python
-        tree-sitter-rust # :lang rust
-        tree-sitter-toml # remapped by :tools tree-sitter itself
-        tree-sitter-tsx
-        tree-sitter-typescript
-        tree-sitter-yaml # :lang yaml
-      ]))
+      (epkgs.treesit-grammars.with-grammars (
+        g: with g; [
+          tree-sitter-bash
+          tree-sitter-c # :lang cc
+          tree-sitter-cmake
+          tree-sitter-cpp
+          tree-sitter-dockerfile # :tools docker
+          tree-sitter-go # :lang go
+          tree-sitter-gomod
+          tree-sitter-gowork
+          tree-sitter-javascript # :lang javascript
+          tree-sitter-jsdoc
+          tree-sitter-json # :lang json
+          tree-sitter-lua # :lang lua
+          tree-sitter-markdown # :lang markdown
+          tree-sitter-markdown-inline
+          tree-sitter-nix # :lang nix
+          tree-sitter-python # :lang python
+          tree-sitter-rust # :lang rust
+          tree-sitter-toml # remapped by :tools tree-sitter itself
+          tree-sitter-tsx
+          tree-sitter-typescript
+          tree-sitter-yaml # :lang yaml
+        ]
+      ))
     ];
   };
 

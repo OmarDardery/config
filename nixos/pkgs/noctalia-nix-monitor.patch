@@ -1,0 +1,103 @@
+--- a/nix-monitor/nix_monitor_service.luau
++++ b/nix-monitor/nix_monitor_service.luau
+@@ -1 +1 @@
+-noctalia.setUpdateInterval(1000)
++noctalia.setUpdateInterval(10000)
+@@ -24,11 +24,6 @@
+-function killWithPidFile(file)
+-	if noctalia.fileExists(file) then
+-		local content = noctalia.readFile(file) or ""
+-		local pid = noctalia.string.trim(content)
+-
+-		if type(pid) == "string" and pid ~= "" then
+-			noctalia.runAsync(`pkill -9 -P {pid} && kill -9 {pid}`)
+-		end
+-		noctalia.removeFile(file)
+-	end
++local function shellQuote(value)
++	return "'" .. tostring(value):gsub("'", "'\\''") .. "'"
+ end
++
++-- No cancellation handle is exposed by v5. Captured commands instead use the
++-- host's process-group timeout; never signal an untrusted or recycled PID.
+@@ -43 +38 @@
+-local stateDir = noctalia.pluginDataDir() or "/tmp/nix-monitor"
++local stateDir = assert(noctalia.pluginDataDir(), "Nix Monitor needs its private plugin data directory")
+@@ -53 +48 @@
+-local remoteHashCmd = "git ls-remote https://github.com/NixOS/nixpkgs " .. branch .. " 2>/dev/null | cut -c 1-7"
++local remoteHashCmd = "git ls-remote https://github.com/NixOS/nixpkgs " .. shellQuote(branch) .. " 2>/dev/null | cut -c 1-7"
+@@ -98,2 +93 @@
+--- Currently it is writing to a file because when I use the runAsync with
+--- the callback, it is timed out
++-- Retain file-backed results, but let the host own the foreground command.
+@@ -115 +110,9 @@
+-	noctalia.runAsync(`sleep {_delay} && {remoteHashCmd} > {remoteHashFile} & echo $! > {remotePidFile}`)
++	local launched = noctalia.runAsync(`sleep {_delay} && {remoteHashCmd} > {shellQuote(remoteHashFile)}`, function()
++		checkRemoteStatus()
++		setState("isRemoteCheckRunning", false)
++		setState("lastRemoteCheckTime", os.time())
++	end, math.clamp(60000 * updateCheckDurationThreshold, 1000, 60000))
++	if not launched then
++		setState("isRemoteCheckRunning", false)
++		setState("lastRemoteCheckTime", os.time())
++	end
+@@ -144,2 +147 @@
+-	setState("isRemoteCheckRunning", false)
+-	killWithPidFile(remotePidFile)
++	-- Manual cancellation disabled; leave the in-flight check owned by the host.
+@@ -191,3 +193,11 @@
+-	-- Sleep 0 to trigger noctalia calling /bin/sh
+-	noctalia.runAsync(`sleep 0 && {storeSizeCmd} > {storeSizeFile} & echo $! > {storePidFile}`)
+-	noctalia.runAsync(`sleep 0 && {closureSizeCmd} > {closureSizeFile} & echo $! > {closurePidFile}`)
++	noctalia.writeFile(storeSizeFile, "")
++	noctalia.writeFile(closureSizeFile, "")
++	local launched = noctalia.runAsync(`({storeSizeCmd} > {shellQuote(storeSizeFile)}) & ({closureSizeCmd} > {shellQuote(closureSizeFile)}) & wait`, function()
++		checkSystemStatsFile()
++		setState("isSystemStatsCheckRunning", false)
++		setState("lastSystemStatsCheckTime", os.time())
++	end, math.clamp(60000 * systemStatsCheckDurationThreshold, 1000, 60000))
++	if not launched then
++		setState("isSystemStatsCheckRunning", false)
++		setState("lastSystemStatsCheckTime", os.time())
++	end
+@@ -224,3 +236 @@
+-	setState("isSystemStatsCheckRunning", false)
+-	killWithPidFile(storePidFile)
+-	killWithPidFile(closurePidFile)
++	-- Manual cancellation disabled; leave the in-flight check owned by the host.
+@@ -260,2 +272,2 @@
+-	-- Check local hash every 10 seconds
+-	if os.time() - getState("lastLocalCheckTime") >= 10 then
++	-- Check local hash every minute; deployment does not change every second.
++	if os.time() - getState("lastLocalCheckTime") >= 60 then
+@@ -270,8 +282 @@
+-	if getState("isRemoteCheckRunning") then
+-		checkRemoteStatus()
+-
+-		-- Remote check timeout
+-		if (os.time() - getState("lastRemoteCheckRunTime")) >= 60 * updateCheckDurationThreshold then
+-			cancelRemoteCheck()
+-		end
+-	end
++	-- Completion and timeout are handled only by the captured-process callback.
+@@ -305,8 +310 @@
+-	if getState("isSystemStatsCheckRunning") then
+-		checkSystemStatsFile()
+-
+-		-- System stats check timeout
+-		if (os.time() - getState("lastSystemStatsCheckRunTime")) >= 60 * systemStatsCheckDurationThreshold then
+-			cancelSystemCheck()
+-		end
+-	end
++	-- Keep the running flag until the host has reaped the process group.
+--- a/nix-monitor/panel.luau
++++ b/nix-monitor/panel.luau
+@@ -88,7 +88 @@
+-			ui.button({
+-				text = tr("panel.cancel"),
+-				glyph = "cancel",
+-				flexGrow = 1,
+-				variant = "destructive",
+-				onClick = "onCancelClicked",
+-			})
++			ui.label({ text = "Checking (manual cancellation disabled)" })

@@ -18,6 +18,22 @@
     #     source. The cost is a second nixpkgs (it pins unstable).
     # Cache itself is configured in nix.settings in configuration.nix.
     noctalia.url = "github:noctalia-dev/noctalia/cachix";
+    noctalia-templates = {
+      url = "github:noctalia-dev/community-templates/2f2ada3f10a66f9dbeb2136e4d70271ac6072aaf";
+      flake = false;
+    };
+    millennium.url = "github:SteamClientHomebrew/Millennium/63c3928f0306edd83122c0f5b085a9b1a3d60f55?dir=packages/nix&narHash=sha256-%2BmNY2lHscvVa4KntAxuRMMFYMYxju06avIKyHooM8EE%3D";
+    noctalia-plugins = {
+      url = "github:noctalia-dev/community-plugins/aa42b35d2e89550bd2d516718f2c29bccddbe0dc";
+      flake = false;
+    };
+    # Keep Umbriel's wlroots and portal dependencies together on its own pin.
+    umbriel.url = "github:noctalia-dev/umbriel";
+    nix-flatpak.url = "github:gmodena/nix-flatpak/v0.7.0";
+    nix-index-database = {
+      url = "github:nix-community/nix-index-database";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     home-manager = {
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -27,15 +43,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     webos-dev-manager.url = "github:OmarDardery/dev-manager-desktop/b7afa5dc41b46d057db751dcbc32e70ef3d57d60";
-    # Doom Emacs with every elisp package resolved by Nix. The older
-    # nix-community/nix-doom-emacs is broken by its own admission and points
-    # here. This one runs Doom's CLI to export its dependency list, then feeds
-    # that to emacsWithPackages, so straight.el never runs.
-    #
-    # It pulls emacs-overlay, doomemacs/core and doomemacs/modules transitively.
-    # Unlike noctalia this costs no second nixpkgs: emacs-overlay leaves its own
-    # nixpkgs unset, so the `follows` below is inherited all the way down and
-    # everything builds against 26.05.
+    # Optional Doom module; enable this input together with its home import.
     #nix-doom-emacs-unstraightened = {
     # url = "github:marienz/nix-doom-emacs-unstraightened";
     # inputs.nixpkgs.follows = "nixpkgs";
@@ -43,42 +51,40 @@
   };
   outputs =
     {
-      self,
       nixpkgs,
-      zen-browser,
-      noctalia,
       home-manager,
-      pixie-sddm,
-      webos-dev-manager,
-      #nix-doom-emacs-unstraightened,
       ...
     }@inputs:
     let
-      system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
-      homePkgs = import nixpkgs {
+      profile = import ./profile.nix;
+      inherit (profile) system;
+      pkgs = import nixpkgs {
         inherit system;
-        config = {
-          allowUnfree = true;
-          permittedInsecurePackages = [ "electron-40.10.5" ];
-        };
+        config = import ./package-policy.nix;
       };
     in
     {
+      # Bootstrap reads these defaults; runtime environment does not affect eval.
+      lib.deployment = profile;
       devShells.${system} = import ./dev-shells.nix { inherit pkgs; };
 
-      # The same Home Manager configuration can be activated directly on any
-      # Linux distribution with Nix, without evaluating or rebuilding NixOS.
-      homeConfigurations.oad = home-manager.lib.homeManagerConfiguration {
-        pkgs = homePkgs;
-        extraSpecialArgs = { inherit inputs; };
-        modules = [ ./home ];
+      # x86_64 Linux with Nix; native services/drivers remain the host's job.
+      homeConfigurations.${profile.profileName} = home-manager.lib.homeManagerConfiguration {
+        inherit pkgs;
+        extraSpecialArgs = {
+          inherit inputs profile;
+          isNixOS = false;
+          isLaptop = false;
+        };
+        modules = [
+          ./home
+          ./home/linux.nix
+        ];
       };
 
       nixosConfigurations = {
-        # Change "nixos" to your actual hostname if it is different
-        "nixos" = nixpkgs.lib.nixosSystem {
-          specialArgs = { inherit inputs; };
+        ${profile.hostName} = nixpkgs.lib.nixosSystem {
+          specialArgs = { inherit inputs profile; };
           modules = [
             ./configuration.nix
             home-manager.nixosModules.home-manager
