@@ -244,6 +244,8 @@ in
         "go.alternateTools" = {
           gopls = bin pkgs.gopls "gopls";
           dlv = bin pkgs.delve "dlv";
+          gofumpt = bin pkgs.gofumpt "gofumpt";
+          goimports = bin pkgs.gotools "goimports";
           "golangci-lint-v2" = bin pkgs.golangci-lint "golangci-lint";
         };
         "go.formatTool" = "gofumpt";

@@ -87,6 +87,16 @@ require a native Flatpak package; Home Manager supplies its CLI.
 
 ## Native Linux Requirements
 
+On NixOS, logind ignores the power key and Umbriel handles it: a short press
+locks with Noctalia, whose secure login box shows logout, suspend, reboot and
+shutdown controls. The binding also works while locked or shortcuts are inhibited.
+`Mod+Shift+Q` still opens the ordinary session menu without locking.
+Other distributions need equivalent native logind configuration; Home Manager
+does not change it. The NixOS setting also suppresses logind's power-key action
+outside Umbriel; other sessions need their own handler. Firmware-enforced shutdown
+from holding the button cannot be disabled by this configuration. Saved Noctalia
+GUI settings can override the session-action list or hide lock-screen buttons.
+
 Home Manager configures user software, not native kernel drivers, accounts,
 system daemons or privileged permissions. The standalone profile supplies
 generic-Linux graphics integration, fonts, Bash/Zsh initialization, compositor

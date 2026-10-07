@@ -116,7 +116,7 @@ in
         empty_above = true;
       };
       layout = {
-        mode = "scrolling";
+        mode = "dwindle";
         gap = 6;
         extent_presets = [
           0.33333
@@ -178,6 +178,10 @@ in
         "Mod+B" = once "spawn:zen";
         "Mod+Alt+L" = once "spawn:noctalia msg session lock";
         "Mod+Shift+Q" = once "spawn:noctalia msg panel-toggle session";
+        "XF86PowerOff" = (locked "session lock") // {
+          repeat = false;
+          allow_when_inhibited = true;
+        };
         "Mod+Shift+F23" = once "spawn:${pkgs.kitty}/bin/kitty";
         "Mod+E" = once "spawn:nautilus";
         "Mod+Shift+D" = once "spawn:nwg-displays";
@@ -355,6 +359,7 @@ in
           blur = true;
           blur_ignore_alpha = 0.5;
           blur_popups = true;
+          # Preserve live window content behind the shell, not wallpaper-only blur.
           blur_optimized = false;
         }
       ];

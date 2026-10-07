@@ -76,6 +76,19 @@
   services.upower.enable = true;
   services.fwupd.enable = true;
 
+  # Umbriel handles short presses; do not race its lock-screen power controls.
+  services.logind.settings.Login = {
+    HandlePowerKey = "ignore";
+    HandlePowerKeyLongPress = "ignore";
+  };
+
+  # Docker uses journald too; bound logs without changing container log drivers.
+  services.journald.extraConfig = ''
+    SystemMaxUse=1G
+    RuntimeMaxUse=256M
+    MaxRetentionSec=1month
+  '';
+
   # SDDM runs as its own user before any home profile exists, so the login
   # screen's font has to come from the system font path.
   fonts.packages = [ pkgs.nerd-fonts.jetbrains-mono ];
@@ -118,6 +131,8 @@
   # Git is home-owned; bootstrap supplies it temporarily before activation.
 
   programs.nix-ld.enable = true; # provides /lib64/ld-linux for foreign binaries
+  programs.nix-ld.libraries =
+    (import ./home/development/toolchain.nix { inherit pkgs; }).pythonNativeLibraries;
   services.udev.packages = [
     pkgs.platformio-core.udev
     pkgs.libmtp.out
@@ -126,6 +141,11 @@
   # Docker daemon and container virtualization
   virtualisation.docker = {
     enable = true;
+    # BuildKit cache only: leave containers, images and volumes alone.
+    daemon.settings.builder.gc = {
+      enabled = true;
+      defaultKeepStorage = "15GB";
+    };
   };
 
   # ── Locale ─────────────────────────────────────────────────────────────

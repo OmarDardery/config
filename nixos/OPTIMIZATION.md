@@ -34,7 +34,8 @@
 - Simplified Noctalia settings merging while retaining deliberate standalone
   removal of NixOS-only widgets/settings and opt-in state reconciliation.
 - Generated palettes respect custom XDG locations. Umbriel is the default
-  compositor, with the shared cursor and English/Arabic keyboard settings.
+  compositor, with dwindle as the default layout, the shared cursor and
+  English/Arabic keyboard settings. Mod+D still cycles scrolling/dwindle/master.
 - Noctalia owns supported application colors. VSCodium's static palette is gone;
   GTK/Qt, Zen, Steam/Millennium, editors and terminal tools consume generated colors.
   Community templates and Steam integration are pinned; see ../README.md.
@@ -62,6 +63,53 @@ Details of the preserved graphics investigation are in GRAPHICS.md.
 - Noctalia plugins are trusted code. Targeted scratch-file/process fixes are
   documented in pkgs/noctalia-plugins.md; upload actions remain external services.
 - No disk-encryption work or planning is included.
+- Bound persistent journals to 1 GiB and runtime journals to 256 MiB, with a
+  one-month retention limit. Docker already uses journald; keep that driver and
+  existing containers rather than switching log drivers or pruning volumes.
+- Foreign Python runtime libraries have one list in the shared toolchain.
+  `nix-ld` consumes it for foreign executables; `nix develop ./nixos#python`
+  exposes it through a shell-scoped `LD_LIBRARY_PATH` for Nix Python with uv/pip
+  wheels, including OpenCV's `libGL.so.1`. There is no desktop-wide library path.
+  Use `opencv-python-headless` instead when GUI functions are unnecessary, and
+  install only one OpenCV wheel variant in a virtual environment. This does not
+  add CUDA or guarantee every wheel's additional dependencies are satisfied.
+
+## Applied Follow-Up
+
+- Noctalia now locks after 600 seconds of idle and turns displays off after 660
+  seconds, using native actions that respect idle inhibitors and restore displays
+  on activity. No automatic suspend or additional idle daemon is configured.
+- Docker's BuildKit GC is configured with 15 GB default cache retention. The
+  one-time cleanup selected only build cache unused for at least seven days and
+  reclaimed 3.359 GB. No container, image or volume pruning was performed.
+- Removed two abandoned August `nh` build-result roots, preserving recent result
+  links and the existing 30-day Nix generation-retention policy. Root-level
+  generation cleanup still requires administrative authentication.
+- The five SolveX services in `/mnt/storage/Coding/solvex/docker-compose.yml` now
+  use `restart: "no"`; existing containers received the same policy and were
+  stopped gracefully. Hermes gateway autostart was disabled and the gateway
+  stopped. Their applications, containers and data remain installed.
+  Start SolveX with `docker compose -f /mnt/storage/Coding/solvex/docker-compose.yml up -d`
+  and Hermes with `systemctl --user start hermes-gateway.service` when needed.
+- Removed redundant explicit GCC from the general shell package list: the pinned
+  `mkShell` compiler is the same GCC wrapper. Compiler-enabled shells remain
+  available for Python source builds and native embedded tests. VSCodium's Go
+  formatter/import tools now use absolute paths to the existing shared packages,
+  avoiding PATH-dependent versions or extension-managed tool downloads.
+- No Cargo/CMake/clangd/BLAS concurrency or thread limits were changed.
+
+## Preserved Rendering
+
+- Preserve Noctalia's live-backdrop layer blur. `blur_optimized = true` uses
+  cached background blur instead of windows behind the shell: potentially
+  cheaper, but not visually equivalent. Global window optimized blur, damage
+  tracking, hardware cursors and direct scanout already have upstream fast paths.
+  Do not add undocumented renderer knobs or duplicate Noctalia's animation with
+  compositor layer animations.
+
+The NVIDIA GPU was runtime-suspended, power-saver active, and no duplicate shell,
+KDE Connect daemon or orphan recorder was observed. No extra power daemon is
+needed on that evidence. Preserve shader caches and existing graphics workarounds.
 
 ## Verification
 

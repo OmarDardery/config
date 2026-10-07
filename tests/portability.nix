@@ -53,7 +53,9 @@ let
       && home.programs.umbriel.settings.input.mouse.accel_profile == "flat"
       && home.programs.umbriel.settings.input.focus.follows_mouse;
     umbrielLayout =
-      home.programs.umbriel.settings.layout.gap == 6
+      home.programs.umbriel.settings.layout.mode == "dwindle"
+      && system.home-manager.users.${profile.username}.programs.umbriel.settings.layout.mode == "dwindle"
+      && home.programs.umbriel.settings.layout.gap == 6
       && home.programs.umbriel.settings.layout.tabs.default_display == "tabbed"
       && home.programs.umbriel.settings.workspaces.back_and_forth
       && home.programs.umbriel.settings.workspaces.empty_above;
@@ -70,7 +72,63 @@ let
       && home.programs.umbriel.settings.keybinds."Mod+Ctrl+WheelDown".cooldown_ms == 150
       && !(home.programs.umbriel.settings.keybinds ? "Mod+Shift+M");
     umbrielKeyCoverage =
-      builtins.length (builtins.attrNames home.programs.umbriel.settings.keybinds) == 98;
+      builtins.length (builtins.attrNames home.programs.umbriel.settings.keybinds) == 99;
+    powerButton =
+      system.services.logind.settings.Login.HandlePowerKey == "ignore"
+      && system.services.logind.settings.Login.HandlePowerKeyLongPress == "ignore"
+      &&
+        home.programs.umbriel.settings.keybinds."XF86PowerOff".action == "spawn:noctalia msg session lock"
+      && !home.programs.umbriel.settings.keybinds."XF86PowerOff".repeat
+      && home.programs.umbriel.settings.keybinds."XF86PowerOff".allow_when_locked
+      && home.programs.umbriel.settings.keybinds."XF86PowerOff".allow_when_inhibited;
+    lockScreenPowerOptions =
+      home.programs.noctalia.settings.lockscreen_widgets.widget."lockscreen-login-box@eDP-1".settings.show_session_buttons
+      && home.programs.noctalia.settings.lockscreen_widgets.widget."lockscreen-login-box@eDP-2".settings.show_session_buttons
+      &&
+        map (entry: entry.action) home.programs.noctalia.settings.shell.session.actions == [
+          "lock"
+          "logout"
+          "lock_and_suspend"
+          "reboot"
+          "shutdown"
+          "suspend"
+        ]
+      &&
+        (builtins.elemAt home.programs.noctalia.settings.shell.session.actions 5).command
+        == "noctalia msg session lock-and-suspend";
+    pythonNativeLibraries =
+      builtins.all (package: builtins.elem package system.programs.nix-ld.libraries) (
+        (import ../nixos/home/development/toolchain.nix {
+          inherit (flake.nixosConfigurations.${profile.hostName}) pkgs;
+        }).pythonNativeLibraries
+      )
+      &&
+        flake.devShells.${profile.system}.python.LD_LIBRARY_PATH
+        == lib.makeLibraryPath toolchain.pythonNativeLibraries
+      && !(home.home.sessionVariables ? LD_LIBRARY_PATH);
+    boundedJournal = builtins.all (setting: lib.hasInfix setting system.services.journald.extraConfig) [
+      "SystemMaxUse=1G"
+      "RuntimeMaxUse=256M"
+      "MaxRetentionSec=1month"
+    ];
+    idlePolicy =
+      home.programs.noctalia.settings.idle.behavior.lock.enabled
+      && home.programs.noctalia.settings.idle.behavior.lock.timeout == 600
+      && home.programs.noctalia.settings.idle.behavior.lock.action == "lock"
+      && home.programs.noctalia.settings.idle.behavior."screen-off".enabled
+      && home.programs.noctalia.settings.idle.behavior."screen-off".timeout == 660
+      && home.programs.noctalia.settings.idle.behavior."screen-off".action == "screen_off"
+      && !(home.programs.noctalia.settings.idle.behavior ? suspend);
+    dockerBuildCache =
+      system.virtualisation.docker.enable
+      && system.virtualisation.docker.daemon.settings.builder.gc.enabled
+      && system.virtualisation.docker.daemon.settings.builder.gc.defaultKeepStorage == "15GB";
+    goToolPaths =
+      home.programs.vscodium.profiles.default.userSettings."go.alternateTools".gofumpt
+      == "${base.pkgs.gofumpt}/bin/gofumpt"
+      &&
+        home.programs.vscodium.profiles.default.userSettings."go.alternateTools".goimports
+        == "${base.pkgs.gotools}/bin/goimports";
     umbrielTabNavigation =
       lib.hasSuffix " focus-up" home.programs.umbriel.settings.keybinds."Mod+K"
       &&

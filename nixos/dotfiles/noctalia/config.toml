@@ -21,6 +21,19 @@
 blur_intensity = 0.5599999874830246
 tint_intensity = 0.34999999217689037
 
+[idle]
+behavior_order = [ "lock", "screen-off" ]
+
+[idle.behavior.lock]
+enabled = true
+timeout = 600
+action = "lock"
+
+[idle.behavior.screen-off]
+enabled = true
+timeout = 660
+action = "screen_off"
+
 [bar.default]
 background_opacity = 0.59999998658895493
 border = "on_primary"
@@ -192,6 +205,34 @@ auto_update = "none"
 
 [shell]
 polkit_agent = true
+
+# The secure lock screen omits lock actions, but exposes the other power choices.
+[[shell.session.actions]]
+action = "lock"
+shortcut = "1"
+
+[[shell.session.actions]]
+action = "logout"
+shortcut = "2"
+
+[[shell.session.actions]]
+action = "lock_and_suspend"
+shortcut = "3"
+
+[[shell.session.actions]]
+action = "reboot"
+shortcut = "4"
+
+[[shell.session.actions]]
+action = "shutdown"
+variant = "destructive"
+shortcut = "5"
+
+[[shell.session.actions]]
+action = "suspend"
+shortcut = "6"
+# Visible on the lock screen, but still lock first when used from the desktop menu.
+command = "noctalia msg session lock-and-suspend"
 
 [shell.animation]
 speed = 2.0000000298023224

@@ -24,6 +24,16 @@
     nodejs
   ];
 
+  # Foreign Python wheels need these outside Nix's patched library linkage.
+  # Shared by the opt-in Python shell and the host's foreign-binary loader.
+  pythonNativeLibraries = with pkgs; [
+    libglvnd
+    libxcb
+    glib
+    stdenv.cc.cc
+    zlib
+  ];
+
   nixdSettings =
     { profile, isNixOS }:
     let

@@ -5,7 +5,6 @@ let
     toolchain.runtimes
     ++ (with pkgs; [
       rustup
-      gcc
     ]);
   embeddedPackages = with pkgs; [
     platformio-core
@@ -23,5 +22,14 @@ in
 
   embedded = pkgs.mkShell {
     packages = embeddedPackages;
+  };
+
+  python = pkgs.mkShell {
+    packages = [
+      pkgs.python3
+      pkgs.uv
+    ];
+    # Scoped to this shell, not every desktop application or editor process.
+    LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath toolchain.pythonNativeLibraries;
   };
 }

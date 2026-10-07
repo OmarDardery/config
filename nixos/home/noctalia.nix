@@ -86,8 +86,8 @@ in
           plugin_settings = lib.optionalAttrs isNixOS {
             "avivbintangaringga/nix-monitor" = {
               update_command = "${pkgs.nh}/bin/nh os switch --hostname ${lib.escapeShellArg profile.hostName} ${lib.escapeShellArg "path:${profile.configRepo}"}";
-              hide_clean_button = true;
-              hide_optimize_button = true;
+              hide_clean_button = false;
+              hide_optimize_button = false;
             };
           };
           theme.templates.user = {
