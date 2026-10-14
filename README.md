@@ -231,6 +231,8 @@ old Noctalia GUI settings between hosts, review/reset `shell.polkit_agent` with
   `:LspCopilotSignIn` once if the language server has not picked up your GitHub
   login. Inline suggestions use LazyVim's normal `<Tab>` acceptance and
   `Alt-]`/`Alt-[` to cycle. Copilot stays out of the `blink.cmp` source list.
+  The Copilot server is pinned to GitHub's npm package because the GitHub
+  release download is unreachable on this connection.
   `<leader>ao` or `:OpenCode` opens OpenCode in a reusable right
   terminal at the detected project root, using the account's OpenCode login.
   Project detection also recognizes PlatformIO, Nix, Python, Go, Rust and

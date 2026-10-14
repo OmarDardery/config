@@ -21,6 +21,23 @@
 }:
 let
   toolchain = import ./toolchain.nix { inherit pkgs; };
+  # GitHub release downloads are unreachable on this connection. GitHub also
+  # publishes this exact server version to npm, whose registry is reachable.
+  copilotLanguageServer = pkgs.copilot-language-server.overrideAttrs (_: {
+    version = "1.495.0";
+    src = pkgs.fetchurl {
+      url = "https://registry.npmjs.org/@github/copilot-language-server/-/copilot-language-server-1.495.0.tgz";
+      hash = "sha256-qHxuXCI9eI19A3yjLz4uJkTsKi+3zA5yaSQoQ/jMAvQ=";
+    };
+    installPhase = ''
+      runHook preInstall
+      mkdir -p "$out/share/copilot-language-server" "$out/bin"
+      cp -r dist/. "$out/share/copilot-language-server/"
+      makeWrapper ${lib.getExe pkgs.nodejs} "$out/bin/copilot-language-server" \
+        --add-flags "$out/share/copilot-language-server/language-server.js"
+      runHook postInstall
+    '';
+  });
 
   # Rendered into the Lua below. Same flags VSCodium passes — see
   # ./toolchain.nix for what --query-driver buys and ./default.nix for the
@@ -265,7 +282,7 @@ in
         gnumake
         wget
         # LazyVim's native Copilot extra uses Neovim 0.12 inline LSP completion.
-        copilot-language-server
+        copilotLanguageServer
       ]);
 
     initLua = ''
