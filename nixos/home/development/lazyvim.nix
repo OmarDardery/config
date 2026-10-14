@@ -17,10 +17,12 @@
   config,
   profile,
   isNixOS,
+  inputs,
   ...
 }:
 let
   toolchain = import ./toolchain.nix { inherit pkgs; };
+  codexPackage = inputs.codex-cli-nix.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
   # Rendered into the Lua below. Same flags VSCodium passes — see
   # ./toolchain.nix for what --query-driver buys and ./default.nix for the
@@ -264,6 +266,8 @@ in
         tree-sitter
         gnumake
         wget
+        # LazyVim's native Copilot extra uses Neovim 0.12 inline LSP completion.
+        copilot-language-server
       ]);
 
     initLua = ''
@@ -339,6 +343,7 @@ in
           { import = "lazyvim.plugins.extras.lang.docker" },
           { import = "lazyvim.plugins.extras.lang.git" },
           { import = "lazyvim.plugins.extras.formatting.prettier" },
+          { import = "lazyvim.plugins.extras.ai.copilot-native" },
 
           { import = "plugins" },
 
@@ -376,12 +381,31 @@ in
 
     opt.scrolloff = 8
 
+    -- Put project tools and the Codex terminal at the actual project root,
+    -- including non-Git PlatformIO and language projects.
+    vim.g.root_spec = {
+      "lsp",
+      { ".git", "lua", "platformio.ini", "flake.nix", "pyproject.toml", "go.mod", "Cargo.toml", "package.json" },
+      "cwd",
+    }
+
     -- Nix builds fail on trailing whitespace often enough to want it visible.
     opt.listchars = { tab = "» ", trail = "·", nbsp = "␣" }
   '';
 
   xdg.configFile."nvim/lua/config/keymaps.lua".text = ''
-    -- Keep LazyVim's defaults, including lazygit on <leader>gg and <leader>gG.
+    -- Codex shares the account's CLI login and runs at LazyVim's project root.
+    -- Snacks keeps the session alive when its terminal is hidden.
+    local function codex()
+      local root = LazyVim.root()
+      Snacks.terminal.focus({ "${codexPackage}/bin/codex" }, {
+        cwd = root,
+        win = { position = "right", width = 0.45 },
+      })
+    end
+
+    vim.keymap.set("n", "<leader>ac", codex, { desc = "Codex (project root)" })
+    vim.api.nvim_create_user_command("Codex", codex, { desc = "Open Codex at the project root" })
   '';
 
   xdg.configFile."nvim/lua/config/autocmds.lua".text = ''

@@ -227,6 +227,14 @@ old Noctalia GUI settings between hosts, review/reset `shell.polkit_agent` with
   downloads remain project-specific; notebook environments remain purpose-specific.
 - Neovim's inactive DAP/test plugin packages are omitted; add them with the
   corresponding LazyVim extras when enabling those workflows.
+- Neovim uses LazyVim's native Copilot integration on Neovim 0.12. Run
+  `:LspCopilotSignIn` once if the language server has not picked up your GitHub
+  login. Inline suggestions use LazyVim's normal `<Tab>` acceptance and
+  `Alt-]`/`Alt-[` to cycle. Copilot stays out of the `blink.cmp` source list.
+  `<leader>ac` or `:Codex` opens the existing Codex CLI in a reusable right
+  terminal at the detected project root, using the account's Codex login.
+  Project detection also recognizes PlatformIO, Nix, Python, Go, Rust and
+  JavaScript manifests outside Git checkouts.
 - Noctalia plugin code is pinned and patched; see [plugin maintenance](#plugin-maintenance).
   Saved disabled-widget layouts and graphics workarounds are intentionally kept.
 
