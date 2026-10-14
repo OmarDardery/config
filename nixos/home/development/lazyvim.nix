@@ -17,12 +17,10 @@
   config,
   profile,
   isNixOS,
-  inputs,
   ...
 }:
 let
   toolchain = import ./toolchain.nix { inherit pkgs; };
-  codexPackage = inputs.codex-cli-nix.packages.${pkgs.stdenv.hostPlatform.system}.default;
 
   # Rendered into the Lua below. Same flags VSCodium passes — see
   # ./toolchain.nix for what --query-driver buys and ./default.nix for the
@@ -381,7 +379,7 @@ in
 
     opt.scrolloff = 8
 
-    -- Put project tools and the Codex terminal at the actual project root,
+    -- Put project tools and the OpenCode terminal at the actual project root,
     -- including non-Git PlatformIO and language projects.
     vim.g.root_spec = {
       "lsp",
@@ -394,18 +392,18 @@ in
   '';
 
   xdg.configFile."nvim/lua/config/keymaps.lua".text = ''
-    -- Codex shares the account's CLI login and runs at LazyVim's project root.
+    -- OpenCode shares the account's CLI login and runs at LazyVim's project root.
     -- Snacks keeps the session alive when its terminal is hidden.
-    local function codex()
+    local function opencode()
       local root = LazyVim.root()
-      Snacks.terminal.focus({ "${codexPackage}/bin/codex" }, {
+      Snacks.terminal.focus({ "${pkgs.opencode}/bin/opencode" }, {
         cwd = root,
         win = { position = "right", width = 0.45 },
       })
     end
 
-    vim.keymap.set("n", "<leader>ac", codex, { desc = "Codex (project root)" })
-    vim.api.nvim_create_user_command("Codex", codex, { desc = "Open Codex at the project root" })
+    vim.keymap.set("n", "<leader>ao", opencode, { desc = "OpenCode (project root)" })
+    vim.api.nvim_create_user_command("OpenCode", opencode, { desc = "Open OpenCode at the project root" })
   '';
 
   xdg.configFile."nvim/lua/config/autocmds.lua".text = ''

@@ -80,7 +80,6 @@ in
     with pkgs;
     [
       inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
-      inputs.codex-cli-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
       inputs.webos-dev-manager.packages.${pkgs.stdenv.hostPlatform.system}.webos-dev-manager
       kitty
       (if isLaptop then blenderNvidia else pkgs.blender)
