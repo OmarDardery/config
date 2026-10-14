@@ -91,6 +91,7 @@ in
       hunspell
       hunspellDicts.en_US # hunspell ships no dictionaries of its own
       rnote
+      xournalpp
       proton-vpn
       protonup-ng
       fastfetch
