@@ -14,9 +14,17 @@ def main():
     parser.add_argument("umbriel", type=Path)
     parser.add_argument("wallpaper", type=Path)
     parser.add_argument("--extension", type=Path)
+    parser.add_argument("--closure", type=Path, required=True)
+    parser.add_argument("--kitty-template", type=Path, required=True)
     args = parser.parse_args()
     settings = tomllib.loads(args.config.read_text())
     templates = settings["theme"]["templates"]["user"]
+    closure = set(args.closure.read_text().splitlines())
+    for template in templates.values():
+        source = Path(template["input_path"])
+        assert source.is_file(), source
+        assert str(Path(*source.parts[:4])) in closure, source
+    print("PASS: template input sources retained in generated TOML closure")
     assert "niri" not in templates
     assert not settings["theme"]["templates"]["community_ids"]
     if args.extension:
@@ -30,7 +38,7 @@ def main():
             assert (extension / theme["path"]).is_symlink()
 
     with tempfile.TemporaryDirectory(
-        prefix="noctalia-themes-", dir="/tmp/opencode"
+        prefix="noctalia-themes-"
     ) as directory:
         root = Path(directory)
         palettes = {}
@@ -50,18 +58,16 @@ def main():
                 str(output / "palette.json"),
             ]
             rendered = {}
+            command.extend(["--render", f"{args.kitty_template}:{output / 'kitty.conf'}"])
             for name, template in templates.items():
                 source = Path(template["input_path"])
-                # The Kitty template uses an XDG token rather than a store path.
-                if str(source).startswith("$XDG_CONFIG_HOME/"):
-                    source = args.config.parent.parent / str(source).removeprefix(
-                        "$XDG_CONFIG_HOME/"
-                    )
                 assert source.is_file(), source
                 target = output / (name + Path(template["output_path"]).suffix)
                 rendered[name] = target
                 command.extend(["--render", f"{source}:{target}"])
             subprocess.run(command, check=True, capture_output=True, text=True)
+            kitty = (output / "kitty.conf").read_text()
+            assert "{{" not in kitty and "background" in kitty
             for name, target in rendered.items():
                 text = target.read_text()
                 assert text.strip(), name

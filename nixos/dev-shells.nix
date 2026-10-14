@@ -1,11 +1,7 @@
 { pkgs }:
 let
   toolchain = import ./home/development/toolchain.nix { inherit pkgs; };
-  generalPackages =
-    toolchain.runtimes
-    ++ (with pkgs; [
-      rustup
-    ]);
+  generalPackages = toolchain.runtimes;
   embeddedPackages = with pkgs; [
     platformio-core
     arduino-cli
@@ -19,6 +15,9 @@ in
   general = pkgs.mkShell {
     packages = generalPackages;
   };
+
+  # Opt-in project-selected toolchains; downloads remain explicit rustup operations.
+  rustup = pkgs.mkShell { packages = [ pkgs.rustup ]; };
 
   embedded = pkgs.mkShell {
     packages = embeddedPackages;

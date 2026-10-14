@@ -2,9 +2,7 @@
 {
   imports = [
     ./development
-    ./3d.nix
     ./apps.nix
-    ./steam.nix
     ./gaming.nix
     ./shell.nix
     ./nix-tools.nix
@@ -13,8 +11,6 @@
     ./noctalia.nix
     ./umbriel.nix
     ./flatpak.nix
-    ./host.nix
-    # ./optional/brave-origin.nix
   ];
 
   home.username = profile.username;

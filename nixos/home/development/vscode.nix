@@ -102,8 +102,7 @@ in
         jnoortheen.nix-ide
         # Lua
         sumneko.lua
-        # C/C++. clangd is the language server here, not cpptools. Debugging
-        # comes from CodeLLDB, which is what nvim-dap uses on this machine too.
+        # C/C++. clangd is the language server here; CodeLLDB handles debugging.
         llvm-vs-code-extensions.vscode-clangd
         vadimcn.vscode-lldb
         ms-vscode.cmake-tools
@@ -138,7 +137,7 @@ in
         ms-python.debugpy
         detachhead.basedpyright
         charliermarsh.ruff
-        # Notebooks, against the same kernel Doom uses.
+        # Notebook integration uses the configured Python kernel.
         ms-toolsai.jupyter
         # Markdown
         yzhang.markdown-all-in-one
@@ -180,15 +179,17 @@ in
         "files.insertFinalNewline" = true;
 
         # "JetBrainsMono Nerd Font", never "JetBrains Mono" — the nerd-fonts
-        # package publishes only the patched name, the same trap documented at
-        # ./doom-emacs.nix:179. Installed in ../../configuration.nix and
-        # ../desktop.nix.
+        # package publishes only the patched name. Installed by the system
+        # greeter configuration and ../desktop.nix.
         "editor.fontFamily" = "'JetBrainsMono Nerd Font', monospace";
         "editor.fontLigatures" = true;
         "editor.fontSize" = 14;
         "terminal.integrated.fontFamily" = "JetBrainsMono Nerd Font";
 
         "workbench.colorTheme" = "NoctaliaTheme";
+        # Keep the editor titlebar usable while hiding its window buttons.
+        "window.titleBarStyle" = "custom";
+        "window.controlsStyle" = "hidden";
         "window.autoDetectColorScheme" = true;
         "workbench.preferredDarkColorTheme" = "NoctaliaTheme";
         "workbench.preferredLightColorTheme" = "NoctaliaLight";
@@ -218,7 +219,7 @@ in
         # --query-driver, so clangd can ask PlatformIO's cross-compilers where
         # their own system headers are. Shared with Neovim; see
         # ./toolchain.nix. The flag removals that go with it are in
-        # ./clangd.nix, which every editor picks up from clangd itself.
+        # ./default.nix, which every editor picks up from clangd itself.
         "clangd.arguments" = toolchain.clangdArgs config.home.homeDirectory;
         "cmake.cmakePath" = bin pkgs.cmake "cmake";
         # cpptools is installed only to satisfy PlatformIO — see the extension
@@ -254,6 +255,9 @@ in
         # ── Rust ─────────────────────────────────────────────────────────
         # Carried over from the old ~/.config/Code/User/settings.json.
         "rust-analyzer.check.command" = "clippy";
+        "rust-analyzer.numThreads" = toolchain.rustAnalyzerSettings.numThreads;
+        "rust-analyzer.cachePriming.numThreads" = toolchain.rustAnalyzerSettings.cachePriming.numThreads;
+        "rust-analyzer.cargo.extraEnv" = toolchain.rustAnalyzerSettings.cargo.extraEnv;
         "rust-analyzer.server.path" = bin pkgs.rust-analyzer "rust-analyzer";
 
         # ── Python ───────────────────────────────────────────────────────

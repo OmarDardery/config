@@ -1,9 +1,8 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    codex-cli-nix.url = "github:sadjow/codex-cli-nix";
 
-    # Required by home/optional/brave-origin.nix when its import is enabled.
-    # nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     zen-browser = {
       url = "github:youwen5/zen-browser-flake";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -43,11 +42,6 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     webos-dev-manager.url = "github:OmarDardery/dev-manager-desktop/b7afa5dc41b46d057db751dcbc32e70ef3d57d60";
-    # Optional Doom module; enable this input together with its home import.
-    #nix-doom-emacs-unstraightened = {
-    # url = "github:marienz/nix-doom-emacs-unstraightened";
-    # inputs.nixpkgs.follows = "nixpkgs";
-    #};
   };
   outputs =
     {
@@ -66,15 +60,27 @@
     {
       # Bootstrap reads these defaults; runtime environment does not affect eval.
       lib.deployment = profile;
+      checks.${system} = import ./checks.nix {
+        inherit pkgs inputs;
+        flake = inputs.self;
+      };
       devShells.${system} = import ./dev-shells.nix { inherit pkgs; };
-
+      # Expose the same rule sources used by NixOS to the Debian installer.
+      packages.${system}.deviceRules = pkgs.symlinkJoin {
+        name = "configs-device-rules";
+        paths = [
+          pkgs.opentabletdriver
+          pkgs.platformio-core.udev
+        ];
+      };
       # x86_64 Linux with Nix; native services/drivers remain the host's job.
       homeConfigurations.${profile.profileName} = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
         extraSpecialArgs = {
           inherit inputs profile;
           isNixOS = false;
-          isLaptop = false;
+          # The standalone profile is deployed to the same laptop on Debian.
+          isLaptop = true;
         };
         modules = [
           ./home

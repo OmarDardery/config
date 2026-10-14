@@ -10,8 +10,11 @@ import unittest
 from unittest.mock import patch
 
 
-HELPER = Path(__file__).resolve().parents[1] / "nixos/pkgs/reconcile-noctalia.py"
+HELPER = Path(__file__).resolve().parents[1] / "pkgs/reconcile-noctalia.py"
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "pkgs"))
 spec = importlib.util.spec_from_file_location("reconcile_noctalia", HELPER)
+import state_file
+
 helper = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(helper)
 
@@ -130,18 +133,14 @@ class ReconciliationTests(unittest.TestCase):
 
     def test_changed_source_aborts_and_keeps_backup(self):
         original = self.files('x = 1\n', 'x = 1\n')
-        snapshot = helper.snapshot
-        calls = 0
+        snapshot = state_file.snapshot
 
-        def changed(path):
-            nonlocal calls
-            calls += 1
-            if calls == 2:
-                self.state.write_text('x = 2\n')
-            return snapshot(path)
+        def changed(path, **kwargs):
+            self.state.write_text('x = 2\n')
+            return snapshot(path, **kwargs)
 
-        with patch.object(helper, 'snapshot', side_effect=changed):
-            with self.assertRaisesRegex(ValueError, 'state changed'):
+        with patch.object(state_file, 'snapshot', side_effect=changed):
+            with self.assertRaisesRegex(ValueError, 'changed during'):
                 self.run_helper(apply=True)
         self.assertEqual(self.state.read_text(), 'x = 2\n')
         backups = list(self.root.glob('settings.toml.backup-*'))
@@ -151,7 +150,7 @@ class ReconciliationTests(unittest.TestCase):
 
     def test_replace_failure_keeps_original_and_backup(self):
         original = self.files('x = 1\n', 'x = 1\n')
-        with patch.object(helper.os, 'replace', side_effect=OSError('failed')):
+        with patch.object(state_file.os, 'replace', side_effect=OSError('failed')):
             with self.assertRaises(OSError):
                 self.run_helper(apply=True)
         self.assertEqual(self.state.read_bytes(), original)

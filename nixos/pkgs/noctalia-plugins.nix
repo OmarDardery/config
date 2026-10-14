@@ -35,7 +35,8 @@ stdenv.mkDerivation {
     for script in screen-toolkit/*.luau nix-monitor/*.luau game-launcher/*.luau; do
       ${luau}/bin/luau-compile "$script" >/dev/null
     done
-    ${bash}/bin/bash ${./noctalia-screen-toolkit-test.sh} "$PWD/screen-toolkit"
+    ${bash}/bin/bash ${../tests/noctalia-screen-toolkit-test.sh} "$PWD/screen-toolkit"
+    ${bash}/bin/bash ${../tests/noctalia-nix-monitor-test.sh} "$PWD/nix-monitor" ${luau}/bin/luau
     runHook postCheck
   '';
 

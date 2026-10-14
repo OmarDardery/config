@@ -2,65 +2,76 @@
   pkgs,
   inputs,
   config,
+  isLaptop,
   ...
 }:
 let
-  # Match the pinned GNOME core-apps module, including its auxiliary modules.
-  gnomeApps = with pkgs; [
-    baobab
-    decibels
-    epiphany
-    gnome-text-editor
-    gnome-calculator
-    gnome-calendar
-    gnome-characters
-    gnome-clocks
-    gnome-console
-    gnome-contacts
-    gnome-font-viewer
-    gnome-logs
-    gnome-maps
-    gnome-music
-    gnome-system-monitor
-    gnome-tecla
-    gnome-weather
-    loupe
-    nautilus
-    papers
-    gnome-connections
-    showtime
-    simple-scan
-    snapshot
-    yelp
-    gnome-disk-utility
-    seahorse
-    sushi
-    gnome-software
-    # User-facing core-shell tools; the shell/session machinery stays native.
-    gnome-color-manager
-    gnome-control-center
-    gnome-tour
-    gnome-user-docs
-    gnome-backgrounds
-    glycin-thumbnailer
-    gst-thumbnailers
+  # This laptop uses PRIME offload, so make Blender consistently use the RTX
+  # GPU whether it is started from a terminal or a desktop launcher.
+  blenderNvidia = pkgs.symlinkJoin {
+    name = "blender-nvidia-${pkgs.blender.version}";
+    paths = [ pkgs.blender ];
+    nativeBuildInputs = [ pkgs.makeWrapper ];
+    postBuild = ''
+      wrapProgram "$out/bin/blender" \
+        --set __NV_PRIME_RENDER_OFFLOAD 1 \
+        --set __NV_PRIME_RENDER_OFFLOAD_PROVIDER NVIDIA-G0 \
+        --set __GLX_VENDOR_LIBRARY_NAME nvidia \
+        --set __VK_LAYER_NV_optimus NVIDIA_only
+    '';
+  };
+  # Install only the tools used by this desktop, not GNOME's full app bundle.
+  desktopApps = with pkgs; [
+    thunar # file browsing; default handler and Mod+E
+    (papers.override { supportNautilus = false; }) # PDF viewer without Nautilus integration
+    gnome-calculator # desktop calculator
+    gnome-disk-utility # disk/device management
+    gnome-control-center # settings for the GNOME fallback
+    seahorse # credential manager and SSH askpass
   ];
+  # D-Bus activation supports mounts/trash, thumbnails and Thunar preferences.
+  desktopServices =
+    desktopApps
+    ++ (with pkgs; [
+      gvfs
+      tumbler
+      xfconf
+    ]);
+
 in
 {
-  dbus.packages = gnomeApps ++ [ pkgs.gvfs ];
-  systemd.user.packages = gnomeApps ++ [ pkgs.gvfs ];
+  # Keep desktop search, but avoid generated dependency/build trees.
+  # Preserve the pinned indexer's standard exclusions and repository markers.
+  dconf.settings."org/freedesktop/tracker/miner/files".ignored-directories = [
+    "po"
+    "CVS"
+    "core-dumps"
+    "lost+found"
+    "node_modules"
+    "target"
+    "build"
+    "dist"
+  ];
+
+  dbus.packages = desktopServices;
+  systemd.user.packages = desktopServices;
   home.sessionSearchVariables.GIO_EXTRA_MODULES = [ "${pkgs.gvfs}/lib/gio/modules" ];
   # Native GNOME consumers also need the schemas, not just wrapped app binaries.
   home.sessionSearchVariables.XDG_DATA_DIRS = [
     "${config.home.profileDirectory}/share"
   ]
-  ++ map (p: "${p}/share/gsettings-schemas/${p.name}") gnomeApps;
-  home.sessionVariables.NAUTILUS_4_EXTENSION_DIR = "${config.home.profileDirectory}/lib/nautilus/extensions-4";
+  ++ map (p: "${p}/share/gsettings-schemas/${p.name}") desktopApps;
   # Preserve the askpass choice previously supplied by programs.seahorse.
   home.sessionVariables.SSH_ASKPASS = "${pkgs.seahorse}/libexec/seahorse/ssh-askpass";
   xdg.mimeApps = {
     enable = true;
-    defaultApplications."inode/directory" = [ "org.gnome.Nautilus.desktop" ];
+    defaultApplications = {
+      "inode/directory" = [ "thunar.desktop" ];
+      "text/html" = [ "zen.desktop" ];
+      "application/xhtml+xml" = [ "zen.desktop" ];
+      "x-scheme-handler/http" = [ "zen.desktop" ];
+      "x-scheme-handler/https" = [ "zen.desktop" ];
+    };
   };
   programs.bash.enableVteIntegration = true;
   programs.zsh.enableVteIntegration = true;
@@ -69,8 +80,11 @@ in
     with pkgs;
     [
       inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
+      inputs.codex-cli-nix.packages.${pkgs.stdenv.hostPlatform.system}.default
       inputs.webos-dev-manager.packages.${pkgs.stdenv.hostPlatform.system}.webos-dev-manager
       kitty
+      (if isLaptop then blenderNvidia else pkgs.blender)
+      freecad
       # The gtk3-default build, not libreoffice-qt — see SAL_USE_VCLPLUGIN below
       # for why the VCL backend decides whether Impress can present onto HDMI.
       libreoffice
@@ -83,13 +97,11 @@ in
       unzip
       lshw
       zenity
-      obsidian
       # Media and viewers. There was previously no video player, image viewer or
       # PDF viewer installed at all.
       mpv
       imv
       wireshark # capture privileges remain the native host's responsibility
-      gvfs # user mounts/trash/remote files; native UDisks2 and MTP rules remain required
       gpu-screen-recorder # NixOS provides the restricted KMS helper wrapper
 
       # Session controls, for the noctalia bar and the media keys.
@@ -102,13 +114,6 @@ in
       # Official: the derivation fetches from stable.dl2.discordapp.net, which is
       # Discord's own CDN, not a repackage.
       discord
-      # WhatsApp has NO official Linux desktop client — the only official surfaces
-      # are the phone apps, web.whatsapp.com, and the Windows/macOS builds. ZapZap
-      # is a third-party Qt shell around the official WhatsApp Web, built from its
-      # real upstream (github.com/rafatosta/zapzap, rtosta.com/zapzap). It buys
-      # native notifications and a tray icon over a browser tab; it does not make
-      # anything more official than the web app it wraps.
-      #zapzap
       # Windows apps in a container. Needs Docker socket (virtualisation.docker).
       # KVM needs nothing: /dev/kvm and /dev/net/tun are already world-accessible here.
       #
@@ -118,28 +123,12 @@ in
       logisim-evolution
       (callPackage ../pkgs/antigravity-cli.nix { })
     ]
-    ++ gnomeApps;
+    ++ desktopServices;
   home.sessionVariables = {
-    # ── Why "click Present" lands on the projector ─────────────────────────
-    # Under Wayland a client cannot position its own windows. The one exception
-    # is xdg_toplevel.set_fullscreen, which takes an optional wl_output argument
-    # meaning "fullscreen me on THAT monitor". GTK3 exposes it as
-    # gtk_window_fullscreen_on_monitor(), and LibreOffice's gtk3 VCL backend
-    # calls it when Impress starts a presentation. Qt has no equivalent path on
-    # Wayland — showFullScreen only ever takes effect on the main screen,
-    # because Qt never passes an output to the compositor. So under the Qt
-    # backend the slides fullscreen on the laptop panel no matter what the
-    # "Presentation display" dropdown says, which is why this previously needed
-    # wl-mirror to work around.
-    #
-    # This was never a niri problem: Fedora presented correctly under the same
-    # compositor because its LibreOffice defaults to gtk3. The build installed
-    # here ships all four backends (gtk3, qt6, kf6, gen) and picks one at
-    # runtime by autodetecting the desktop — and niri is not a desktop it
-    # recognises. Naming the backend removes the guess.
-    #
-    # Session variable: needs a fresh LOGIN, not just a rebuild.
+    BROWSER = "zen";
+    # Impress's GTK3 backend passes the selected Wayland output when presenting;
+    # its Qt backend fullscreened slides on the primary display instead.
+    # A fresh login is required for this session variable.
     SAL_USE_VCLPLUGIN = "gtk3";
-
   };
 }

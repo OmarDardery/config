@@ -14,38 +14,75 @@
 -		end
 -		noctalia.removeFile(file)
 -	end
+-end
 +local function shellQuote(value)
 +	return "'" .. tostring(value):gsub("'", "'\\''") .. "'"
- end
++end
 +
 +-- No cancellation handle is exposed by v5. Captured commands instead use the
 +-- host's process-group timeout; never signal an untrusted or recycled PID.
-@@ -43 +38 @@
+@@ -43,2 +38 @@
 -local stateDir = noctalia.pluginDataDir() or "/tmp/nix-monitor"
+-local remoteHashFile = stateDir .. "/remoteHash"
 +local stateDir = assert(noctalia.pluginDataDir(), "Nix Monitor needs its private plugin data directory")
-@@ -53 +48 @@
+@@ -53 +47,2 @@
 -local remoteHashCmd = "git ls-remote https://github.com/NixOS/nixpkgs " .. branch .. " 2>/dev/null | cut -c 1-7"
-+local remoteHashCmd = "git ls-remote https://github.com/NixOS/nixpkgs " .. shellQuote(branch) .. " 2>/dev/null | cut -c 1-7"
-@@ -98,2 +93 @@
++local remoteRef = "refs/heads/" .. branch
++local remoteHashCmd = "git ls-remote --exit-code --heads https://github.com/NixOS/nixpkgs " .. shellQuote(remoteRef)
+@@ -67,0 +63,2 @@
++setState("remoteHashFresh", false)
++setState("remoteCheckError", "")
+@@ -84 +80,0 @@
+-noctalia.writeFile(remoteHashFile, "")
+@@ -98,2 +94,9 @@
 --- Currently it is writing to a file because when I use the runAsync with
 --- the callback, it is timed out
-+-- Retain file-backed results, but let the host own the foreground command.
-@@ -115 +110,9 @@
++-- A failed check invalidates availability without discarding the last good hash.
++local function failRemoteCheck(message)
++	setState("remoteHashFresh", false)
++	setState("remoteCheckError", message)
++	setState("isUpdateAvailable", false)
++	if cfg("show_update_check_notification") then
++		noctalia.notifyError(message)
++	end
++end
+@@ -107,0 +111 @@
++	setState("remoteCheckError", "")
+@@ -114,10 +118,10 @@
+-	noctalia.writeFile(remoteHashFile, "")
 -	noctalia.runAsync(`sleep {_delay} && {remoteHashCmd} > {remoteHashFile} & echo $! > {remotePidFile}`)
-+	local launched = noctalia.runAsync(`sleep {_delay} && {remoteHashCmd} > {shellQuote(remoteHashFile)}`, function()
-+		checkRemoteStatus()
-+		setState("isRemoteCheckRunning", false)
+-end
+-
+--- Check if the remoteHash check command is finished by reading the file
+-function checkRemoteStatus()
+-	local remoteHashFileContent = noctalia.readFile(remoteHashFile) or ""
+-	local remoteHash = noctalia.string.trim(remoteHashFileContent)
+-
+-	if type(remoteHash) == "string" and remoteHash ~= "" then
++	local launched = noctalia.runAsync(`sleep {_delay} && {remoteHashCmd}`, function(result)
++		local hash, ref = noctalia.string.trim(result.stdout or ""):match("^([%da-fA-F]+)%s+([^%s]+)%s*$")
++		if result.exitCode == 0 and hash and (#hash == 40 or #hash == 64) and ref == remoteRef then
++			setState("remoteHash", hash:lower():sub(1, 7))
++			setState("remoteHashFresh", true)
++			setState("remoteCheckError", "")
++			onRemoteHashCheckCompleted()
++		else
++			failRemoteCheck("Update check failed. Last successful result may be stale; try again.")
++		end
+@@ -125,2 +129,6 @@
+-		setState("remoteHash", remoteHash)
+-		onRemoteHashCheckCompleted()
 +		setState("lastRemoteCheckTime", os.time())
 +	end, math.clamp(60000 * updateCheckDurationThreshold, 1000, 60000))
 +	if not launched then
++		failRemoteCheck("Could not start update check. Try again.")
 +		setState("isRemoteCheckRunning", false)
 +		setState("lastRemoteCheckTime", os.time())
-+	end
-@@ -144,2 +147 @@
+@@ -144,2 +152 @@
 -	setState("isRemoteCheckRunning", false)
 -	killWithPidFile(remotePidFile)
 +	-- Manual cancellation disabled; leave the in-flight check owned by the host.
-@@ -191,3 +193,11 @@
+@@ -191,3 +198,11 @@
 -	-- Sleep 0 to trigger noctalia calling /bin/sh
 -	noctalia.runAsync(`sleep 0 && {storeSizeCmd} > {storeSizeFile} & echo $! > {storePidFile}`)
 -	noctalia.runAsync(`sleep 0 && {closureSizeCmd} > {closureSizeFile} & echo $! > {closurePidFile}`)
@@ -60,17 +97,17 @@
 +		setState("isSystemStatsCheckRunning", false)
 +		setState("lastSystemStatsCheckTime", os.time())
 +	end
-@@ -224,3 +236 @@
+@@ -224,3 +239 @@
 -	setState("isSystemStatsCheckRunning", false)
 -	killWithPidFile(storePidFile)
 -	killWithPidFile(closurePidFile)
 +	-- Manual cancellation disabled; leave the in-flight check owned by the host.
-@@ -260,2 +272,2 @@
+@@ -260,2 +273,2 @@
 -	-- Check local hash every 10 seconds
 -	if os.time() - getState("lastLocalCheckTime") >= 10 then
 +	-- Check local hash every minute; deployment does not change every second.
 +	if os.time() - getState("lastLocalCheckTime") >= 60 then
-@@ -270,8 +282 @@
+@@ -270,8 +283 @@
 -	if getState("isRemoteCheckRunning") then
 -		checkRemoteStatus()
 -
@@ -80,7 +117,11 @@
 -		end
 -	end
 +	-- Completion and timeout are handled only by the captured-process callback.
-@@ -305,8 +310 @@
+@@ -280 +286,2 @@
+-		getState("localHash") ~= getState("remoteHash")
++		getState("remoteHashFresh")
++		and getState("localHash") ~= getState("remoteHash")
+@@ -305,8 +312 @@
 -	if getState("isSystemStatsCheckRunning") then
 -		checkSystemStatsFile()
 -
@@ -101,3 +142,23 @@
 -				onClick = "onCancelClicked",
 -			})
 +			ui.label({ text = "Checking (manual cancellation disabled)" })
+@@ -148,0 +143,9 @@
++	local remoteHash = getState("remoteHash")
++	if remoteHash ~= "n/a" and not getState("remoteHashFresh") then
++		remoteHash = `{remoteHash} (stale)`
++	end
++	local checkStatus = `{tr("panel.last_checked")}: {lastCheckTimeStr}`
++	local checkError = getState("remoteCheckError") or ""
++	if checkError ~= "" then
++		checkStatus = `{checkStatus} — {checkError}`
++	end
+@@ -188 +191 @@
+-			labelBox(tr("panel.remote"), getState("remoteHash"), "world"),
++			labelBox(tr("panel.remote"), remoteHash, "world"),
+@@ -223 +226 @@
+-			text = `{tr("panel.last_checked")}: {lastCheckTimeStr}`,
++			text = checkStatus,
+@@ -238,0 +242,3 @@
++watchState("remoteHashFresh", render)
++watchState("remoteCheckError", render)
++watchState("isUpdateAvailable", render)

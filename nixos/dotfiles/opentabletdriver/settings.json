@@ -1,0 +1,177 @@
+{
+  "Revision": "0.6.7",
+  "Profiles": [
+    {
+      "Tablet": "XP-Pen Deco mini7",
+      "OutputMode": {
+        "Path": "OpenTabletDriver.Desktop.Output.LinuxArtistMode",
+        "Settings": [],
+        "Enable": true
+      },
+      "Filters": [],
+      "AbsoluteModeSettings": {
+        "Display": {
+          "Width": 1707,
+          "Height": 1067,
+          "X": 853.5,
+          "Y": 533.5,
+          "Rotation": 0
+        },
+        "Tablet": {
+          "Width": 177.8,
+          "Height": 111.095,
+          "X": 88.9,
+          "Y": 55.5475,
+          "Rotation": 0
+        },
+        "EnableClipping": true,
+        "EnableAreaLimiting": false,
+        "LockAspectRatio": false
+      },
+      "RelativeModeSettings": {
+        "XSensitivity": 10,
+        "YSensitivity": 10,
+        "RelativeRotation": 0,
+        "RelativeResetDelay": "00:00:00.1000000"
+      },
+      "Bindings": {
+        "TipActivationThreshold": 1,
+        "TipButton": {
+          "Path": "OpenTabletDriver.Desktop.Binding.AdaptiveBinding",
+          "Settings": [
+            {
+              "Property": "Binding",
+              "Value": "Tip"
+            }
+          ],
+          "Enable": true
+        },
+        "EraserActivationThreshold": 1,
+        "EraserButton": {
+          "Path": "OpenTabletDriver.Desktop.Binding.AdaptiveBinding",
+          "Settings": [
+            {
+              "Property": "Binding",
+              "Value": "Eraser"
+            }
+          ],
+          "Enable": true
+        },
+        "PenButtons": [
+          {
+            "Path": "OpenTabletDriver.Desktop.Binding.AdaptiveBinding",
+            "Settings": [
+              {
+                "Property": "Binding",
+                "Value": "Button 1"
+              }
+            ],
+            "Enable": true
+          },
+          {
+            "Path": "OpenTabletDriver.Desktop.Binding.AdaptiveBinding",
+            "Settings": [
+              {
+                "Property": "Binding",
+                "Value": "Button 2"
+              }
+            ],
+            "Enable": true
+          }
+        ],
+        "AuxButtons": [
+          {
+            "Path": "OpenTabletDriver.Desktop.Binding.MultiKeyBinding",
+            "Settings": [
+              {
+                "Property": "Keys",
+                "Value": "Control+Equal"
+              }
+            ],
+            "Enable": true
+          },
+          {
+            "Path": "OpenTabletDriver.Desktop.Binding.MultiKeyBinding",
+            "Settings": [
+              {
+                "Property": "Keys",
+                "Value": "Control+Minus"
+              }
+            ],
+            "Enable": true
+          },
+          {
+            "Path": "OpenTabletDriver.Desktop.Binding.KeyBinding",
+            "Settings": [
+              {
+                "Property": "Key",
+                "Value": "Up"
+              }
+            ],
+            "Enable": true
+          },
+          {
+            "Path": "OpenTabletDriver.Desktop.Binding.KeyBinding",
+            "Settings": [
+              {
+                "Property": "Key",
+                "Value": "Down"
+              }
+            ],
+            "Enable": true
+          },
+          {
+            "Path": "OpenTabletDriver.Desktop.Binding.MultiKeyBinding",
+            "Settings": [
+              {
+                "Property": "Keys",
+                "Value": "Control+V"
+              }
+            ],
+            "Enable": true
+          },
+          {
+            "Path": "OpenTabletDriver.Desktop.Binding.MultiKeyBinding",
+            "Settings": [
+              {
+                "Property": "Keys",
+                "Value": "Control+C"
+              }
+            ],
+            "Enable": true
+          },
+          {
+            "Path": "OpenTabletDriver.Desktop.Binding.MultiKeyBinding",
+            "Settings": [
+              {
+                "Property": "Keys",
+                "Value": "Control+Z"
+              }
+            ],
+            "Enable": true
+          },
+          {
+            "Path": "OpenTabletDriver.Desktop.Binding.KeyBinding",
+            "Settings": [
+              {
+                "Property": "Key",
+                "Value": "F6"
+              }
+            ],
+            "Enable": true
+          }
+        ],
+        "MouseButtons": [],
+        "MouseScrollUp": null,
+        "MouseScrollDown": null,
+        "WheelBindings": [],
+        "DisablePressure": false,
+        "DisableTilt": false,
+        "EnableDragBindings": false
+      }
+    }
+  ],
+  "LockUsableAreaDisplay": true,
+  "LockUsableAreaTablet": true,
+  "Tools": []
+}

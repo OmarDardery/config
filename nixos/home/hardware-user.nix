@@ -2,22 +2,24 @@
   pkgs,
   lib,
   isLaptop,
+  config,
   osConfig ? null,
   ...
 }:
 lib.mkIf isLaptop {
+  # Keep GUI settings writable. Seed the profile on a fresh installation and
+  # reapply only the Deco mini7 auxiliary bindings on subsequent activations.
+  home.activation.openTabletDriverBindings = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    run ${pkgs.python3}/bin/python3 ${../pkgs}/migrate-desktop.py tablet \
+      ${lib.escapeShellArg "${config.xdg.configHome}/OpenTabletDriver/settings.json"} ${../dotfiles/opentabletdriver/settings.json}
+  '';
+
   home.packages = [
     pkgs.opentabletdriver
     # Integrated HM uses the exact host driver pin; no duplicate driver policy.
-    (if osConfig != null then osConfig.hardware.nvidia.package.settings else pkgs.nvidia-settings)
-    (pkgs.writeShellScriptBin "nvidia-offload" ''
-      export __NV_PRIME_RENDER_OFFLOAD=1
-      export __NV_PRIME_RENDER_OFFLOAD_PROVIDER=NVIDIA-G0
-      export __GLX_VENDOR_LIBRARY_NAME=nvidia
-      export __VK_LAYER_NV_optimus=NVIDIA_only
-      exec "$@"
-    '')
-  ];
+    (import ../pkgs/nvidia-offload.nix { inherit pkgs; })
+  ]
+  ++ lib.optionals (osConfig != null) [ osConfig.hardware.nvidia.package.settings ];
 
   systemd.user.services.opentabletdriver = {
     Unit = {

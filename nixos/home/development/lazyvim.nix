@@ -23,7 +23,7 @@ let
   toolchain = import ./toolchain.nix { inherit pkgs; };
 
   # Rendered into the Lua below. Same flags VSCodium passes — see
-  # ./toolchain.nix for what --query-driver buys and ./clangd.nix for the
+  # ./toolchain.nix for what --query-driver buys and ./default.nix for the
   # editor-independent half.
   clangdArgs = lib.generators.toLua { } (toolchain.clangdArgs config.home.homeDirectory);
 
@@ -112,17 +112,6 @@ let
     render-markdown-nvim # markdown
     rustaceanvim # rust
     venv-selector-nvim # python
-
-    # Pulled in by the extras as `optional = true`, so they sit unused until
-    # dap.core / test.core are enabled. Listing them now means turning those
-    # on later is a one-line change instead of a debugging session.
-    neotest
-    neotest-golang
-    neotest-python
-    nvim-dap
-    nvim-dap-go
-    nvim-dap-python
-    nvim-nio
 
     # ── Notebooks (see lua/plugins/jupyter.lua below) ─────────────────────
     image-nvim
@@ -529,6 +518,9 @@ in
         opts = {
           server = {
             cmd = { "${pkgs.rust-analyzer}/bin/rust-analyzer" },
+            default_settings = {
+              ["rust-analyzer"] = ${lib.generators.toLua { } toolchain.rustAnalyzerSettings},
+            },
           },
         },
       },
@@ -656,7 +648,7 @@ in
         -- file VSCodium's clangd reads, so the two editors cannot disagree.
         -- The plugin's own :help warns this combination breaks on Espressif
         -- boards: the xtensa build line carries GCC-only flags that clang
-        -- rejects outright. That is what ../clangd.nix removes.
+        -- rejects outright. That is what ../default.nix removes.
         opts = {
           lsp = "clangd",
           clangd_source = "compiledb",

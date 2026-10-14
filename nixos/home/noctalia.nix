@@ -18,8 +18,17 @@ let
   community = inputs.noctalia-templates;
   builtin = "${inputs.noctalia}/assets/templates";
   render = input: output: {
-    input_path = toString input;
+    input_path = "${input}";
     output_path = output;
+  };
+  nixosUpdate = pkgs.writeShellApplication {
+    name = "nixos-update";
+    runtimeInputs = [
+      pkgs.nix
+      pkgs.nixos-rebuild
+      pkgs.sudo
+    ];
+    text = builtins.readFile ../pkgs/nixos-update.sh;
   };
   zenApply = pkgs.writeShellApplication {
     name = "noctalia-zen-apply";
@@ -30,20 +39,10 @@ let
       pkgs.gnused
     ];
     text = ''
-      for root in "''${XDG_CONFIG_HOME:-$HOME/.config}/zen" "$HOME/.zen"; do
-        [[ -d "$root" ]] || continue
-        while IFS= read -r -d "" prefs; do
-          profile_dir=$(dirname "$prefs")
-          for file in "$profile_dir/user.js" "$profile_dir/chrome/userChrome.css" "$profile_dir/chrome/userContent.css"; do
-            if [[ -f "$file" && ! -e "$file.noctalia-backup" ]]; then
-              cp -p -- "$file" "$file.noctalia-backup"
-            fi
-          done
-        done < <(find "$root" -mindepth 2 -maxdepth 2 -type f -name prefs.js -print0)
-      done
-      exec bash ${community}/zen-browser/apply.sh
+      exec bash ${../pkgs}/zen-apply.sh ${lib.escapeShellArg "${community}/zen-browser/apply.sh"} ${lib.escapeShellArg "${zenControls}"}
     '';
   };
+  zenControls = ../dotfiles/zen/zen-window-controls.css;
 in
 {
   imports = [ inputs.noctalia.homeModules.default ];
@@ -53,12 +52,13 @@ in
     (pkgs.writeShellApplication {
       name = "noctalia-reconcile";
       text = ''
-        exec ${reconcilePython}/bin/python3 ${../pkgs/reconcile-noctalia.py} \
+        exec ${reconcilePython}/bin/python3 ${../pkgs}/reconcile-noctalia.py \
           ${lib.escapeShellArg "${config.xdg.stateHome}/noctalia/settings.toml"} \
           ${lib.escapeShellArg "${config.xdg.configHome}/noctalia/config.toml"} "$@"
       '';
     })
-  ];
+  ]
+  ++ lib.optional isNixOS nixosUpdate;
 
   programs.noctalia = {
     enable = true;
@@ -79,19 +79,18 @@ in
         )
         {
           shell.polkit_agent = isNixOS;
-          plugins.enabled = builtins.filter (
-            id: isNixOS || id != "avivbintangaringga/nix-monitor"
-          ) settings.plugins.enabled;
+          plugins.enabled =
+            builtins.filter (id: isNixOS || id != "avivbintangaringga/nix-monitor") settings.plugins.enabled
+            ++ lib.optional isNixOS "davemhammer/tailscale";
           bar.default.start = builtins.filter (id: isNixOS || id != "nix-monitor") settings.bar.default.start;
           plugin_settings = lib.optionalAttrs isNixOS {
             "avivbintangaringga/nix-monitor" = {
-              update_command = "${pkgs.nh}/bin/nh os switch --hostname ${lib.escapeShellArg profile.hostName} ${lib.escapeShellArg "path:${profile.configRepo}"}";
+              update_command = "${nixosUpdate}/bin/nixos-update ${lib.escapeShellArg profile.configRepo} ${lib.escapeShellArg profile.hostName}";
               hide_clean_button = false;
               hide_optimize_button = false;
             };
           };
           theme.templates.user = {
-            kitty.output_path = "${themeDir}/kitty.conf";
             umbriel = render ../dotfiles/noctalia/templates/umbriel.toml "${themeDir}/umbriel.toml";
             vscode = render "${community}/vscode/vscode.json" "${themeDir}/vscode.json";
             steam = render "${community}/steam/steam.css" "${themeDir}/steam.css";
@@ -149,8 +148,28 @@ in
     fi
   '';
 
+  # Seed before HM's own batCache hook, including when Noctalia is not running.
+  home.activation.initializeNoctaliaBat =
+    lib.hm.dag.entryBetween [ "batCache" ] [ "linkGeneration" ]
+      ''
+        bat_theme=${lib.escapeShellArg "${config.xdg.configHome}/bat/themes/noctalia.tmTheme"}
+        if [[ ! -e "$bat_theme" && ! -L "$bat_theme" ]]; then
+          run mkdir -p ${lib.escapeShellArg "${config.xdg.configHome}/bat/themes"}
+          run ${config.programs.noctalia.package}/bin/noctalia theme ${../dotfiles/Pictures/Wallpapers/dark-mountain.jpg} \
+            --scheme ${lib.escapeShellArg config.programs.noctalia.settings.theme.wallpaper_scheme} \
+            --render ${lib.escapeShellArg "${community}/bat/bat.tmTheme:${config.xdg.configHome}/bat/themes/noctalia.tmTheme"} -o /dev/null
+        fi
+      '';
+
+  # Migrate saved GUI state to the builtin while preserving other selections.
+  home.activation.noctaliaKittyTemplate = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    run ${reconcilePython}/bin/python3 ${../pkgs}/migrate-desktop.py noctalia \
+      ${lib.escapeShellArg "${config.xdg.stateHome}/noctalia/settings.toml"} \
+      ${lib.escapeShellArg "${config.xdg.stateHome}/noctalia/.kitty-template-v1"}
+  '';
+
   # Immutable local plugins take precedence over downloaded Git sources.
-  # Tailscale is available but inactive while the host service is disabled.
+  # Tailscale controls are enabled on NixOS alongside the host service.
   # Local discovery reads the manifests, so directory names need no author prefix.
   xdg.dataFile =
     lib.genAttrs
@@ -175,7 +194,7 @@ in
   # path, because it is real TOML and cannot interpolate one. That also keeps
   # switching wallpapers from the noctalia UI working.
   #
-  # Read-only, like the kitty tree, so adding a wallpaper means
+  # Read-only, so adding a wallpaper means
   # dropping it in dotfiles/Pictures/Wallpapers and rebuilding.
   home.file."Pictures/Wallpapers".source = ../dotfiles/Pictures/Wallpapers;
 }

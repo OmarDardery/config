@@ -3,26 +3,12 @@
 
 import argparse
 from collections.abc import Mapping
-import os
 from pathlib import Path
-import stat
-import tempfile
-import time
 import tomllib
 
 import tomlkit
 
-
-def snapshot(path):
-    fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
-    info = os.fstat(fd)
-    if not stat.S_ISREG(info.st_mode):
-        os.close(fd)
-        raise ValueError("state must be a regular, non-symlink file")
-    with os.fdopen(fd, "rb") as source:
-        identity = (info.st_dev, info.st_ino, info.st_size, info.st_mtime_ns,
-                    info.st_ctime_ns, info.st_mode)
-        return source.read(), identity
+from state_file import replace, snapshot
 
 
 def equal(left, right):
@@ -80,27 +66,7 @@ def reconcile(state, desired, *, apply=False, resets=()):
         rendered = tomlkit.dumps(document).encode("utf-8")
         if tomllib.loads(rendered.decode("utf-8")) != document.unwrap():
             raise ValueError("rendered state failed TOML roundtrip")
-        fd, name = tempfile.mkstemp(
-            prefix=f"{state.name}.backup-{time.time_ns()}-", dir=state.parent)
-        backup = Path(name)
-        with os.fdopen(fd, "wb") as output:
-            output.write(original)
-            output.flush()
-            os.fsync(output.fileno())
-        fd, name = tempfile.mkstemp(prefix=f".{state.name}.", dir=state.parent)
-        try:
-            with os.fdopen(fd, "wb") as output:
-                output.write(rendered)
-                output.flush()
-                os.fsync(output.fileno())
-            if snapshot(state) != (original, identity):
-                raise ValueError("state changed during reconciliation; backup retained")
-            os.replace(name, state)
-        finally:
-            try:
-                os.unlink(name)
-            except OSError:
-                pass  # Never remove the backup or mask a failed replacement.
+        backup = replace(state, (original, identity), rendered)
     return removed, backup
 
 
@@ -114,7 +80,7 @@ def main():
     try:
         removed, backup = reconcile(args.state, args.desired, apply=args.apply, resets=args.reset)
     except (OSError, ValueError, tomlkit.exceptions.ParseError):
-        parser.exit(1, "Reconciliation failed; state was not replaced. Any backup is retained.\n")
+        parser.exit(1, "Reconciliation failed; inspect state and any retained backup.\n")
     print("Removed keys:" if args.apply else "Would remove keys:")
     for key in removed:
         print(key)

@@ -52,7 +52,7 @@ let
         exec "$agent"
       fi
     done
-    printf '%s\n' 'Native polkit agent missing: review bootstrap.sh --setup-host prerequisites.' >&2
+    printf '%s\n' 'Native polkit agent missing: review bash nixos/bootstrap.sh --setup-host prerequisites.' >&2
     exit 1
   '';
   screenshotWindow = pkgs.writeShellApplication {
@@ -93,6 +93,9 @@ in
         mod_key = "Super";
         show_cheatsheet = false;
         focus_on_activate = true;
+        # Keep X11 games sharp at the panel resolution despite desktop scaling.
+        # Changing this requires restarting the compositor session.
+        xwayland_native_resolution = true;
       };
       input = {
         keyboard = {
@@ -183,7 +186,7 @@ in
           allow_when_inhibited = true;
         };
         "Mod+Shift+F23" = once "spawn:${pkgs.kitty}/bin/kitty";
-        "Mod+E" = once "spawn:nautilus";
+        "Mod+E" = once "spawn:thunar";
         "Mod+Shift+D" = once "spawn:nwg-displays";
 
         "XF86AudioRaiseVolume" = locked "volume-up";
@@ -274,7 +277,7 @@ in
         "Mod+F" = once "window-toggle-maximize";
         "Mod+W" = once "column-toggle-tabbed";
         "Mod+D" = once "workspace-set-layout:toggle";
-        "Mod+S" = once "spawn:noctalia msg screenshot-region";
+        "F6" = once "spawn:noctalia msg screenshot-region";
         "Ctrl+Shift+2" = once "spawn:noctalia msg screenshot-fullscreen";
         "Ctrl+Shift+3" = once "spawn:${screenshotWindow}/bin/screenshot-window-umbriel";
         "Mod+Escape" = (once "shortcuts-inhibit-toggle") // {
@@ -306,7 +309,7 @@ in
           blur = true;
         }
         {
-          match.app_id = "^org\\.gnome\\.Nautilus$";
+          match.app_id = "^(thunar|Thunar|org\\.xfce\\.Thunar)$";
           opacity = 0.8;
           blur = true;
         }

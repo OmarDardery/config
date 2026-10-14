@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Run with bash tests/bootstrap.sh. No Nix builds or real activation are allowed.
+# Run from the repository root with bash nixos/tests/bootstrap.sh. No Nix builds or real activation are allowed.
 # Literal shell expressions below are test seams, not expanded test variables.
 # shellcheck disable=SC2016
 set -euo pipefail
@@ -9,7 +9,7 @@ bash_bin=$(command -v bash)
 env_bin=$(command -v env)
 tmp=$(mktemp -d)
 trap 'rm -rf -- "$tmp"' EXIT
-mkdir -p "$tmp/bin" "$tmp/home" "$tmp/checkout/nixos" "$tmp/store/output"
+mkdir -p "$tmp/bin" "$tmp/home" "$tmp/checkout/nixos" "$tmp/store/output" "$tmp/retention"
 
 fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 
@@ -96,21 +96,38 @@ case "$name" in
           *) exit 90 ;;
         esac ;;
       build)
-        [[ $# == 5 && "$2 $3 $4" == '--no-write-lock-file --no-link --print-out-paths' ]] || exit 90
-        case "$MOCK_OS:$5" in
+        [[ $# == 6 && "$2 $3 $5" == '--no-write-lock-file --out-link --print-out-paths' ]] || exit 90
+        [[ "$4" == "$TMPDIR"/configs-bootstrap.*/result && -d "${4%/*}" ]] || exit 90
+        case "$MOCK_OS:$6" in
           "nixos:$MOCK_FLAKE#nixosConfigurations.$MOCK_HOST.config.system.build.toplevel"|\
           "linux:$MOCK_FLAKE#homeConfigurations.$MOCK_PROFILE.activationPackage") ;;
           *) exit 90 ;;
         esac
         [[ "$MOCK_BUILD" != fail ]] || exit 42
+        ln -s "$MOCK_OUTPUT" "$4"
         printf '%s\n' "$MOCK_OUTPUT" ;;
       *) exit 90 ;;
     esac ;;
   activate)
     [[ $# == 0 && "$MOCK_OS" == linux ]] || exit 90
+    roots=("$TMPDIR"/configs-bootstrap.*/result)
+    [[ ${#roots[@]} == 1 && -L "${roots[0]}" && -d "${roots[0]}" ]] || exit 90
     [[ "${HOME_MANAGER_BACKUP_EXT-}" == "$MOCK_BACKUP_EXTENSION" ]] || exit 90
     [[ -n "$MOCK_BACKUP_EXTENSION" || -z "${HOME_MANAGER_BACKUP_EXT+x}" ]] || exit 90 ;;
-  git|sudo|nix-env) exit 90 ;;
+  sudo)
+    [[ "${MOCK_ALLOW_SWITCH:-}" == yes ]] || exit 90
+    "$@" ;;
+  nix-env|switch-to-configuration)
+    [[ "${MOCK_ALLOW_SWITCH:-}" == yes ]] || exit 90
+    roots=("$TMPDIR"/configs-bootstrap.*/result)
+    [[ ${#roots[@]} == 1 && -L "${roots[0]}" && -d "${roots[0]}" ]] || exit 90
+    if [[ "$name" == nix-env ]]; then
+      [[ "$*" == "--profile /nix/var/nix/profiles/system --set $MOCK_STORE/output" ]] || exit 90
+    else
+      [[ "$*" == switch ]] || exit 90
+      [[ "${MOCK_SWITCH_FAIL:-}" != yes ]] || exit 42
+    fi ;;
+  git) exit 90 ;;
   *) exit 90 ;;
 esac
 MOCK
@@ -119,8 +136,12 @@ chmod +x "$tmp/bin/mock"
 for command in id uname findmnt nix git sudo nix-env; do
   ln -s mock "$tmp/bin/$command"
 done
-ln -s "$(command -v realpath)" "$tmp/bin/realpath"
+for command in realpath mktemp rm ln; do
+  ln -s "$(command -v "$command")" "$tmp/bin/$command"
+done
 ln -s "$tmp/bin/mock" "$tmp/store/output/activate"
+mkdir -p "$tmp/store/output/bin"
+ln -s "$tmp/bin/mock" "$tmp/store/output/bin/switch-to-configuration"
 
 # A real, local dirty index and untracked file ensure preservation assertions
 # cover more than command logs. No network, commits, or user git config changes.
@@ -150,7 +171,7 @@ reset_case() {
 run_case() {
   local expected=$1 label=$2 status=0
   shift 2
-  "$env_bin" -i PATH="$tmp/bin" HOME="$tmp/home" \
+  "$env_bin" -i PATH="$tmp/bin" HOME="$tmp/home" TMPDIR="$tmp/retention" \
     MOCK_OS="$os" MOCK_UID="$uid" MOCK_USER="$user" \
     MOCK_UUID="$uuid" MOCK_DEVICE_UUID="$device_uuid" \
     MOCK_ARCH="$arch" MOCK_SYSTEM="$system" MOCK_ROOT_TYPE="$root_type" MOCK_BOOT_TYPE="$boot_type" \
@@ -168,6 +189,8 @@ run_case() {
     [[ "$status" != 0 ]] || fail "$label: unexpectedly succeeded"
     [[ "$expected" == fail || "$(<"$tmp/stderr")" == *"$expected"* ]] || fail "$label: wrong refusal: $(<"$tmp/stderr")"
   fi
+  local leftovers=("$tmp/retention"/configs-bootstrap.*)
+  [[ ! -e "${leftovers[0]}" ]] || fail "$label: build root was not cleaned up"
   local log
   log=$(<"$tmp/log")
   [[ "$log" != *git* && "$log" != *sudo* && "$log" != *nix-env* ]] || fail "$label: forbidden command"
@@ -189,7 +212,7 @@ for os_case in nixos linux; do
     [[ "$mode" != explicit ]] || args=(--build-only)
     run_case pass "$os build-only ($mode)" "${args[@]}"
     [[ "$(<"$tmp/stdout")" == *'Nothing was activated.'* ]] || fail 'missing build-only message'
-    [[ "$(<"$tmp/log")" == *'--no-write-lock-file --no-link --print-out-paths'* ]] || fail 'build was not called'
+    [[ "$(<"$tmp/log")" == *'--no-write-lock-file --out-link'* ]] || fail 'build was not called'
   done
 done
 
@@ -267,12 +290,12 @@ run_case 'single store output' 'invalid output cannot activate' --activate
 reset_case
 run_case pass 'Home Manager builds before activation without sudo' --activate
 log=$(<"$tmp/log")
-[[ "$log" == *'--no-write-lock-file --no-link --print-out-paths'*$'\nactivate '* ]] || fail 'activation did not follow build'
+[[ "$log" == *'--no-write-lock-file --out-link'*$'\nactivate '* ]] || fail 'activation did not follow build'
 [[ "$(<"$tmp/stdout")" == *'Activation completed'* ]] || fail 'activation did not complete'
 
 reset_case; backup_extension=bootstrap-backup
 run_case pass 'standalone activation scopes backup extension to exact closure' --activate --backup-extension "$backup_extension"
-[[ "$(<"$tmp/log")" == *'--no-write-lock-file --no-link --print-out-paths'*$'\nactivate '* ]] || fail 'backup activation did not follow build'
+[[ "$(<"$tmp/log")" == *'--no-write-lock-file --out-link'*$'\nactivate '* ]] || fail 'backup activation did not follow build'
 reset_case
 run_case 'requires standalone --activate' 'backup extension requires activation' --backup-extension backup; no_build
 reset_case; os=nixos
@@ -284,6 +307,8 @@ for value in '' 'bad/name' 'bad#name' 'bad?name' 'bad name' $'bad\nname'; do
 done
 reset_case; backup_extension=backup; build=fail
 run_case fail 'failed build with backup cannot activate' --activate --backup-extension "$backup_extension"
+
+python3 "$root/tests/bootstrap-retention.py" "$tmp" "$bash_bin"
 
 git -C "$tmp/checkout" status --porcelain=v1 > "$tmp/status.after"
 git -C "$tmp/checkout" diff --cached --binary > "$tmp/index.after"

@@ -250,7 +250,7 @@ wallpaper_scheme = "m3-rainbow"
     [theme.templates]
     # Noctalia owns color generation, not immutable application configuration.
     # Application templates and hooks use pinned sources in home/noctalia.nix.
-    builtin_ids = [ "gtk3", "gtk4", "kcolorscheme", "starship" ]
+    builtin_ids = [ "gtk3", "gtk4", "kcolorscheme", "starship", "kitty" ]
     community_ids = []
 
     # User templates: same rendering, writable destination. Both paths below
@@ -260,13 +260,6 @@ wallpaper_scheme = "m3-rainbow"
     # ~/.local/state is the right side of the line: it is generated output that
     # changes with the wallpaper, not configuration, so it does not belong in
     # git and does not fight home-manager for ownership of a path.
-
-    [theme.templates.user.kitty]
-    input_path = "$XDG_CONFIG_HOME/noctalia/templates/kitty.conf"
-    output_path = "$XDG_STATE_HOME/noctalia/theme/kitty.conf"
-    # kitty does not watch its includes. This is the same reload the builtin
-    # kitty template's apply.sh ends with.
-    post_hook = "pkill -USR1 kitty"
 
 [wallpaper]
 transition_on_startup = true

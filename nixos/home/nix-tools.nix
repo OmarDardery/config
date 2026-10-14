@@ -1,6 +1,13 @@
-# Tooling for working on this config and on Nix projects generally. Portable:
-# the one machine-specific bit, which flake `nh` acts on, lives in host.nix.
-{ pkgs, inputs, ... }:
+# Nix tooling and deployment aliases for both backends.
+{
+  pkgs,
+  inputs,
+  profile,
+  isNixOS,
+  isLaptop,
+  lib,
+  ...
+}:
 {
   imports = [ inputs.nix-index-database.homeModules.nix-index ];
 
@@ -27,4 +34,16 @@
     nvd # diff two generations' package lists
     nix-tree # walk a closure to find what pulled something in
   ];
+
+  programs.nh.flake = "path:${profile.configRepo}";
+
+  home.shellAliases = {
+    up =
+      if isNixOS then
+        "nh os switch --hostname ${lib.escapeShellArg profile.hostName}"
+      else
+        "nh home switch -c ${lib.escapeShellArg profile.profileName}";
+    cnf = "\${EDITOR:-nvim} ${lib.escapeShellArg "${profile.configRepo}/${if isNixOS then "configuration.nix" else "profile.nix"}"}";
+  }
+  // lib.optionalAttrs isLaptop { lc = "cd /mnt/storage/Coding"; };
 }

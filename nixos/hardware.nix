@@ -1,5 +1,9 @@
 # Everything bound to this specific laptop: GPUs, peripherals, extra disks.
-{ config, pkgs, ... }:
+{
+  config,
+  pkgs,
+  ...
+}:
 {
   boot.kernelModules = [ "uinput" ];
 
@@ -103,9 +107,8 @@
     "nvidia"
   ];
 
-  # Fixes this laptop's stripe corruption, not its independent Niri flicker.
-  # Changes require a fresh login. Keep the fixed refresh configuration and
-  # disabled amdgpu_dpm action; historical Niri findings remain in GRAPHICS.md.
+  # Fixes this laptop's stripe corruption. Changes require a fresh login.
+  # Historical graphics findings remain in the README.
   # Keep this global: SDDM also renders on AMD; greeter dependence is untested.
   environment.sessionVariables.AMD_DEBUG = "nodcc";
 

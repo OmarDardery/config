@@ -24,7 +24,7 @@ die() {
 
 usage() {
   printf '%s\n' \
-    'Usage: bash bootstrap.sh [OPTIONS]' \
+    'Usage: bash nixos/bootstrap.sh [OPTIONS]' \
     '' \
     'Linux only; run as your normal user, never root.' \
     'NixOS builds nixosConfigurations.<host>; other Linux builds Home Manager.' \
@@ -227,8 +227,16 @@ if [[ "$flake_dir" != "$configured_flake" ]]; then
 fi
 
 say "Building $build_target (no activation yet)"
-# No result symlink or git staging; the path source includes untracked modules.
-output=$(nix "${nixflags[@]}" build --no-write-lock-file --no-link --print-out-paths "$build_target")
+# Nix registers the out-link as a GC root when the build completes. Keep it
+# until activation registers its generation, including time spent at the prompt.
+# Nothing is linked inside the checkout; failures and cancellation clean up too.
+build_retention=$(mktemp -d "${TMPDIR:-/tmp}/configs-bootstrap.XXXXXXXX")
+trap 'rm -rf -- "$build_retention"' EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+build_root="$build_retention/result"
+output=$(nix "${nixflags[@]}" build --no-write-lock-file --out-link "$build_root" --print-out-paths "$build_target")
 [[ "$output" == /nix/store/* && "$output" != *$'\n'* && -d "$output" ]] ||
   die 'build did not return a single store output'
 say "Build succeeded: $output"
@@ -245,7 +253,7 @@ if [[ -e /etc/NIXOS ]]; then
   if ! read -r -p 'Activate NixOS now? [y/N] ' reply </dev/tty; then
     die 'interactive terminal required for NixOS activation'
   fi
-  [[ "$reply" == y || "$reply" == Y ]] || die 'activation cancelled; build remains available'
+  [[ "$reply" == y || "$reply" == Y ]] || die 'activation cancelled; nothing was activated'
   # Activate the exact closure just built, rather than reevaluating mutable files.
   sudo nix-env --profile /nix/var/nix/profiles/system --set "$output"
   sudo "$output/bin/switch-to-configuration" switch

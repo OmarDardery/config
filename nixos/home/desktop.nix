@@ -6,6 +6,20 @@
   ...
 }:
 {
+  # Noctalia writes kitty.conf and themes/noctalia.conf. Preserve existing edits
+  # and back up the old directory link before making its configuration writable.
+  home.activation.kittyDirectoryMigration =
+    lib.hm.dag.entryBetween [ "linkGeneration" ] [ "writeBoundary" ]
+      ''
+        run ${pkgs.python3}/bin/python3 ${../pkgs}/migrate-desktop.py kitty-directory \
+          ${lib.escapeShellArg "${config.xdg.configHome}/kitty"}
+      '';
+  home.activation.kittyWritableConfig = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+    run ${pkgs.python3}/bin/python3 ${../pkgs}/migrate-desktop.py kitty \
+      ${lib.escapeShellArg "${config.xdg.configHome}/kitty/kitty.conf"} ${../dotfiles/kitty/kitty.conf} \
+      ${lib.escapeShellArg "${config.xdg.stateHome}/noctalia/theme/kitty.conf"}
+  '';
+
   services.kdeconnect.enable = true;
   systemd.user.services.kdeconnect = {
     Unit.BindsTo = [ "graphical-session.target" ];
@@ -44,16 +58,6 @@
     Service.Restart = "on-failure";
     Service.RestartSec = "5s";
   };
-
-  # Raw config trees, deployed as read-only symlinks into ~/.config.
-  # Retain directory-level ownership so existing HM directory links migrate safely.
-  xdg.configFile."kitty".source = pkgs.runCommand "kitty-config" { } ''
-    cp -r ${../dotfiles/kitty} "$out"
-    chmod -R u+w "$out"
-    substituteInPlace "$out/kitty.conf" \
-      --replace-fail '~/.local/state/noctalia/theme/kitty.conf' \
-      ${lib.escapeShellArg "${config.xdg.stateHome}/noctalia/theme/kitty.conf"}
-  '';
 
   # Required for pointerCursor.gtk to deploy the cursor settings.
   gtk.enable = true;

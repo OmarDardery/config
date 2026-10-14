@@ -1,15 +1,10 @@
 # The language toolchain, in one place.
 #
-# Three editors are configured in this directory and all three want the same
-# servers, formatters and linters. Neovim and Doom each take theirs as
-# `extraPackages` / `extraBinPackages`, which puts the binaries on that
-# editor's *wrapper* PATH and nowhere else. VSCode extensions cannot use that:
-# they spawn `gopls`, `ruff`, `shfmt` and friends from the session PATH, so
-# whatever they need has to be a real installed package.
+# Neovim and VSCodium use the same servers, formatters and linters. VSCodium
+# extensions spawn tools from the session PATH, so these are installed packages.
 #
 # So this file is the single list, and ./default.nix installs it into
-# home.packages. Each editor still adds its own extras on top — see the
-# consumers for what is deliberately local to one of them.
+# home.packages. Each editor adds its own extras where needed.
 #
 # Plain function, not a NixOS module: it is `import`ed, not `imports`ed.
 { pkgs }:
@@ -17,6 +12,13 @@
   # Shared by GUI editors and the general development shells.
   runtimes = with pkgs; [
     go
+    # GUI editors and shells can compile/check Rust without downloading a toolchain.
+    rustc
+    cargo
+    clippy
+    rustfmt
+    # Rust links through cc; GUI editors need the same wrapper as mkShell.
+    stdenv.cc
     uv
     bun
     python3
@@ -62,10 +64,10 @@
       };
     };
 
-  # Servers, formatters and linters shared by Neovim, Doom and VSCodium.
+  # Servers, formatters and linters shared by Neovim and VSCodium.
   languageServers = with pkgs; [
     # Nix. nixd over nil/rnix-lsp: it is the only one of the three installed, so
-    # both eglot and nvim-lspconfig resolve to it. statix is what nvim-lint
+    # nvim-lspconfig resolves to it. statix is what nvim-lint
     # points at for .nix files; without it every write logs "Error running
     # statix: ENOENT".
     nixd
@@ -77,8 +79,7 @@
     # C/C++ — clangd and clang-format both live in clang-tools
     clang-tools
     # Go. gofumpt and goimports (from gotools) are what LazyVim's go extra
-    # formats with; delve is the debugger both the VSCode Go extension and
-    # nvim-dap drive.
+    # formats with; delve is used by the VSCodium Go extension.
     gopls
     gofumpt
     gotools
@@ -116,6 +117,13 @@
     hadolint
   ];
 
+  # Editor-only limits leave explicit builds and game processes unrestricted.
+  rustAnalyzerSettings = {
+    numThreads = 4;
+    cachePriming.numThreads = 4;
+    cargo.extraEnv.CARGO_BUILD_JOBS = "4";
+  };
+
   # Extra clangd flags every editor here passes. --query-driver lets clangd run
   # a cross-compiler it does not recognise and ask that compiler where its own
   # system headers live. Without it an ESP32 translation unit resolves
@@ -127,8 +135,9 @@
   # A function of the home dir rather than a hardcoded path: clangd expands
   # neither ~ nor $HOME here, so callers pass config.home.homeDirectory.
   # Flag removals for those toolchains are editor-independent and live in
-  # ./clangd.nix instead.
+  # ./default.nix instead.
   clangdArgs = homeDir: [
+    "-j=4"
     (
       "--query-driver="
       + builtins.concatStringsSep "," (
@@ -150,9 +159,7 @@
     )
   ];
 
-  # Notebook support. Doom's `:lang org +jupyter` talks to a real Jupyter over
-  # ZeroMQ, and VSCodium's ms-toolsai.jupyter needs an interpreter with
-  # ipykernel in it. Same env for both.
+  # VSCodium's Jupyter extension needs an interpreter with ipykernel.
   jupyterPython = pkgs.python3.withPackages (
     ps: with ps; [
       jupyter-client

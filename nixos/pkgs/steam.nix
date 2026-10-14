@@ -5,7 +5,6 @@
 }:
 assert pkgs.stdenv.hostPlatform.system == "x86_64-linux";
 let
-  sources = import ./steam-sources.nix;
   millennium = millenniumInput.packages.x86_64-linux.millennium;
   # Keep Steam's FHS glibc and Millennium's compiled libraries on the same pin.
   runtimePkgs = import millenniumInput.inputs.nixpkgs {
@@ -15,7 +14,12 @@ let
   material =
     pkgs.runCommand "noctalia-steam-material-1.5.16"
       {
-        src = pkgs.fetchFromGitHub sources.material;
+        src = pkgs.fetchFromGitHub {
+          owner = "kuska1";
+          repo = "Material-Theme";
+          rev = "f91b4e9cbc5436f149e6b293391a9a96ab47fbe9";
+          hash = "sha256-qPzo59NyKsmKkhupOf3n9X29p/Wbv7jaKDGaM23HTJo=";
+        };
         nativeBuildInputs = [ pkgs.jq ];
       }
       ''
@@ -29,7 +33,7 @@ let
       '';
 in
 {
-  inherit millennium;
+  inherit millennium material;
   # Same environment/libraries as upstream packages/nix/steam.nix, without
   # its unconditional ln -sf in extraProfile. Bootstrap setup is opt-in below.
   steam = runtimePkgs.steam.override {
@@ -48,61 +52,22 @@ in
       runtimeInputs = [
         pkgs.coreutils
         pkgs.procps
+        pkgs.python3
       ];
       text = ''
         if [[ $# -gt 1 || ( $# -eq 1 && "$1" != --apply ) ]]; then
           printf 'Usage: noctalia-steam-setup [--apply]\n' >&2
           exit 2
         fi
-        apply=false
-        if [[ $# -eq 1 ]]; then apply=true; fi
         if pgrep -u "$(id -u)" -x 'steam|steamwebhelper' >/dev/null; then
           printf 'Exit Steam completely before setup.\n' >&2
           exit 1
         fi
-        root="$HOME/.steam/steam"
-        if [[ ! -f "$root/ubuntu12_32/steam" || ! -d "$root/ubuntu12_64" ]]; then
-          printf 'Initialize Steam normally first; expected client at %s.\n' "$root" >&2
-          exit 1
-        fi
-        if [[ ! -s ${pkgs.lib.escapeShellArg colorsFile} ]]; then
-          printf 'Render Noctalia steam.css before setup: %s\n' ${pkgs.lib.escapeShellArg colorsFile} >&2
-          exit 1
-        fi
-        destinations=(
-          "$root/ubuntu12_32/libXtst.so.6"
-          "$root/ubuntu12_64/libXtst.so.6"
-          "$root/millennium/themes/Material-Theme"
-        )
-        targets=(
-          "${millennium}/lib/libmillennium_bootstrap_x86.so"
-          "${millennium}/lib/libmillennium_bootstrap_hhx64.so"
-          "${material}"
-        )
-        # Validate every destination before making any changes. Never replace
-        # an existing user theme, library, or non-managed symlink.
-        for i in "''${!destinations[@]}"; do
-          dest="''${destinations[$i]}"
-          if [[ -e "$dest" || -L "$dest" ]]; then
-            old=$(readlink "$dest" || true)
-            case "$i:$old" in
-              0:/nix/store/*-millennium-*/lib/libmillennium_bootstrap_x86.so) ;;
-              1:/nix/store/*-millennium-*/lib/libmillennium_bootstrap_hhx64.so) ;;
-              2:/nix/store/*-noctalia-steam-material-*) ;;
-              *) printf 'Refusing to replace unmanaged path: %s\n' "$dest" >&2; exit 1 ;;
-            esac
-          fi
-          printf '%s -> %s\n' "$dest" "''${targets[$i]}"
-        done
-        if ! "$apply"; then
-          printf 'Preview only. Run with --apply to create these links.\n'
-          exit 0
-        fi
-        mkdir -p "$root/millennium/themes"
-        for i in "''${!destinations[@]}"; do
-          ln -sfnT "''${targets[$i]}" "''${destinations[$i]}"
-        done
-        printf 'Select Material in Millennium, then Color = Matugen. No settings were changed.\n'
+        exec python3 ${./steam-setup.py} \
+          ${pkgs.lib.escapeShellArg colorsFile} \
+          "${millennium}/lib/libmillennium_bootstrap_x86.so" \
+          "${millennium}/lib/libmillennium_bootstrap_hhx64.so" \
+          "${material}" "$@"
       '';
     };
 }

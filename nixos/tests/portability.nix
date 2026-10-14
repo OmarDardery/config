@@ -21,12 +21,26 @@ let
   vscodeThemeExtension = lib.findFirst (
     extension: (extension.vscodeExtName or "") == "noctalia"
   ) null home.programs.vscodium.profiles.default.extensions;
-  toolchain = import ../nixos/home/development/toolchain.nix { inherit (base) pkgs; };
+  toolchain = import ../home/development/toolchain.nix { inherit (base) pkgs; };
   nixd = toolchain.nixdSettings {
     profile = alternate;
     isNixOS = false;
   };
   checks = {
+    performancePolicy =
+      system.boot.loader.timeout == 2
+      && system.boot.loader.systemd-boot.configurationLimit == 10
+      && builtins.elem "-j=4" (toolchain.clangdArgs alternate.homeDirectory)
+      && home.programs.vscodium.profiles.default.userSettings."rust-analyzer.numThreads" == 4
+      &&
+        home.programs.vscodium.profiles.default.userSettings."rust-analyzer.cargo.extraEnv".CARGO_BUILD_JOBS
+        == "4"
+      && !(home.home.sessionVariables ? CARGO_BUILD_JOBS)
+      && system.hardware.block.defaultScheduler == null
+      && !system.services.scx.enable
+      && !(system.systemd.services ? scx)
+      && system.specialisation == { }
+      && system.boot.kernelPackages.kernel == base.pkgs.linuxPackages_latest.kernel;
     identity =
       home.home.username == alternate.username && home.home.homeDirectory == alternate.homeDirectory;
     noAuthorIdentity = !(home.programs.git.settings ? user);
@@ -43,8 +57,8 @@ let
     nixd = home.programs.vscodium.profiles.default.userSettings."nix.serverSettings".nixd == nixd;
     noSystemOptions = !(nixd.options ? nixos);
     templates =
-      home.programs.noctalia.settings.theme.templates.user.kitty.output_path
-      == "${home.xdg.stateHome}/noctalia/theme/kitty.conf";
+      builtins.elem "kitty" home.programs.noctalia.settings.theme.templates.builtin_ids
+      && !(home.programs.noctalia.settings.theme.templates.user ? kitty);
     cursor = home.programs.umbriel.settings.input.cursor.size == home.home.pointerCursor.size;
     keyboard = home.programs.umbriel.settings.input.keyboard.layout == "us,ara";
     umbrielInput =
@@ -98,7 +112,7 @@ let
         == "noctalia msg session lock-and-suspend";
     pythonNativeLibraries =
       builtins.all (package: builtins.elem package system.programs.nix-ld.libraries) (
-        (import ../nixos/home/development/toolchain.nix {
+        (import ../home/development/toolchain.nix {
           inherit (flake.nixosConfigurations.${profile.hostName}) pkgs;
         }).pythonNativeLibraries
       )
@@ -180,7 +194,6 @@ let
           "steam"
           "zen_chrome"
           "zen_content"
-          "kitty"
           "nvim"
           "fzf"
           "lazygit"
@@ -205,6 +218,21 @@ let
       && system.hardware.steam-hardware.enable
       && system.security.wrappers.gamemoded.capabilities == "cap_sys_nice+ep"
       && system.services.pipewire.alsa.support32Bit == system.services.pipewire.alsa.enable;
+    gamemodeAuthorization =
+      builtins.elem "gamemode" system.users.users.${profile.username}.extraGroups
+      && builtins.any (
+        package: lib.getName package == "gamemode-polkit-policy"
+      ) system.environment.systemPackages;
+    rustToolchain = builtins.all (package: builtins.elem package home.home.packages) [
+      base.pkgs.rustc
+      base.pkgs.cargo
+      base.pkgs.clippy
+      base.pkgs.rustfmt
+      base.pkgs.stdenv.cc
+    ];
+    batSeedOrdering =
+      builtins.elem "batCache" home.home.activation.initializeNoctaliaBat.before
+      && builtins.elem "linkGeneration" home.home.activation.initializeNoctaliaBat.after;
     portals = builtins.all (
       package:
       builtins.elem package home.dbus.packages && builtins.elem package home.systemd.user.packages
@@ -229,6 +257,52 @@ let
         base.pkgs.gvfs
         base.pkgs.gamemode
       ];
+    fileManager =
+      builtins.all
+        (
+          configuration:
+          configuration.xdg.mimeApps.defaultApplications."inode/directory" == [ "thunar.desktop" ]
+          && configuration.programs.umbriel.settings.keybinds."Mod+E".action == "spawn:thunar"
+          && builtins.elem base.pkgs.thunar configuration.home.packages
+          &&
+            builtins.all
+              (
+                package:
+                builtins.elem package configuration.dbus.packages
+                && builtins.elem package configuration.systemd.user.packages
+              )
+              [
+                base.pkgs.thunar
+                base.pkgs.tumbler
+                base.pkgs.xfconf
+                base.pkgs.gvfs
+              ]
+        )
+        [
+          home
+          system.home-manager.users.${profile.username}
+        ];
+    noUnrequestedApplications =
+      builtins.all
+        (
+          packages:
+          !(builtins.any (
+            package:
+            builtins.elem (lib.getName package) [
+              "nautilus"
+              "obsidian"
+              "gnome-maps"
+              "gnome-connections"
+              "epiphany"
+              "sushi"
+            ]
+          ) packages)
+        )
+        [
+          home.home.packages
+          system.home-manager.users.${profile.username}.home.packages
+          system.environment.systemPackages
+        ];
     capturePrivileges =
       system.security.wrappers.dumpcap.capabilities == "cap_net_raw,cap_net_admin+eip"
       && system.security.wrappers.dumpcap.group == "wireshark"
@@ -254,9 +328,26 @@ let
       ];
     hardwarePolicy = system.hardware.nvidia.open && system.hardware.nvidia.prime.offload.enable;
     localsendAbsent = !system.programs.localsend.enable;
-    firewallPreserved =
+    nixMonitorUpdatesFlakes =
+      let
+        settings = system.home-manager.users.${profile.username}.programs.noctalia.settings;
+        command = settings.plugin_settings."avivbintangaringga/nix-monitor".update_command;
+      in
+      lib.hasInfix "/bin/nixos-update " command
+      && builtins.elem "davemhammer/tailscale" settings.plugins.enabled;
+    tailscaleOnlyKdeConnect =
       system.networking.firewall.enable
-      && system.programs.kdeconnect.enable
+      && system.services.tailscale.enable
+      && !system.programs.kdeconnect.enable
+      && system.services.tailscale.extraSetFlags == [ "--operator=${profile.username}" ]
+      && !builtins.elem {
+        from = 1714;
+        to = 1764;
+      } system.networking.firewall.allowedTCPPortRanges
+      && !builtins.elem {
+        from = 1714;
+        to = 1764;
+      } system.networking.firewall.allowedUDPPortRanges
       &&
         builtins.all
           (
@@ -267,8 +358,8 @@ let
             } ranges
           )
           [
-            system.networking.firewall.allowedTCPPortRanges
-            system.networking.firewall.allowedUDPPortRanges
+            system.networking.firewall.interfaces.${system.services.tailscale.interfaceName}.allowedTCPPortRanges
+            system.networking.firewall.interfaces.${system.services.tailscale.interfaceName}.allowedUDPPortRanges
           ];
   };
   failed = builtins.attrNames (lib.filterAttrs (_: passed: !passed) checks);
@@ -280,7 +371,7 @@ assert lib.assertMsg (
   inherit checks;
   # These fixtures exercise actual generated files, not only mocked identities.
   fixtures = {
-    kitty = home.xdg.configFile."kitty".source;
+    kitty = ../dotfiles/kitty;
     umbriel = home.xdg.configFile."umbriel/config.toml".source;
     vscode = vscodeThemeExtension;
     units = home.xdg.dataFile."systemd/user".source;
