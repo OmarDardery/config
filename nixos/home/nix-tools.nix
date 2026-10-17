@@ -8,6 +8,9 @@
   lib,
   ...
 }:
+let
+  configFile = if isNixOS then "configuration.nix" else "profile.nix";
+in
 {
   imports = [ inputs.nix-index-database.homeModules.nix-index ];
 
@@ -43,7 +46,7 @@
         "nh os switch --hostname ${lib.escapeShellArg profile.hostName}"
       else
         "nh home switch -c ${lib.escapeShellArg profile.profileName}";
-    cnf = "\${EDITOR:-nvim} ${lib.escapeShellArg "${profile.configRepo}/${if isNixOS then "configuration.nix" else "profile.nix"}"}";
+    cnf = "\${EDITOR:-nvim} ${lib.escapeShellArg "${profile.configRepo}/${configFile}"}";
   }
   // lib.optionalAttrs isLaptop { lc = "cd /mnt/storage/Coding"; };
 }

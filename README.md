@@ -374,7 +374,7 @@ unchanged. Hardware testing limits and recorded graphics observations are below.
 
 Nix Monitor runs the packaged `nixos-update` command using `path:` flake
 references, so new untracked modules are included consistently. It updates all inputs,
-previews builds/downloads, and switches only after you type `yes`. Refusal or
+builds the complete system without activating it, and switches only after you type `yes`. Refusal or
 EOF leaves the updated lockfile for inspection; command failures stop the flow.
 This verification does not run the updater against the real checkout.
 
@@ -507,7 +507,7 @@ The package applies three maintained patches:
   checks as errors/stale data, and suppresses update availability until retry
   succeeds. It ticks every ten seconds, checks local revision once per minute,
   and leaves expensive store scanning disabled. The packaged updater previews
-  all-input updates and requires `yes` before switching.
+  all-input updates, builds the system, and requires `yes` before switching.
 - Game Launcher's C helper is compiled during packaging, avoiding runtime
   recompilation inside an immutable plugin directory.
 

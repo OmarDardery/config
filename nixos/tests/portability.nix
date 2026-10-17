@@ -299,6 +299,7 @@ let
               "gnome-connections"
               "epiphany"
               "sushi"
+              "rnote"
             ]
           ) packages)
         )

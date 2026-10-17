@@ -136,28 +136,27 @@
   # neither ~ nor $HOME here, so callers pass config.home.homeDirectory.
   # Flag removals for those toolchains are editor-independent and live in
   # ./default.nix instead.
-  clangdArgs = homeDir: [
-    "-j=4"
-    (
-      "--query-driver="
-      + builtins.concatStringsSep "," (
-        builtins.concatMap
-          (
-            target:
-            map (compiler: "${homeDir}/.platformio/packages/**/bin/${target}-${compiler}") [
-              "gcc"
-              "g++"
-            ]
-          )
-          [
-            "xtensa-*"
-            "riscv*"
-            "avr"
-            "arm-*"
-          ]
+  clangdArgs =
+    homeDir:
+    let
+      bin = "${homeDir}/.platformio/packages/**/bin";
+    in
+    [
+      "-j=4"
+      (
+        "--query-driver="
+        + pkgs.lib.concatStringsSep "," [
+          "${bin}/xtensa-*-gcc"
+          "${bin}/xtensa-*-g++"
+          "${bin}/riscv*-gcc"
+          "${bin}/riscv*-g++"
+          "${bin}/avr-gcc"
+          "${bin}/avr-g++"
+          "${bin}/arm-*-gcc"
+          "${bin}/arm-*-g++"
+        ]
       )
-    )
-  ];
+    ];
 
   # VSCodium's Jupyter extension needs an interpreter with ipykernel.
   jupyterPython = pkgs.python3.withPackages (

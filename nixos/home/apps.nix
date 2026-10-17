@@ -6,20 +6,8 @@
   ...
 }:
 let
-  zenPackages = inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system};
-  zenBrowser = zenPackages.default.override {
-    zen-browser-unwrapped = zenPackages.zen-browser-unwrapped.override (
-      pkgs.lib.optionalAttrs
-        (
-          zenPackages.zen-browser-unwrapped.version == "1.23.3b"
-          && pkgs.stdenv.hostPlatform.system == "x86_64-linux"
-        )
-        {
-          # The release asset was replaced after the flake recorded its hash.
-          # Verified against the official GitHub release asset's SHA-256 digest.
-          hash = "sha256-uyBF0+IWVNQP6EElAJLurf0sH8gx7vtQkiJ3PIvcoUk=";
-        }
-    );
+  zenBrowser = pkgs.callPackage ../pkgs/zen-browser.nix {
+    zenInput = inputs.zen-browser;
   };
   nvidiaOffload = import ../pkgs/nvidia-offload.nix { inherit pkgs; };
   # This laptop uses PRIME offload, so make Blender consistently use the RTX
@@ -102,7 +90,6 @@ in
       libreoffice
       hunspell
       hunspellDicts.en_US # hunspell ships no dictionaries of its own
-      rnote
       xournalpp
       proton-vpn
       protonup-ng

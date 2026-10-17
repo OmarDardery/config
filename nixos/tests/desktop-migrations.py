@@ -260,7 +260,7 @@ class MigrationTests(unittest.TestCase):
             script.write_text('#!' + shutil.which("bash") + '\nprintf "%s\\n" "$*" >> "$LOG"\n[[ "$*" != *"$FAIL"* ]]\n')
             script.chmod(0o755)
         cases = [("yes\n", "never", True), ("no\n", "never", False), ("", "never", False),
-                 ("yes\n", "flake update", False), ("yes\n", "build --dry-run", False), ("yes\n", "nixos-rebuild", True)]
+                 ("yes\n", "flake update", False), ("yes\n", "build --no-link", False), ("yes\n", "nixos-rebuild", True)]
         for answer, failure, switches in cases:
             with self.subTest(answer=answer, failure=failure):
                 log.write_text("")
@@ -271,7 +271,7 @@ class MigrationTests(unittest.TestCase):
                 commands = log.read_text().splitlines()
                 self.assertEqual(commands[0], "flake update --flake path:/checkout with spaces")
                 if failure != "flake update":
-                    self.assertEqual(commands[1], "build --dry-run path:/checkout with spaces#nixosConfigurations.host.config.system.build.toplevel")
+                    self.assertEqual(commands[1], "build --no-link path:/checkout with spaces#nixosConfigurations.host.config.system.build.toplevel")
                 if switches:
                     self.assertEqual(commands[2], "nixos-rebuild switch --flake path:/checkout with spaces#host")
                 if failure == "never":

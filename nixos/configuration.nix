@@ -95,9 +95,6 @@
   services.gvfs.enable = lib.mkForce false;
   services.udisks2.enable = true;
 
-  # Flatpak installations, remotes, updates and CLI are all user-owned.
-  programs.localsend.enable = false;
-
   # Home Manager owns KDE Connect. Its ports are opened only on Tailscale
   # above; the NixOS module would open them globally.
   programs.kdeconnect = {
@@ -199,6 +196,10 @@
       max-jobs = 2;
       cores = 4;
 
+      # Collect unreferenced store paths when a build is running low on space.
+      min-free = 1024 * 1024 * 1024;
+      max-free = 5 * 1024 * 1024 * 1024;
+
       experimental-features = [
         "nix-command"
         "flakes"
@@ -219,10 +220,18 @@
     optimise.automatic = true;
   };
 
+  # Let interactive work take priority over scheduled store maintenance.
+  systemd.services.nix-gc.serviceConfig = {
+    Nice = 19;
+    IOSchedulingClass = "idle";
+  };
+  systemd.services.nix-optimise.serviceConfig = {
+    Nice = 19;
+    IOSchedulingClass = "idle";
+  };
+
   # Proprietary drivers are native; user-only insecure app exceptions stay in HM.
   nixpkgs.config.allowUnfree = true;
-
-  # Nothing was collecting garbage: 94 generations and a 54 GB store.
 
   # This value determines the NixOS release from which the default
   # settings for stateful data, like file locations and database versions

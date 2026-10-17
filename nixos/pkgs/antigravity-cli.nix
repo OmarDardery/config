@@ -1,8 +1,8 @@
-{ lib
-, stdenv
-, fetchurl
-, autoPatchelfHook
-,
+{
+  lib,
+  stdenv,
+  fetchurl,
+  autoPatchelfHook,
 }:
 # Google Antigravity CLI (`agy`) — the replacement for Gemini CLI.
 #
