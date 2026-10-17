@@ -14,17 +14,19 @@
   boot.extraModulePackages = [ ];
 
   fileSystems."/" =
-    { device = "/dev/disk/by-uuid/3c01cc89-46a6-4aac-b33d-b4032ed5ad31";
+    { device = "/dev/disk/by-uuid/eba49de6-d322-41c7-899f-c2ee74513d0c";
       fsType = "xfs";
     };
 
   fileSystems."/boot" =
-    { device = "/dev/disk/by-uuid/6740-9C63";
+    { device = "/dev/disk/by-uuid/208A-1AE1";
       fsType = "vfat";
       options = [ "fmask=0077" "dmask=0077" ];
     };
 
-  swapDevices = [ ];
+  swapDevices =
+    [ { device = "/dev/disk/by-uuid/f2e2a4a9-45f7-4f4c-9894-e758f25db669"; }
+    ];
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;

@@ -13,7 +13,11 @@ let
     gitEmail = null;
   };
   portable = base.extendModules {
-    specialArgs.profile = alternate;
+    specialArgs = {
+      profile = alternate;
+      # Exercise a generic Linux machine, independent of the deployed laptop.
+      isLaptop = false;
+    };
     modules = [ { xdg.stateHome = "${alternate.homeDirectory}/state \"quoted\""; } ];
   };
   home = portable.config;

@@ -112,8 +112,8 @@
   # Keep this global: SDDM also renders on AMD; greeter dependence is untested.
   environment.sessionVariables.AMD_DEBUG = "nodcc";
 
-  # No swap device on this machine. Compressed RAM swap gives the Rust/Go/Nix
-  # builds headroom on 14 GiB instead of hitting the OOM killer.
+  # Prefer compressed RAM swap; the disk swap in hardware-configuration.nix
+  # remains available when RAM is exhausted.
   zramSwap.enable = true;
 
   fileSystems."/mnt/storage" = {

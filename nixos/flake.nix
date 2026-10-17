@@ -59,6 +59,7 @@
     {
       # Bootstrap reads these defaults; runtime environment does not affect eval.
       lib.deployment = profile;
+      formatter.${system} = pkgs.nixfmt;
       checks.${system} = import ./checks.nix {
         inherit pkgs inputs;
         flake = inputs.self;

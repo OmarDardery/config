@@ -6,6 +6,22 @@
   ...
 }:
 let
+  zenPackages = inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system};
+  zenBrowser = zenPackages.default.override {
+    zen-browser-unwrapped = zenPackages.zen-browser-unwrapped.override (
+      pkgs.lib.optionalAttrs
+        (
+          zenPackages.zen-browser-unwrapped.version == "1.23.3b"
+          && pkgs.stdenv.hostPlatform.system == "x86_64-linux"
+        )
+        {
+          # The release asset was replaced after the flake recorded its hash.
+          # Verified against the official GitHub release asset's SHA-256 digest.
+          hash = "sha256-uyBF0+IWVNQP6EElAJLurf0sH8gx7vtQkiJ3PIvcoUk=";
+        }
+    );
+  };
+  nvidiaOffload = import ../pkgs/nvidia-offload.nix { inherit pkgs; };
   # This laptop uses PRIME offload, so make Blender consistently use the RTX
   # GPU whether it is started from a terminal or a desktop launcher.
   blenderNvidia = pkgs.symlinkJoin {
@@ -14,10 +30,7 @@ let
     nativeBuildInputs = [ pkgs.makeWrapper ];
     postBuild = ''
       wrapProgram "$out/bin/blender" \
-        --set __NV_PRIME_RENDER_OFFLOAD 1 \
-        --set __NV_PRIME_RENDER_OFFLOAD_PROVIDER NVIDIA-G0 \
-        --set __GLX_VENDOR_LIBRARY_NAME nvidia \
-        --set __VK_LAYER_NV_optimus NVIDIA_only
+        --run 'exec ${nvidiaOffload}/bin/nvidia-offload ${pkgs.blender}/bin/blender "$@"'
     '';
   };
   # Install only the tools used by this desktop, not GNOME's full app bundle.
@@ -79,7 +92,7 @@ in
   home.packages =
     with pkgs;
     [
-      inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
+      zenBrowser
       inputs.webos-dev-manager.packages.${pkgs.stdenv.hostPlatform.system}.webos-dev-manager
       kitty
       (if isLaptop then blenderNvidia else pkgs.blender)

@@ -43,7 +43,7 @@ in
       toolchain.languageServers
       ++ toolchain.runtimes
       ++ (with pkgs; [
-        jetbrains-toolbox
+        (callPackage ../../pkgs/jetbrains-toolbox.nix { })
         platformio-core
       ]);
 
