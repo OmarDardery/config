@@ -45,6 +45,8 @@ in
       ++ (with pkgs; [
         (callPackage ../../pkgs/jetbrains-toolbox.nix { })
         platformio-core
+        opencode
+        (callPackage ../../pkgs/antigravity-cli.nix { })
       ]);
 
     # Foreign binaries (Zed, etc.) hardcode /usr/share/X11/xkb for keyboard layout

@@ -2,6 +2,7 @@
 {
   programs.git = {
     enable = true;
+    lfs.enable = true;
     settings = {
       init.defaultBranch = "main";
 
@@ -22,4 +23,6 @@
     enable = true;
     enableGitIntegration = true;
   };
+
+  programs.gh.enable = true;
 }

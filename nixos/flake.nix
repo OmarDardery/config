@@ -14,7 +14,7 @@
     #   - NO `inputs.nixpkgs.follows`. Overriding noctalia's inputs changes the
     #     derivation hash, so every build would miss the cache and compile from
     #     source. The cost is a second nixpkgs (it pins unstable).
-    # Cache itself is configured in nix.settings in configuration.nix.
+    # Cache is configured in system/nix.nix.
     noctalia.url = "github:noctalia-dev/noctalia/cachix";
     noctalia-templates = {
       url = "github:noctalia-dev/community-templates/2f2ada3f10a66f9dbeb2136e4d70271ac6072aaf";
@@ -59,7 +59,7 @@
     {
       # Bootstrap reads these defaults; runtime environment does not affect eval.
       lib.deployment = profile;
-      formatter.${system} = pkgs.nixfmt;
+      formatter.${system} = pkgs.nixfmt-tree;
       checks.${system} = import ./checks.nix {
         inherit pkgs inputs;
         flake = inputs.self;

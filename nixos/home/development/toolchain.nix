@@ -19,6 +19,10 @@
     rustfmt
     # Rust links through cc; GUI editors need the same wrapper as mkShell.
     stdenv.cc
+    gnumake
+    cmake
+    ninja
+    pkg-config
     uv
     bun
     python3

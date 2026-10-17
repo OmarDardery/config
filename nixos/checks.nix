@@ -7,6 +7,10 @@ let
   inherit (pkgs) lib;
   profile = flake.lib.deployment;
   home = flake.homeConfigurations.${profile.profileName}.config;
+  thunar = lib.findFirst (
+    package: lib.getName package == "thunar-with-plugins"
+  ) null home.home.packages;
+  papers = lib.findFirst (package: lib.getName package == "papers") null home.home.packages;
   portability = import ./tests/portability.nix { inherit flake; };
   python = pkgs.python3.withPackages (ps: [ ps.tomlkit ]);
   source = lib.cleanSourceWith {
@@ -24,6 +28,7 @@ let
     findutils
     gnugrep
     gnused
+    gettext
     gawk
     git
     util-linux
@@ -51,7 +56,10 @@ let
     legacy:
     inputs.home-manager.lib.homeManagerConfiguration {
       inherit pkgs;
-      extraSpecialArgs.isLaptop = false;
+      extraSpecialArgs = {
+        isLaptop = false;
+        isNixOS = false;
+      };
       modules = [
         {
           home.username = "fixture";
@@ -64,7 +72,12 @@ let
           if legacy then
             { xdg.configFile.kitty.source = legacyKitty; }
           else
-            { imports = [ ./home/desktop.nix ]; }
+            {
+              imports = [
+                ./home/terminal.nix
+                ./home/desktop.nix
+              ];
+            }
         )
       ];
     };
@@ -164,6 +177,21 @@ let
   fixtureJson = pkgs.writeText "kitty-linking-fixtures.json" (builtins.toJSON fixtures);
 in
 {
+  desktop-integration =
+    pkgs.runCommand "desktop-integration-checks"
+      {
+        nativeBuildInputs = [ pkgs.gnugrep ];
+      }
+      ''
+        test -x ${thunar}/bin/thunar-volman
+        test -f ${thunar}/lib/thunarx-3/thunar-archive-plugin.so
+        grep -F '${thunar}/bin/' ${thunar}/share/dbus-1/services/org.xfce.Thunar.service
+        test -f ${papers}/share/applications/org.gnome.Papers.desktop
+        test -f ${pkgs.file-roller}/share/applications/org.gnome.FileRoller.desktop
+        test -f ${pkgs.imv}/share/applications/imv.desktop
+        test -f ${pkgs.mpv}/share/applications/mpv.desktop
+        touch "$out"
+      '';
   performance-launchers = scriptCheck "performance-launcher-checks" "python ${tests}/performance-launchers.py ${launcherFixture}";
   portability = pkgs.writeText "portability-checks.json" (builtins.toJSON portability.checks);
   desktop-migrations = scriptCheck "desktop-migration-checks" "python ${tests}/desktop-migrations.py";

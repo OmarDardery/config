@@ -2,7 +2,7 @@
 # Debian 13 installer for the configured oad laptop. Run as oad.
 set -euo pipefail
 
-repo_url=https://codeberg.org/oadardery/configs.git
+repo_url=https://github.com/OmarDardery/config.git
 repo_dir="$HOME/configs"
 session_file=/usr/share/wayland-sessions/umbriel-configs.desktop
 session_launcher=/usr/local/bin/start-umbriel-configs

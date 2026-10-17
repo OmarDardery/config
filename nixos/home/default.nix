@@ -3,6 +3,11 @@
   imports = [
     ./development
     ./apps.nix
+    ./files.nix
+    ./engineering.nix
+    ./terminal.nix
+    ./capture.nix
+    ./displays.nix
     ./gaming.nix
     ./shell.nix
     ./nix-tools.nix

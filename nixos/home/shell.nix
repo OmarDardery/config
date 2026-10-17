@@ -18,7 +18,7 @@ in
   programs.bash.enable = !isNixOS;
   programs.bash.initExtra = lib.mkAfter fzfTheme;
   home.shellAliases = {
-    ll = "ls -l";
+    lt = "eza --tree --level=2";
     edit = "sudo -e";
   };
   programs.zsh = {
@@ -53,7 +53,11 @@ in
     enable = true;
     config.theme = "noctalia";
   };
-  programs.eza.enable = true;
+  programs.eza = {
+    enable = true;
+    icons = "auto";
+    extraOptions = [ "--group-directories-first" ];
+  };
   programs.lazygit = {
     enable = true;
     # Resolve the overlay at launch, including when invoked by Neovim. Never

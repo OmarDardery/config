@@ -21,15 +21,7 @@ let
     input_path = "${input}";
     output_path = output;
   };
-  nixosUpdate = pkgs.writeShellApplication {
-    name = "nixos-update";
-    runtimeInputs = [
-      pkgs.nix
-      pkgs.nixos-rebuild
-      pkgs.sudo
-    ];
-    text = builtins.readFile ../pkgs/nixos-update.sh;
-  };
+  nixosUpdate = pkgs.callPackage ../pkgs/nixos-update.nix { };
   zenApply = pkgs.writeShellApplication {
     name = "noctalia-zen-apply";
     runtimeInputs = [
@@ -57,8 +49,7 @@ in
           ${lib.escapeShellArg "${config.xdg.configHome}/noctalia/config.toml"} "$@"
       '';
     })
-  ]
-  ++ lib.optional isNixOS nixosUpdate;
+  ];
 
   programs.noctalia = {
     enable = true;

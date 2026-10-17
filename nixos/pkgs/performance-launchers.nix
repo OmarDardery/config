@@ -11,6 +11,9 @@ let
   performanceRun = pkgs.writeShellApplication {
     name = "performance-run";
     text = ''
+      if [[ "''${1:-}" == -- ]]; then
+        shift
+      fi
       if [[ $# == 0 ]]; then
         printf '%s\n' 'Usage: performance-run COMMAND [ARG...]' >&2
         exit 2
@@ -26,6 +29,9 @@ let
       offload_game=${lib.boolToString isLaptop}
       if [[ "''${1:-}" == --integrated ]]; then
         offload_game=false
+        shift
+      fi
+      if [[ "''${1:-}" == -- ]]; then
         shift
       fi
       if [[ $# == 0 ]]; then

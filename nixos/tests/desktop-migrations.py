@@ -1,4 +1,5 @@
 """State safety, Kitty rollback, and updater confirmation in disposable directories."""
+import fcntl
 import importlib.util
 import json
 import os
@@ -265,7 +266,7 @@ class MigrationTests(unittest.TestCase):
             with self.subTest(answer=answer, failure=failure):
                 log.write_text("")
                 result = subprocess.run(["bash", str(ROOT / "pkgs/nixos-update.sh"), "/checkout with spaces", "host"], input=answer, text=True, capture_output=True,
-                                        env={**os.environ, "PATH": str(bin_dir) + ":" + os.environ["PATH"], "LOG": str(log), "FAIL": failure})
+                                        env={**os.environ, "PATH": str(bin_dir) + ":" + os.environ["PATH"], "LOG": str(log), "FAIL": failure, "XDG_CACHE_HOME": str(self.root / "cache")})
                 self.assertEqual("nixos-rebuild switch" in log.read_text(), switches)
                 self.assertEqual(result.returncode == 0, switches and failure == "never")
                 commands = log.read_text().splitlines()
@@ -278,10 +279,26 @@ class MigrationTests(unittest.TestCase):
                     self.assertIn("lockfile", result.stdout)
         log.write_text("")
         result = subprocess.run(["bash", str(ROOT / "pkgs/nixos-update.sh"), "path:/already prefixed", "host"], input="no\n", text=True, capture_output=True,
-                                env={**os.environ, "PATH": str(bin_dir) + ":" + os.environ["PATH"], "LOG": str(log), "FAIL": "never"})
+                                env={**os.environ, "PATH": str(bin_dir) + ":" + os.environ["PATH"], "LOG": str(log), "FAIL": "never", "XDG_CACHE_HOME": str(self.root / "cache")})
         self.assertEqual(result.returncode, 1)
         self.assertIn("--flake path:/already prefixed", log.read_text())
         self.assertNotIn("path:path:", log.read_text())
+
+    def test_updater_invalid_arguments_and_concurrent_run(self):
+        script = str(ROOT / "pkgs/nixos-update.sh")
+        for arguments in ([], ["repo"], ["repo", "bad.name"], ["", "host"]):
+            result = subprocess.run(["bash", script, *arguments], capture_output=True)
+            self.assertEqual(result.returncode, 2)
+        result = subprocess.run(["bash", script, "--help"], capture_output=True)
+        self.assertEqual(result.returncode, 0)
+        directory = self.root / "cache/nix-config"
+        directory.mkdir(parents=True)
+        with (directory / "update.lock").open("w") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            result = subprocess.run(["bash", script, "repo", "host"], capture_output=True,
+                                    env={**os.environ, "XDG_CACHE_HOME": str(self.root / "cache")})
+            self.assertEqual(result.returncode, 1)
+            self.assertIn(b"already running", result.stderr)
 
 
 if __name__ == "__main__":

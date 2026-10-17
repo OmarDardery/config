@@ -15,7 +15,8 @@ For another Linux account, set these values explicitly before bootstrapping.
 Use `null` for `gitName`/`gitEmail` if Git identity should remain unmanaged.
 The shared Home Manager modules no longer hardcode the author's account.
 Rebuild aliases and both editors' nixd queries follow the selected profile.
-`cnf` opens the backend's configuration file, not an uneditable directory.
+`cnf` opens the configuration's module tree in `$EDITOR`; `cconf` enters it.
+`neval`, `ncheck`, `nbuild`, `up` and `nfmt` share the selected repository/profile.
 
 `nixos/package-policy.nix` supplies the user/dev-shell package policy, including
 the explicit EOL Electron exception needed by retained WinBoat. Integrated Home
@@ -31,7 +32,7 @@ does not turn this laptop's NixOS configuration into a generic installer.
 From a Debian 13 installation with the `oad` account and working `sudo`, run:
 
 ```sh
-curl -fsSLo "$HOME/debian-setup.sh" https://codeberg.org/oadardery/configs/raw/branch/main/debian-setup.sh && bash "$HOME/debian-setup.sh"
+curl -fsSLo "$HOME/debian-setup.sh" https://raw.githubusercontent.com/OmarDardery/config/main/debian-setup.sh && bash "$HOME/debian-setup.sh"
 ```
 
 The script installs SDDM with Umbriel and GNOME sessions, native graphics/audio,
@@ -439,14 +440,14 @@ establish FPS gains or replace suspend/resume, displays and controller testing.
 
 ## Configuration Layout And Resource Policy
 
-- `nixos/configuration.nix` owns boot, networking/Tailscale, accounts, native
-  privileges, system services and Nix settings. `nixos/desktop.nix` groups SDDM,
-  the GNOME fallback and Umbriel session/portal registration.
-- `nixos/hardware.nix` retains laptop drivers/devices and storage; the generated
-  hardware file remains separate. Host gaming privileges remain in `gaming.nix`.
-- Home modules group applications/3D tools, gaming/Steam, desktop/Kitty, Nix
-  tools/deployment aliases, shell, development, Noctalia, Umbriel and Flatpak.
-  `home/linux.nix` supplies only the standalone backend's native integration.
+- `nixos/configuration.nix` is the entry point; `nixos/system/` separates base
+  system, networking, Nix maintenance, desktop services, development and gaming.
+- `nixos/hardware.nix` and the generated hardware file retain laptop drivers and
+  storage. Identity stays in `profile.nix`.
+- Home modules separate everyday apps, engineering, file integration, terminal
+  tools, appearance/services, capture, displays, development and gaming.
+  `home/linux.nix` supplies standalone integration. See the complete module map
+  and desktop coverage in [nixos/README.md](nixos/README.md).
 - Shared package and state helpers remain separate when used by modules/tests.
   Multiple consumers of a store path do not require duplicate downloads.
 - Nix uses two parallel builds and four cores per build, weekly garbage
