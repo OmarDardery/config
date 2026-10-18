@@ -2,6 +2,8 @@
 {
   # Nix
   nix = {
+    daemonCPUSchedPolicy = "batch";
+    daemonIOSchedPriority = 6;
     settings = {
       # Keep parallel native builds from exhausting this laptop's 14 GiB RAM.
       max-jobs = 2;
@@ -30,6 +32,9 @@
     };
     optimise.automatic = true;
   };
+
+  # Inherited by local builds: yield to interactive work without a CPU cap.
+  systemd.services.nix-daemon.serviceConfig.Nice = 5;
 
   # Let interactive work take priority over scheduled store maintenance.
   systemd.services.nix-gc.serviceConfig = {

@@ -111,13 +111,11 @@ in
     ];
   };
 
-  # Home Manager owns KDE Connect. Its ports are opened only on Tailscale
-  # above; the NixOS module would open them globally.
+  # Home Manager owns KDE Connect; networking.nix limits its ports to Tailscale.
   programs.kdeconnect = {
     enable = false;
     package = null;
   };
-  services.power-profiles-daemon.enable = true;
   services.upower.enable = true;
   services.fwupd.enable = true;
 

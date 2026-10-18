@@ -54,6 +54,8 @@ plugin patches and recorded hardware observations are in
 [nixos/SHORTCUTS.md](nixos/SHORTCUTS.md).
 Upstream app templates and Yazi setup are documented in
 [nixos/THEMING.md](nixos/THEMING.md).
+Kernel/scheduler policy and the CachyOS source audit are in
+[nixos/PERFORMANCE.md](nixos/PERFORMANCE.md).
 
 ## Validation
 

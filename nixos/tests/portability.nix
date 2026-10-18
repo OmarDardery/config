@@ -56,10 +56,36 @@ let
         == "4"
       && !(home.home.sessionVariables ? CARGO_BUILD_JOBS)
       && system.hardware.block.defaultScheduler == null
-      && !system.services.scx.enable
-      && !(system.systemd.services ? scx)
       && system.specialisation == { }
       && system.boot.kernelPackages.kernel == base.pkgs.linuxPackages_latest.kernel;
+    nativeScheduler =
+      system.services.scx.enable
+      && system.services.scx.package == base.pkgs.scx.rustscheds
+      && system.services.scx.scheduler == "scx_lavd"
+      && system.services.scx.extraArgs == [ "--autopower" ]
+      && system.services.power-profiles-daemon.enable
+      && !system.services.ananicy.enable
+      && !system.services.tlp.enable
+      && !system.services.auto-cpufreq.enable
+      && system.systemd.services.scx.unitConfig.ConditionPathIsDirectory == "/sys/kernel/sched_ext";
+    schedulerKernel =
+      builtins.all
+        (
+          symbol:
+          (system.boot.kernelPackages.kernel.configfile.structuredConfig.${symbol}.tristate or null) == "y"
+        )
+        [
+          "SCHED_CLASS_EXT"
+          "BPF_SYSCALL"
+          "BPF_JIT"
+          "DEBUG_INFO_BTF"
+        ];
+    backgroundBuilds =
+      system.nix.daemonCPUSchedPolicy == "batch"
+      && system.nix.daemonIOSchedPriority == 6
+      && system.systemd.services.nix-daemon.serviceConfig.Nice == 5
+      && system.nix.settings.max-jobs == 2
+      && system.nix.settings.cores == 4;
     identity =
       home.home.username == alternate.username && home.home.homeDirectory == alternate.homeDirectory;
     noAuthorIdentity = !(home.programs.git.settings ? user);

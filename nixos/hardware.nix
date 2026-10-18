@@ -1,7 +1,6 @@
 # Everything bound to this specific laptop: GPUs, peripherals, extra disks.
 {
   config,
-  pkgs,
   ...
 }:
 {
@@ -80,10 +79,6 @@
   # Historical graphics findings remain in the README.
   # Keep this global: SDDM also renders on AMD; greeter dependence is untested.
   environment.sessionVariables.AMD_DEBUG = "nodcc";
-
-  # Prefer compressed RAM swap; the disk swap in hardware-configuration.nix
-  # remains available when RAM is exhausted.
-  zramSwap.enable = true;
 
   fileSystems."/mnt/storage" = {
     device = "/dev/disk/by-uuid/71d4d606-a6ef-42bb-b63c-8f5a8fee4b24";
