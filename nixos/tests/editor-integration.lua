@@ -4,6 +4,7 @@ assert(#lua_files > 0, "Generated Lua configuration was not found")
 for _, path in ipairs(lua_files) do
   assert(loadfile(path), "Invalid Lua: " .. path)
 end
+assert(vim.g.colors_name == "habamax", "Built-in fallback theme did not load without a palette")
 local lazy = require("lazy")
 local config = require("lazy.core.config")
 for name, plugin in pairs(config.plugins) do

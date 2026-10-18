@@ -16,7 +16,7 @@ let
       "nh os switch --hostname ${lib.escapeShellArg profile.hostName}"
     else
       "nh home switch -c ${lib.escapeShellArg profile.profileName}";
-  updater = pkgs.callPackage ../pkgs/config-update.nix { };
+  updater = pkgs.callPackage ../pkgs/config-update.nix { inherit isNixOS; };
   updateCommand = "${updater}/bin/config-update ${directory} ${if isNixOS then "os" else "home"} ${
     lib.escapeShellArg (if isNixOS then profile.hostName else profile.profileName)
   }";

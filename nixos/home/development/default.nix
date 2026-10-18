@@ -25,7 +25,6 @@ in
 {
   imports = [
     ./git.nix
-    ./vscode.nix
     ./lazyvim.nix
   ];
 
@@ -35,7 +34,6 @@ in
       toolchain.languageServers
       ++ toolchain.runtimes
       ++ (with pkgs; [
-        (callPackage ../../pkgs/jetbrains-toolbox.nix { })
         platformio-core
         opencode
         (callPackage ../../pkgs/antigravity-cli.nix { })

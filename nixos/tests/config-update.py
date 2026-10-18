@@ -32,7 +32,7 @@ class UpdateTests(unittest.TestCase):
             )
             path.chmod(0o755)
 
-    def run_update(self, arguments=None, failure=""):
+    def run_update(self, arguments=None, failure="", path=None):
         return subprocess.run(
             ["bash", str(SCRIPT), *(arguments if arguments is not None else ["/checkout with spaces", "os", "host"])],
             stdin=subprocess.DEVNULL,
@@ -40,7 +40,7 @@ class UpdateTests(unittest.TestCase):
             capture_output=True,
             env={
                 **os.environ,
-                "PATH": str(self.bin) + ":" + os.environ["PATH"],
+                "PATH": path if path is not None else str(self.bin) + ":" + os.environ["PATH"],
                 "XDG_CACHE_HOME": str(self.root / "cache"),
                 "UPDATE_LOG": str(self.log),
                 "UPDATE_FAIL": failure,
@@ -67,6 +67,15 @@ class UpdateTests(unittest.TestCase):
             "nh", "home", "switch", "--configuration", "user@host", "path:/checkout 'quoted'"
         ])
         self.assertNotIn("path:path:", self.log.read_text())
+
+    def test_missing_native_flatpak_is_skipped(self):
+        (self.bin / "flatpak").unlink()
+        for name in ("bash", "mkdir", "flock"):
+            (self.bin / name).symlink_to(shutil.which(name))
+        result = self.run_update(["/checkout", "home", "user"], path=str(self.bin))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual([entry[0] for entry in self.commands()], ["nix", "nh"])
+        self.assertIn("Flatpak is not installed; skipping", result.stdout)
 
     def test_nix_failures_stop_later_stages(self):
         for command, expected in (("nix", ["nix"]), ("nh", ["nix", "nh"])):

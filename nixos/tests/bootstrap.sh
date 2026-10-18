@@ -273,8 +273,8 @@ run_case 'Filesystem type mismatch for /boot:' 'boot filesystem mismatch'; no_bu
 reset_case; os=nixos; root_type=''
 run_case 'mounted unknown' 'empty filesystem type'; no_build
 reset_case
-run_case pass 'native service warnings do not prevent building'
-[[ "$(<"$tmp/stderr")" == *'Flatpak CLI/user installations'* && "$(<"$tmp/stderr")" == *'systemd user manager'* ]] || fail 'missing native service warnings'
+run_case pass 'portable tools build without desktop services'
+[[ "$(<"$tmp/stdout")" == *'the distribution owns GUI applications and desktop services'* ]] || fail 'missing portable profile description'
 reset_case; os=nixos; uuid=''
 run_case 'Missing or invalid UUID' 'empty UUID refusal'; no_build
 reset_case; os=nixos; device_uuid=other-uuid

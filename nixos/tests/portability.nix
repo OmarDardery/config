@@ -20,7 +20,22 @@ let
     };
     modules = [ { xdg.stateHome = "${alternate.homeDirectory}/state \"quoted\""; } ];
   };
-  home = portable.config;
+  tools = portable.config;
+  desktop = flake.inputs.home-manager.lib.homeManagerConfiguration {
+    inherit (base) pkgs;
+    extraSpecialArgs = {
+      inherit (flake) inputs;
+      profile = alternate;
+      osConfig = system;
+      isNixOS = true;
+      isLaptop = false;
+    };
+    modules = [
+      ../home/nixos.nix
+      { xdg.stateHome = "${alternate.homeDirectory}/state \"quoted\""; }
+    ];
+  };
+  home = desktop.config;
   system = flake.nixosConfigurations.${profile.hostName}.config;
   vscodeThemeExtension = lib.findFirst (
     extension: (extension.vscodeExtName or "") == "noctalia"
@@ -28,7 +43,7 @@ let
   toolchain = import ../home/development/toolchain.nix { inherit (base) pkgs; };
   nixd = toolchain.nixdSettings {
     profile = alternate;
-    isNixOS = false;
+    isNixOS = true;
   };
   checks = {
     performancePolicy =
@@ -48,13 +63,13 @@ let
     identity =
       home.home.username == alternate.username && home.home.homeDirectory == alternate.homeDirectory;
     noAuthorIdentity = !(home.programs.git.settings ? user);
-    rebuild = home.programs.zsh.shellAliases.up == "nh home switch -c portable-test";
+    rebuild = tools.programs.zsh.shellAliases.up == "nh home switch -c portable-test";
     repository = home.programs.nh.flake == "path:${alternate.configRepo}";
-    noNixOSXkb = !(home.home.sessionVariables ? XKB_CONFIG_ROOT);
-    nativeShell = home.programs.bash.enable && home.programs.zsh.enable;
+    noNixOSXkb = !(tools.home.sessionVariables ? XKB_CONFIG_ROOT);
+    nativeShell = tools.programs.bash.enable && tools.programs.zsh.enable;
     sharedAliases =
       builtins.all
-        (name: home.programs.bash.shellAliases.${name} == home.programs.zsh.shellAliases.${name})
+        (name: tools.programs.bash.shellAliases.${name} == tools.programs.zsh.shellAliases.${name})
         [
           "up"
           "rebuild"
@@ -75,12 +90,19 @@ let
       && lib.hasInfix (lib.escapeShellArg alternate.configRepo) home.home.shellAliases.nfmt
       && home.home.shellAliases.lt == "eza --tree --level=2";
     nixFeatures =
-      home.nix.settings.experimental-features == [
+      tools.nix.settings.experimental-features == [
         "nix-command"
         "flakes"
       ];
     nixd = home.programs.vscodium.profiles.default.userSettings."nix.serverSettings".nixd == nixd;
-    noSystemOptions = !(nixd.options ? nixos);
+    noSystemOptions =
+      !(
+        (toolchain.nixdSettings {
+          profile = alternate;
+          isNixOS = false;
+        }).options
+          ? nixos
+      );
     templates =
       !(builtins.elem "kitty" home.programs.noctalia.settings.theme.templates.builtin_ids)
       && home.programs.noctalia.settings.theme.templates.user ? kitty
@@ -272,13 +294,10 @@ let
       home.qt.platformTheme.name == "kde"
       && home.programs.umbriel.settings.environment.QT_QPA_PLATFORMTHEME == "kde"
       && builtins.elem "kcolorscheme" home.programs.noctalia.settings.theme.templates.builtin_ids;
-    steamHomeOwned =
-      !system.programs.steam.enable
-      && builtins.any (package: lib.getName package == "steam") home.home.packages
-      && builtins.any (
-        package: lib.getName package == "steam"
-      ) system.home-manager.users.${profile.username}.home.packages
-      && !(builtins.any (package: lib.getName package == "steam") system.environment.systemPackages);
+    steamSystemOwned =
+      system.programs.steam.enable
+      && builtins.elem system.programs.steam.package system.environment.systemPackages
+      && !(builtins.any (p: lib.getName p == "steam") home.home.packages);
     steamHostIntegration =
       system.hardware.graphics.enable32Bit
       && system.hardware.steam-hardware.enable
@@ -286,9 +305,7 @@ let
       && system.services.pipewire.alsa.support32Bit == system.services.pipewire.alsa.enable;
     gamemodeAuthorization =
       builtins.elem "gamemode" system.users.users.${profile.username}.extraGroups
-      && builtins.any (
-        package: lib.getName package == "gamemode-polkit-policy"
-      ) system.environment.systemPackages;
+      && builtins.any (package: package == base.pkgs.gamemode) system.environment.systemPackages;
     rustToolchain = builtins.all (package: builtins.elem package home.home.packages) [
       base.pkgs.rustc
       base.pkgs.cargo
@@ -299,13 +316,44 @@ let
     batSeedOrdering =
       builtins.elem "batCache" home.home.activation.initializeNoctaliaBat.before
       && builtins.elem "linkGeneration" home.home.activation.initializeNoctaliaBat.after;
-    portals = builtins.all (
-      package:
-      builtins.elem package home.dbus.packages && builtins.elem package home.systemd.user.packages
-    ) ([ base.pkgs.xdg-desktop-portal ] ++ home.xdg.portal.extraPortals);
+    portableDesktopBoundary =
+      !tools.xdg.portal.enable
+      && !tools.gtk.enable
+      && !tools.qt.enable
+      && !tools.programs.vscodium.enable
+      && !tools.programs.kitty.enable
+      && !tools.services.kdeconnect.enable
+      && !tools.targets.genericLinux.gpu.enable
+      && !tools.xdg.mimeApps.enable
+      && !tools.xdg.configFile."nvim/lua/plugins/noctalia.lua".enable
+      && !(tools.home.sessionVariables ? QT_QPA_PLATFORMTHEME)
+      && !(tools.home.sessionVariables ? GIO_EXTRA_MODULES)
+      && !(tools.home.sessionSearchVariables ? GIO_EXTRA_MODULES)
+      && !(tools.home.sessionVariables ? LD_LIBRARY_PATH)
+      && !(tools.xdg.configFile ? "umbriel/config.toml")
+      && !(tools.xdg.configFile ? "noctalia/config.toml")
+      && tools.systemd.user.services == { }
+      && builtins.all (name: !(builtins.any (p: lib.getName p == name) tools.home.packages)) [
+        "steam"
+        "flatpak"
+        "gvfs"
+        "gamemode"
+        "umbriel"
+        "noctalia"
+        "opentabletdriver"
+      ];
+    portableDevelopment =
+      tools.programs.neovim.enable
+      && tools.programs.git.enable
+      && tools.programs.direnv.enable
+      && builtins.elem base.pkgs.uv tools.home.packages;
+    portals =
+      system.xdg.portal.enable
+      && builtins.elem system.programs.umbriel.portalPackage system.xdg.portal.extraPortals
+      && !home.xdg.portal.enable;
     userFlatpak =
-      !system.services.flatpak.enable
-      && builtins.elem base.pkgs.flatpak home.home.packages
+      system.services.flatpak.enable
+      && !(builtins.elem base.pkgs.flatpak home.home.packages)
       && builtins.elem "${home.xdg.dataHome}/flatpak/exports/share" home.xdg.systemDirs.data
       && home.services.flatpak.update.auto.enable
       && !home.services.flatpak.uninstallUnmanaged
@@ -320,41 +368,26 @@ let
         base.pkgs.gnome-disk-utility
         base.pkgs.wireshark
         base.pkgs.gpu-screen-recorder
-        base.pkgs.gvfs
-        base.pkgs.gamemode
       ];
     fileManager =
-      builtins.all
-        (
-          configuration:
-          let
-            thunar = lib.findFirst (
-              package: lib.getName package == "thunar-with-plugins"
-            ) null configuration.home.packages;
-          in
-          configuration.xdg.mimeApps.defaultApplications."inode/directory" == [ "thunar.desktop" ]
-          && configuration.programs.umbriel.settings.keybinds."Mod+E".action == "spawn:thunar"
-          && thunar != null
-          && configuration.xfconf.settings.thunar.misc-volume-management
-          && configuration.xdg.userDirs.createDirectories
-          &&
-            builtins.all
-              (
-                package:
-                builtins.elem package configuration.dbus.packages
-                && builtins.elem package configuration.systemd.user.packages
-              )
-              [
-                thunar
-                base.pkgs.tumbler
-                base.pkgs.xfconf
-                base.pkgs.gvfs
-              ]
-        )
-        [
-          home
-          system.home-manager.users.${profile.username}
-        ];
+      system.programs.thunar.enable
+      && system.services.gvfs.enable
+      && system.services.tumbler.enable
+      && builtins.elem base.pkgs.thunar-archive-plugin system.programs.thunar.plugins
+      && builtins.elem base.pkgs.thunar-volman system.programs.thunar.plugins
+      && home.xdg.mimeApps.defaultApplications."inode/directory" == [ "thunar.desktop" ]
+      && home.programs.umbriel.settings.keybinds."Mod+E".action == "spawn:thunar"
+      && home.xfconf.settings.thunar.misc-volume-management
+      && home.xdg.userDirs.createDirectories
+      && !(home.home.sessionSearchVariables ? GIO_EXTRA_MODULES);
+    nativeSessionServices =
+      system.programs.umbriel.enable
+      && home.programs.umbriel.package == system.programs.umbriel.package
+      && builtins.elem system.programs.umbriel.package system.services.displayManager.sessionPackages
+      && system.hardware.opentabletdriver.enable
+      && system.programs.gamemode.enable
+      && !(home.systemd.user.services ? opentabletdriver)
+      && !(home.systemd.user.services ? gamemoded);
     noUnrequestedApplications =
       builtins.all
         (
@@ -384,10 +417,13 @@ let
       && system.security.wrappers.dumpcap.group == "wireshark"
       && system.security.wrappers.gsr-kms-server.group == "recording"
       && system.security.wrappers.gsr-kms-server.permissions == "u+rx,g+rx,o-rwx";
-    userPackagePolicy =
-      !system.home-manager.useGlobalPkgs
-      && (system.nixpkgs.config.permittedInsecurePackages or [ ]) == [ ]
-      && (portable.pkgs.config.permittedInsecurePackages or [ ]) == [ "electron-40.10.5" ];
+    sharedPackagePolicy =
+      system.home-manager.useGlobalPkgs
+      && system.home-manager.useUserPackages
+      && system.nixpkgs.config.permittedInsecurePackages == [ "electron-40.10.5" ]
+      &&
+        home.programs.neovim.package
+        == system.home-manager.users.${profile.username}.programs.neovim.package;
     desktopBasics =
       builtins.all
         (
@@ -425,17 +461,17 @@ let
       && system.security.wrappers.mtr-packet.capabilities == "cap_net_raw+p";
     userSessionPath = builtins.elem "${home.home.homeDirectory}/.local/bin" home.home.sessionPath;
     nativeAuthentication =
-      !home.programs.noctalia.settings.shell.polkit_agent
-      && builtins.length home.programs.umbriel.settings.general.autostart == 2
-      && system.home-manager.users.${profile.username}.programs.noctalia.settings.shell.polkit_agent;
+      home.programs.noctalia.settings.shell.polkit_agent
+      && builtins.length home.programs.umbriel.settings.general.autostart == 1;
     secretPortal =
-      home.xdg.portal.config.gnome."org.freedesktop.impl.portal.Secret" == "gnome-keyring"
-      && home.xdg.portal.config.umbriel."org.freedesktop.impl.portal.Secret" == "gnome-keyring"
-      && system.xdg.portal.config.umbriel."org.freedesktop.impl.portal.Secret" == "gnome-keyring";
+      system.xdg.portal.config.umbriel."org.freedesktop.impl.portal.Secret" == "gnome-keyring";
     nativeFlatpaks =
       map (p: p.appId) home.services.flatpak.packages == [
         "com.orcaslicer.OrcaSlicer"
         "com.vysp3r.ProtonPlus"
+        "org.freedesktop.Platform.GL.nvidia-${
+          lib.replaceStrings [ "." ] [ "-" ] system.hardware.nvidia.package.version
+        }"
       ];
     hardwarePolicy = system.hardware.nvidia.open && system.hardware.nvidia.prime.offload.enable;
     localsendAbsent = !system.programs.localsend.enable;

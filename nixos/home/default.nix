@@ -2,21 +2,9 @@
 {
   imports = [
     ./development
-    ./apps.nix
-    ./files.nix
-    ./engineering.nix
-    ./kitty.nix
     ./terminal.nix
-    ./capture.nix
-    ./displays.nix
-    ./gaming.nix
     ./shell.nix
     ./nix-tools.nix
-    ./desktop.nix
-    ./hardware-user.nix
-    ./noctalia.nix
-    ./umbriel.nix
-    ./flatpak.nix
   ];
 
   home.username = profile.username;

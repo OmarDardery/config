@@ -1,4 +1,4 @@
-# Desktop shortcuts
+# NixOS desktop shortcuts
 
 `Mod` is Super. `Mod+Shift+Escape` opens Umbriel's live cheatsheet, including
 bindings inherited from upstream. The same physical shortcuts work with English

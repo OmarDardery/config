@@ -15,24 +15,9 @@ lib.mkIf isLaptop {
   '';
 
   home.packages = [
-    pkgs.opentabletdriver
     # Integrated HM uses the exact host driver pin; no duplicate driver policy.
     (import ../pkgs/nvidia-offload.nix { inherit pkgs; })
   ]
   ++ lib.optionals (osConfig != null) [ osConfig.hardware.nvidia.package.settings ];
 
-  systemd.user.services.opentabletdriver = {
-    Unit = {
-      Description = "Open source, cross-platform, user-mode tablet driver";
-      After = [ "graphical-session.target" ];
-      BindsTo = [ "graphical-session.target" ];
-      PartOf = [ "graphical-session.target" ];
-    };
-    Install.WantedBy = [ "graphical-session.target" ];
-    Service = {
-      Type = "simple";
-      ExecStart = lib.getExe' pkgs.opentabletdriver "otd-daemon";
-      Restart = "on-failure";
-    };
-  };
 }

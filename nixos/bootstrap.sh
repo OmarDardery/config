@@ -10,9 +10,6 @@ backup_extension=
 activate=false
 install_nix=false
 mode_selected=false
-setup_host=false
-apply_host=false
-deployment_options=false
 nixflags=(--extra-experimental-features "nix-command flakes")
 
 say() { printf '\n== %s\n' "$1"; }
@@ -38,10 +35,6 @@ usage() {
     '                          EXT uses only letters, digits, dots, underscores or hyphens.' \
     '  --install-nix  Show official installation instructions if Nix is missing' \
     '                 No installer is downloaded or executed by this script.' \
-    '  --setup-host   Preview minimal native Fedora/Debian prerequisites; no Nix needed' \
-    '  --apply-host   Requires --setup-host; confirm each sudo command on a terminal' \
-    '                 Host setup cannot be combined with deployment options.' \
-    '                 --repo-dir is allowed but ignored; no clone/build/activation.' \
     '  -h, --help     Show this help' \
     '' \
     'Existing checkouts are never pulled, staged, or reset.' \
@@ -60,15 +53,12 @@ while (($#)); do
         --repo-dir) repo_dir=$2 ;;
         --profile)
           profile=$2
-          deployment_options=true
           ;;
         --host)
           host=$2
-          deployment_options=true
           ;;
         --backup-extension)
           backup_extension=$2
-          deployment_options=true
           ;;
       esac
       shift 2
@@ -81,15 +71,6 @@ while (($#)); do
       ;;
     --install-nix)
       install_nix=true
-      deployment_options=true
-      shift
-      ;;
-    --setup-host)
-      setup_host=true
-      shift
-      ;;
-    --apply-host)
-      apply_host=true
       shift
       ;;
     -h | --help)
@@ -102,18 +83,6 @@ done
 
 [[ $(id -u) != 0 ]] || die 'run as your normal user, not root or through sudo'
 [[ $(uname -s) == Linux ]] || die 'only NixOS and non-NixOS Linux are supported'
-[[ "$apply_host" == false || "$setup_host" == true ]] || die '--apply-host requires --setup-host'
-if [[ "$setup_host" == true ]]; then
-  [[ "$mode_selected" == false && "$deployment_options" == false ]] ||
-    die '--setup-host is exclusive with activation, build-only, selectors, backup and install-nix options'
-  # Dispatch before checking Nix or touching the checkout. Only this explicit path
-  # may install native packages; normal builds and activation never call it.
-  host_script_dir=${BASH_SOURCE[0]%/*}
-  [[ "$host_script_dir" != "${BASH_SOURCE[0]}" ]] || host_script_dir=.
-  source "$host_script_dir/bootstrap-host.sh"
-  host_setup "$apply_host"
-  exit 0
-fi
 [[ -z "$profile" || "$profile" =~ ^[a-zA-Z0-9_-]+$ ]] || die 'invalid profile name'
 [[ -z "$host" || "$host" =~ ^[a-zA-Z0-9_-]+$ ]] || die 'invalid host name'
 if [[ -n "$backup_extension" ]]; then
@@ -212,10 +181,7 @@ else
   configured_home=$(nix "${nixflags[@]}" eval "${evalflags[@]}" --raw "$target.config.home.homeDirectory")
   [[ "$configured_user" == "$(id -un)" && "$configured_home" == "$HOME" ]] || die \
     "Profile $profile requires user $configured_user with HOME=$configured_home; current user is $(id -un) with HOME=$HOME. Edit the explicit deployment identity in $flake_dir/profile.nix, or select an existing named profile with --profile."
-  warn 'Home Manager supplies user applications, Flatpak CLI/user installations and user services. Review native BlueZ/Bluetooth, systemd/PAM, Wayland session registration, graphics drivers, polkit, keyring, audio, Docker, user namespaces and udev requirements. Fedora/Debian can preview baseline prerequisites with --setup-host.'
-  if ! command -v systemctl >/dev/null 2>&1 || ! systemctl --user show-environment >/dev/null 2>&1; then
-    warn 'A working host systemd user manager was not detected. Review your distribution login/session setup before relying on Home Manager user services.'
-  fi
+  say 'Standalone profile: shell, Neovim and development tools; the distribution owns GUI applications and desktop services.'
   warn 'Activation may change managed home files and run profile activation hooks; existing conflicting files are not force-overwritten by this script.'
   build_target="$target.activationPackage"
 fi

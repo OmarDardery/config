@@ -2,6 +2,7 @@
 {
   home.packages = with pkgs; [
     (callPackage ../pkgs/zen-browser.nix { zenInput = inputs.zen-browser; })
+    (callPackage ../pkgs/jetbrains-toolbox.nix { })
     discord
     proton-vpn
     libreoffice

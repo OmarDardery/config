@@ -37,9 +37,13 @@ else
   nh home switch --configuration "$configuration" "$repository"
 fi
 
-printf '%s\n' 'Updating user and system Flatpaks...'
-if ! flatpak update --noninteractive --assumeyes; then
-  printf '%s\n' 'Nix configuration activated, but Flatpak updates failed. Rerun flatpak update.' >&2
-  exit 1
+if command -v flatpak >/dev/null 2>&1; then
+  printf '%s\n' 'Updating user and system Flatpaks...'
+  if ! flatpak update --noninteractive --assumeyes; then
+    printf '%s\n' 'Nix configuration activated, but Flatpak updates failed. Rerun flatpak update.' >&2
+    exit 1
+  fi
+else
+  printf '%s\n' 'Flatpak is not installed; skipping Flatpak updates.'
 fi
 printf '%s\n' 'Configuration and Flatpak updates completed.'

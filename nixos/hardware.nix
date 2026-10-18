@@ -68,12 +68,7 @@
     };
   };
 
-  # Preserve the OpenTabletDriver module's host-only device access policy.
-  services.udev.packages = [ pkgs.opentabletdriver ];
-  boot.blacklistedKernelModules = [
-    "hid-uclogic"
-    "wacom"
-  ];
+  hardware.opentabletdriver.enable = true;
 
   # Keep the iGPU first in the PRIME driver list.
   services.xserver.videoDrivers = [

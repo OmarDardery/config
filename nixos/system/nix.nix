@@ -41,6 +41,6 @@
     IOSchedulingClass = "idle";
   };
 
-  # Proprietary drivers are native; user-only insecure app exceptions stay in HM.
-  nixpkgs.config.allowUnfree = true;
+  # The system and integrated Home Manager share one package set and policy.
+  nixpkgs.config = import ../package-policy.nix;
 }

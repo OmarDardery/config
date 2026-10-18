@@ -4,8 +4,8 @@
   config,
   lib,
   isLaptop,
-  isNixOS,
   profile,
+  osConfig,
   ...
 }:
 let
@@ -48,19 +48,6 @@ let
     '';
   };
   rowAction = action: "spawn:${rowNavigation}/bin/umbriel-row-action ${action}";
-  nativePolkitAgent = pkgs.writeShellScript "umbriel-native-polkit-agent" ''
-    # Native agents use the distro's privileged helper, not NixOS's wrapper path.
-    for agent in \
-      /usr/libexec/polkit-gnome-authentication-agent-1 \
-      /usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1 \
-      /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1; do
-      if [ -x "$agent" ]; then
-        exec "$agent"
-      fi
-    done
-    printf '%s\n' 'Native polkit agent missing: review bash nixos/bootstrap.sh --setup-host prerequisites.' >&2
-    exit 1
-  '';
   screenshotWindow = pkgs.writeShellApplication {
     name = "screenshot-window-umbriel";
     runtimeInputs = [
@@ -85,17 +72,16 @@ let
 in
 {
   imports = [ inputs.umbriel.homeModules.default ];
-  systemd.user.packages = [ config.programs.umbriel.package ];
   programs.umbriel = {
     enable = true;
+    package = osConfig.programs.umbriel.package;
     settings = {
       # No independent palette: Noctalia owns colors; native defaults before rendering.
       include.optional.files = [ "${config.xdg.stateHome}/noctalia/theme/umbriel.toml" ];
       general = {
         autostart = [
           "${config.programs.noctalia.package}/bin/noctalia"
-        ]
-        ++ lib.optionals (!isNixOS) [ (toString nativePolkitAgent) ];
+        ];
         mod_key = "Super";
         show_cheatsheet = false;
         focus_on_activate = true;
