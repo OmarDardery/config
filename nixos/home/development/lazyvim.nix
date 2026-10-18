@@ -488,10 +488,13 @@ in
             basedpyright = {
               settings = {
                 basedpyright = {
+                  disableOrganizeImports = true,
                   analysis = ${lib.generators.toLua { } toolchain.pythonAnalysis},
                 },
               },
             },
+            -- Ruff owns import actions; ordinary sessions do not need protocol tracing.
+            ruff = { cmd_env = { RUFF_TRACE = "off" } },
             nil_ls = { enabled = false },
             -- nixd needs to be told where the flake is to offer completion on
             -- options rather than just on syntax.

@@ -1,12 +1,14 @@
 { pkgs }:
 pkgs.writeShellApplication {
-  name = "nixos-update";
+  name = "config-update";
   runtimeInputs = with pkgs; [
     coreutils
+    flatpak
+    nh
     nix
-    nixos-rebuild
+    nvd
     sudo
     util-linux
   ];
-  text = builtins.readFile ./nixos-update.sh;
+  text = builtins.readFile ./config-update.sh;
 }

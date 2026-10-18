@@ -16,6 +16,10 @@ let
       "nh os switch --hostname ${lib.escapeShellArg profile.hostName}"
     else
       "nh home switch -c ${lib.escapeShellArg profile.profileName}";
+  updater = pkgs.callPackage ../pkgs/config-update.nix { };
+  updateCommand = "${updater}/bin/config-update ${directory} ${if isNixOS then "os" else "home"} ${
+    lib.escapeShellArg (if isNixOS then profile.hostName else profile.profileName)
+  }";
 in
 {
   imports = [ inputs.nix-index-database.homeModules.nix-index ];
@@ -38,17 +42,17 @@ in
     nix-direnv.enable = true;
   };
 
-  home.packages =
-    (with pkgs; [
-      nix-output-monitor
-      nvd
-      nix-tree
-    ])
-    ++ lib.optional isNixOS (pkgs.callPackage ../pkgs/nixos-update.nix { });
+  home.packages = with pkgs; [
+    nix-output-monitor
+    nvd
+    nix-tree
+    updater
+  ];
 
   programs.nh.flake = "path:${profile.configRepo}";
 
   home.shellAliases = {
+    update = updateCommand;
     up = switchCommand;
     rebuild = switchCommand;
     nbuild =

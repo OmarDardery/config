@@ -229,7 +229,7 @@ reconciles saved `shell.polkit_agent` overrides with the host-specific Nix setti
 - LazyVim enables DAP and Neotest for Python, Go, Rust and C/C++ debugging.
   Language-specific tests use project dependencies; Mason stays disabled.
   VSCodium provides Python/Go launch presets, project environment selection,
-  and the same pinned language tools. See [editor workflows](nixos/README.md#editor-workflows).
+  and Nix-managed language integrations. See [editor workflows](nixos/README.md#editor-workflows).
 - Neovim uses LazyVim's native Copilot integration on Neovim 0.12. Run
   `:LspCopilotSignIn` once if the language server has not picked up your GitHub
   login. Inline suggestions use LazyVim's normal `<Tab>` acceptance and
@@ -351,7 +351,7 @@ Use `path:` while modules are untracked. The portability tests instantiate a
 different user with custom/quoted paths, not only simulated bootstrap responses.
 The flake checks supply pinned Python/tomlkit, generated fixtures, and renderer
 binaries automatically. They cover portability, reconciliation, state migrations,
-updater confirmations, Steam rollback, Bat first-run behavior, offline Rust
+update ordering/failures, Steam rollback, Bat first-run behavior, offline Rust
 compilation/lint/format checks, GameMode authorization, bootstrap/host setup,
 headless editor integration, Kitty migrations and dark/light rendering of all user templates plus the pinned built-in Kitty template. Template
 sources are checked against the generated configuration's closure. Kitty checks
@@ -367,11 +367,14 @@ transactions, SELinux behavior and graphical logins still need VM/hardware tests
 Builds and checks do not activate the system. Keep both state-version values
 unchanged. Hardware testing limits and recorded graphics observations are below.
 
-Nix Monitor runs the packaged `nixos-update` command using `path:` flake
-references, so new untracked modules are included consistently. It updates all inputs,
-builds the complete system without activating it, and switches only after you type `yes`. Refusal or
-EOF leaves the updated lockfile for inspection; command failures stop the flow.
-This verification does not run the updater against the real checkout.
+Run `update` to refresh flake inputs, build and activate through nh, then update
+user and system Flatpaks. On NixOS, Nix Monitor calls the same packaged `config-update`
+workflow. Both use `path:` flake references and a shared lock. Build failures stop
+activation and leave the lockfile for inspection; Flatpak failures report that
+Nix activation already succeeded. There is no additional confirmation beyond
+normal privilege authentication. Standalone Linux updates its Home Manager
+profile and Flatpaks, while native host packages remain separately managed.
+Tests use mocked tools and never update the real checkout or installed system.
 
 Individual state tests remain available through `nixos/tests/desktop-migrations.py`
 and `nixos/tests/reconcile-noctalia.py` with Python plus `tomlkit`.
@@ -491,8 +494,8 @@ The package applies three maintained patches:
 - Nix Monitor validates complete Git hashes, checks exit statuses, shows failed
   checks as errors/stale data, and suppresses update availability until retry
   succeeds. It ticks every ten seconds, checks local revision once per minute,
-  and leaves expensive store scanning disabled. The packaged updater previews
-  all-input updates, builds the system, and requires `yes` before switching.
+  and leaves expensive store scanning disabled. The packaged updater refreshes
+  inputs, builds and switches through nh, then updates Flatpaks.
 - Game Launcher's C helper is compiled during packaging, avoiding runtime
   recompilation inside an immutable plugin directory.
 

@@ -1,5 +1,5 @@
 # Use the VSCodium-specific Home Manager module for its config and extension paths.
-# Nix supplies extensions and the shared toolchain; store paths select those tools.
+# Nix supplies extensions; store paths select external tools where needed.
 {
   pkgs,
   lib,
@@ -247,10 +247,10 @@ in
         "rust-analyzer.server.path" = bin pkgs.rust-analyzer "rust-analyzer";
 
         # Python
-        # Use the bundled basedpyright server independently of project Python environments.
-        "basedpyright.importStrategy" = "useBundled";
+        # Use project versions when installed, with Nix-owned extension bundles as fallback.
+        "basedpyright.importStrategy" = "fromEnvironment";
+        "basedpyright.disableOrganizeImports" = true;
         "ruff.importStrategy" = "fromEnvironment";
-        "ruff.path" = [ (bin pkgs.ruff "ruff") ];
         "python.defaultInterpreterPath" = "\${workspaceFolder}/.venv";
         "python.terminal.activateEnvironment" = true;
         "python.testing.pytestEnabled" = true;
@@ -266,7 +266,7 @@ in
         "shellformat.path" = bin pkgs.shfmt "shfmt";
 
         # Formatters, per language
-        # Mirrors conform.nvim's formatters_by_ft in ./lazyvim.nix.
+        # Use each language extension's formatter integration.
         "[nix]".editor.defaultFormatter = "jnoortheen.nix-ide";
         "[python]" = {
           "editor.defaultFormatter" = "charliermarsh.ruff";
@@ -293,7 +293,6 @@ in
         "[yaml]".editor.defaultFormatter = "esbenp.prettier-vscode";
         "[markdown]".editor.defaultFormatter = "esbenp.prettier-vscode";
         "[toml]".editor.defaultFormatter = "tamasfe.even-better-toml";
-        "prettier.prettierPath" = "${pkgs.prettier}/lib/node_modules/prettier/index.cjs";
 
         "eslint.format.enable" = false;
         "eslint.run" = "onSave";

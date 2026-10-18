@@ -116,14 +116,25 @@ The same names work in Bash and Zsh on both backends:
 | `ncheck` | Run the complete flake checks |
 | `nbuild` | Build the selected NixOS/Home Manager profile without activation |
 | `up` / `rebuild` | Build and switch through nh, with a package diff |
+| `update` | Update flake inputs, build and switch, then update user/system Flatpaks |
 | `nupdate` | Refresh the lockfile only; inspect/build before switching |
 | `nfmt` | Format the configuration tree without changing the shell's directory |
 
 Eza supplies the standard listing aliases; `lt` limits the tree to two levels.
 The formatter uses upstream `nixfmt-tree`, so `nix fmt` formats repository files
 instead of waiting for standard input. Game launchers accept `--` before a
-command. The combined NixOS updater validates the host name and uses a private
-lock to prevent simultaneous updates from CLI and Noctalia.
+command. `update` works from any directory and uses the declared NixOS host or
+standalone Home Manager profile. It runs `nix flake update`, then `nh os switch`
+or `nh home switch`, then `flatpak update --noninteractive --assumeyes`. nh builds
+before activation and shows the generation diff. Nix failures stop later stages;
+a Flatpak failure reports that Nix was already activated. The lockfile remains
+available for inspection after a build failure.
+
+On NixOS, Noctalia uses the same command and private update lock. `update` proceeds without
+an extra confirmation; normal privilege authentication can still be required.
+On standalone Linux it updates Home Manager and Flatpaks; native host packages
+remain the distribution's responsibility. `up`/`rebuild` apply the current
+lockfile, while `nupdate` only refreshes inputs.
 
 ## Resource policy and package fixes
 
@@ -142,8 +153,16 @@ behavior still requires testing on actual hardware.
 
 ## Editor workflows
 
-Both editors use the same pinned language tools and the repository's
-`.editorconfig`. Python defaults to a project's `.venv`; create/sync it with uv
+Both editors use the repository's `.editorconfig` and shared Nix CLI tools.
+Each owns its language-client, environment, test and debugger integrations.
+VSCodium uses extension-bundled servers where appropriate; basedpyright and
+Ruff prefer versions installed in the selected Python environment, and Prettier
+prefers the project's installation. Their Nix-owned extension bundles provide
+fallbacks. Neovim uses Nix-supplied servers/adapters; Conform resolves local
+Prettier first, then the CLI fallback. clangd, gopls, rust-analyzer and Nix tools
+retain explicit shared paths/settings where needed.
+
+Python defaults to a project's `.venv`; create/sync it with uv
 and include pytest in the project's development dependencies. The separate
 **Python (Nix notebooks)** Jupyter kernel is registered declaratively.
 
@@ -164,6 +183,8 @@ and include pytest in the project's development dependencies. The separate
   rust-analyzer/Clippy. Golangci-lint remains an explicit project command rather
   than another save-time diagnostic worker. ESLint and Prettier use project
   configuration. Language-specific workspace settings can override defaults.
+  Ruff owns Python import actions in both editors; basedpyright handles type
+  analysis and navigation. Routine Ruff protocol tracing is disabled.
 - Dependency/output trees are excluded from VSCodium file watching. Python
   reports diagnostics for open files; test discovery on every save is disabled.
   Debug/test plugins load on demand and Nix owns every plugin and adapter.

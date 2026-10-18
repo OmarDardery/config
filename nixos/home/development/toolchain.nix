@@ -61,7 +61,8 @@
       };
     };
 
-  # Servers, formatters and linters shared by Neovim and VSCodium.
+  # CLI tools and Neovim defaults. VSCodium uses native extensions where they
+  # provide an integrated server, with explicit paths for external tools.
   languageServers = with pkgs; [
     # Nix: nixd, formatter and linter.
     nixd

@@ -1,12 +1,9 @@
-"""State safety, Kitty rollback, and updater confirmation in disposable directories."""
-import fcntl
+"""State safety and Kitty rollback in disposable directories."""
 import importlib.util
 import json
 import os
 from pathlib import Path
-import shutil
 import stat
-import subprocess
 import sys
 import tempfile
 import unittest
@@ -216,54 +213,6 @@ class MigrationTests(unittest.TestCase):
         os.rename(recovery, target)
         m.remove_transaction(recovery.parent)
         self.assert_no_scratch()
-
-    def test_updater_confirmation_and_command_failures(self):
-        bin_dir = self.root / "bin"
-        bin_dir.mkdir()
-        log = self.root / "commands"
-        for name in ("nix", "sudo"):
-            script = bin_dir / name
-            script.write_text('#!' + shutil.which("bash") + '\nprintf "%s\\n" "$*" >> "$LOG"\n[[ "$*" != *"$FAIL"* ]]\n')
-            script.chmod(0o755)
-        cases = [("yes\n", "never", True), ("no\n", "never", False), ("", "never", False),
-                 ("yes\n", "flake update", False), ("yes\n", "build --no-link", False), ("yes\n", "nixos-rebuild", True)]
-        for answer, failure, switches in cases:
-            with self.subTest(answer=answer, failure=failure):
-                log.write_text("")
-                result = subprocess.run(["bash", str(ROOT / "pkgs/nixos-update.sh"), "/checkout with spaces", "host"], input=answer, text=True, capture_output=True,
-                                        env={**os.environ, "PATH": str(bin_dir) + ":" + os.environ["PATH"], "LOG": str(log), "FAIL": failure, "XDG_CACHE_HOME": str(self.root / "cache")})
-                self.assertEqual("nixos-rebuild switch" in log.read_text(), switches)
-                self.assertEqual(result.returncode == 0, switches and failure == "never")
-                commands = log.read_text().splitlines()
-                self.assertEqual(commands[0], "flake update --flake path:/checkout with spaces")
-                if failure != "flake update":
-                    self.assertEqual(commands[1], "build --no-link path:/checkout with spaces#nixosConfigurations.host.config.system.build.toplevel")
-                if switches:
-                    self.assertEqual(commands[2], "nixos-rebuild switch --flake path:/checkout with spaces#host")
-                if failure == "never":
-                    self.assertIn("lockfile", result.stdout)
-        log.write_text("")
-        result = subprocess.run(["bash", str(ROOT / "pkgs/nixos-update.sh"), "path:/already prefixed", "host"], input="no\n", text=True, capture_output=True,
-                                env={**os.environ, "PATH": str(bin_dir) + ":" + os.environ["PATH"], "LOG": str(log), "FAIL": "never", "XDG_CACHE_HOME": str(self.root / "cache")})
-        self.assertEqual(result.returncode, 1)
-        self.assertIn("--flake path:/already prefixed", log.read_text())
-        self.assertNotIn("path:path:", log.read_text())
-
-    def test_updater_invalid_arguments_and_concurrent_run(self):
-        script = str(ROOT / "pkgs/nixos-update.sh")
-        for arguments in ([], ["repo"], ["repo", "bad.name"], ["", "host"]):
-            result = subprocess.run(["bash", script, *arguments], capture_output=True)
-            self.assertEqual(result.returncode, 2)
-        result = subprocess.run(["bash", script, "--help"], capture_output=True)
-        self.assertEqual(result.returncode, 0)
-        directory = self.root / "cache/nix-config"
-        directory.mkdir(parents=True)
-        with (directory / "update.lock").open("w") as lock:
-            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-            result = subprocess.run(["bash", script, "repo", "host"], capture_output=True,
-                                    env={**os.environ, "XDG_CACHE_HOME": str(self.root / "cache")})
-            self.assertEqual(result.returncode, 1)
-            self.assertIn(b"already running", result.stderr)
 
 
 if __name__ == "__main__":

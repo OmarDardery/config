@@ -62,6 +62,7 @@ let
           "neval"
           "ncheck"
           "nupdate"
+          "update"
           "nfmt"
           "cnf"
           "cconf"
@@ -217,6 +218,13 @@ let
         home.programs.vscodium.profiles.default.userSettings."basedpyright.analysis.typeCheckingMode"
         == "standard"
       && home.programs.vscodium.profiles.default.userSettings."go.lintOnSave" == "off"
+      &&
+        home.programs.vscodium.profiles.default.userSettings."basedpyright.importStrategy"
+        == "fromEnvironment"
+      && home.programs.vscodium.profiles.default.userSettings."ruff.importStrategy" == "fromEnvironment"
+      && home.programs.vscodium.profiles.default.userSettings."basedpyright.disableOrganizeImports"
+      && !(home.programs.vscodium.profiles.default.userSettings ? "ruff.path")
+      && !(home.programs.vscodium.profiles.default.userSettings ? "prettier.prettierPath")
       && home.xdg.dataFile ? "jupyter/kernels/nix-python/kernel.json";
     umbrielLaptopMirror =
       system.home-manager.users.${profile.username}.programs.umbriel.settings.keybinds."Mod+Shift+M".action
@@ -436,7 +444,8 @@ let
         settings = system.home-manager.users.${profile.username}.programs.noctalia.settings;
         command = settings.plugin_settings."avivbintangaringga/nix-monitor".update_command;
       in
-      lib.hasInfix "/bin/nixos-update " command
+      command == system.home-manager.users.${profile.username}.home.shellAliases.update
+      && lib.hasInfix "/bin/config-update " command
       && builtins.elem "davemhammer/tailscale" settings.plugins.enabled;
     tailscaleOnlyKdeConnect =
       system.networking.firewall.enable

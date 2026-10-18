@@ -235,6 +235,7 @@ in
   performance-launchers = scriptCheck "performance-launcher-checks" "python ${tests}/performance-launchers.py ${launcherFixture}";
   portability = pkgs.writeText "portability-checks.json" (builtins.toJSON portability.checks);
   desktop-migrations = scriptCheck "desktop-migration-checks" "python ${tests}/desktop-migrations.py";
+  config-update = scriptCheck "configuration-update-checks" "python ${tests}/config-update.py";
   reconciliation = scriptCheck "noctalia-reconciliation-checks" "python ${tests}/reconcile-noctalia.py";
   bootstrap = scriptCheck "bootstrap-checks" "bash ${tests}/bootstrap.sh";
   host-setup = scriptCheck "host-setup-checks" "bash ${tests}/host-setup.sh";

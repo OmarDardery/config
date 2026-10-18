@@ -5,7 +5,6 @@
   lib,
   config,
   isNixOS,
-  profile,
   ...
 }:
 let
@@ -21,7 +20,6 @@ let
     input_path = "${input}";
     output_path = output;
   };
-  nixosUpdate = pkgs.callPackage ../pkgs/nixos-update.nix { };
   zenApply = pkgs.writeShellApplication {
     name = "noctalia-zen-apply";
     runtimeInputs = [
@@ -76,7 +74,7 @@ in
           bar.default.start = builtins.filter (id: isNixOS || id != "nix-monitor") settings.bar.default.start;
           plugin_settings = lib.optionalAttrs isNixOS {
             "avivbintangaringga/nix-monitor" = {
-              update_command = "${nixosUpdate}/bin/nixos-update ${lib.escapeShellArg profile.configRepo} ${lib.escapeShellArg profile.hostName}";
+              update_command = config.home.shellAliases.update;
               hide_clean_button = false;
               hide_optimize_button = false;
             };
