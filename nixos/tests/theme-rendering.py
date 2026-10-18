@@ -1,7 +1,6 @@
 """Render deployed palettes in isolation without executing application hooks."""
 
 import argparse
-import ast
 import json
 from pathlib import Path
 import subprocess
@@ -97,7 +96,6 @@ def main():
             assert json.loads(rendered["opencode"].read_text())["theme"]
             assert json.loads(rendered["fastfetch"].read_text())["display"]["color"]
             ET.parse(rendered["libreoffice"])
-            ast.parse(rendered["blender"].read_text())
             zellij_config = output / "zellij-check.kdl"
             zellij_config.write_text(rendered["zellij"].read_text() + '\ntheme "noctalia"\n')
             checked = subprocess.run(

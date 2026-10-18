@@ -21,7 +21,7 @@ desktop. `profile.nix` contains identity and deployment paths;
 | `home/nixos.nix` | Full desktop user configuration for the NixOS host |
 | `home/apps.nix` | Browser, chat, office, media viewers, image editors and scanner UI |
 | `home/files.nix` | File preferences, archive/PDF tools, user folders and file associations |
-| `home/engineering.nix` | Blender, FreeCAD, Logisim, WinBoat and webOS tools |
+| `home/engineering.nix` | FreeCAD, Logisim, WinBoat and webOS tools |
 | `home/kitty.nix` | Declarative terminal settings, shortcuts and migration |
 | `home/terminal.nix` | Command-line utilities/diagnostics |
 | `home/noctalia-settings.nix` | Shell preferences and bar layout |
@@ -57,7 +57,7 @@ in their native formats. No parallel `dotfiles/` configuration tree is used.
   recording, Bluetooth media keys, PipeWire and PulseAudio-client compatibility.
 - **Development:** VSCodium, Neovim, language servers/runtimes, Make/CMake/Ninja,
   pkg-config, Git LFS, GitHub CLI, PlatformIO and project development shells.
-- **Engineering/gaming:** Blender with laptop NVIDIA offload, FreeCAD, Logisim,
+- **Engineering/gaming:** FreeCAD, Logisim,
   Steam/Millennium and ProtonPlus; OrcaSlicer remains a user Flatpak.
 - **Diagnostics:** btop, USB/PCI/storage tools, lsof/strace, sysstat, DNS lookup,
   nmap, iperf3, MTR, ethtool, curl/wget and rsync. Privileged operations still

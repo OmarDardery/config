@@ -20,7 +20,6 @@ Noctalia's shipped palette template rather than a separately maintained copy.
 | GIMP, Inkscape | Community CSS | Personal override CSS; GIMP path matches the pinned 3.0 series |
 | Fastfetch | Community colors/apply script | Disposable color processing plus native CLI overrides; user JSONC stays intact |
 | LibreOffice | Community ColorScheme extension | Apply script staged in writable cache; skips installation while Office is open |
-| Blender | Community Python theme | Native `bpy` preferences API; skips while Blender is open |
 
 There is no matching upstream template for every application. The official
 Discord client does not expose these CSS themes without modifications; no client
@@ -37,9 +36,7 @@ For GIMP, use its Default base theme. For LibreOffice, close Office and run
 `noctalia-apply-libreoffice-theme`, then select Noctalia in **Tools → Options →
 LibreOffice → Application Colors**. The upstream extension installer also runs on
 palette changes, but defers while Office is open. Closing Office alone does not
-retry a deferred installation. Close Blender and run
-`noctalia-apply-blender-theme` to apply a deferred Blender theme; this changes UI
-preferences, not project geometry or materials. Both helpers use upstream files.
+retry a deferred installation. The helper uses upstream files.
 
 The six curated plugins still use the official source API. Three integration
 patches remain necessary: Screen Toolkit's runtime compatibility, Nix Monitor's

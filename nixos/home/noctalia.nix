@@ -26,7 +26,6 @@ in
   # Manual reconciliation previews changes unless --apply is supplied.
   home.packages = [
     appThemes.libreoffice
-    appThemes.blender
     (pkgs.writeShellApplication {
       name = "noctalia-reconcile";
       text = ''

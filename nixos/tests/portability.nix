@@ -293,7 +293,6 @@ let
           "opencode"
           "fastfetch"
           "libreoffice"
-          "blender"
           "gimp"
           "inkscape"
         ];

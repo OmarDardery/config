@@ -75,12 +75,6 @@ in
       post_hook = "${apps.libreoffice}/bin/noctalia-apply-libreoffice-theme";
       hook_async = false;
     };
-  blender =
-    (render "${community}/blender/blender_theme.py" "${config.xdg.cacheHome}/noctalia/blender_theme_rendered.py")
-    // {
-      post_hook = "${apps.blender}/bin/noctalia-apply-blender-theme";
-      hook_async = false;
-    };
   yazi = render "${community}/yazi/yazi.toml" "${config.xdg.configHome}/yazi/flavors/noctalia.yazi/flavor.toml";
   yazi_syntax = render "${community}/yazi/yazi.tmTheme" "${config.xdg.configHome}/yazi/flavors/noctalia.yazi/tmtheme.xml";
 }
