@@ -147,9 +147,10 @@ let
       configHome = batHome.xdg.configHome;
       cacheHome = batHome.xdg.cacheHome;
       init = batHome.lib.bash.initHomeManagerLib;
-      seed = batHome.home.activation.initializeNoctaliaBat.data;
+      seed = batHome.home.activation.initializeNoctaliaTemplates.data;
       cache = batHome.home.activation.batCache.data;
       bat = batHome.programs.bat.package;
+      opencodeTui = batHome.xdg.configFile."opencode/tui.json".source;
     }
   );
   launcherMocks = pkgs.runCommand "performance-launcher-mocks" { } ''
@@ -254,6 +255,10 @@ in
   portability = pkgs.writeText "portability-checks.json" (builtins.toJSON portability.checks);
   desktop-migrations = scriptCheck "desktop-migration-checks" "python ${tests}/desktop-migrations.py";
   config-update = scriptCheck "configuration-update-checks" "python ${tests}/config-update.py";
+  fastfetch-theme = scriptCheck "fastfetch-theme-checks" ''
+    export PATH=${pkgs.lib.makeBinPath [ pkgs.jq ]}:"$PATH"
+    python ${tests}/noctalia-fastfetch.py ${inputs.noctalia-templates}
+  '';
   reconciliation = scriptCheck "noctalia-reconciliation-checks" "python ${tests}/reconcile-noctalia.py";
   office-convert = scriptCheck "office-conversion-checks" "python ${tests}/office-convert.py";
   bootstrap = scriptCheck "bootstrap-checks" "bash ${tests}/bootstrap.sh";
@@ -321,9 +326,6 @@ in
         export XDG_STATE_HOME="$HOME/state"
         export XDG_CACHE_HOME="$HOME/cache"
         mkdir -p "$XDG_CONFIG_HOME" "$XDG_DATA_HOME/noctalia" "$XDG_STATE_HOME" "$XDG_CACHE_HOME"
-        ln -s ${
-          home.xdg.dataFile."noctalia/plugins/screen-toolkit".source
-        }/.. "$XDG_DATA_HOME/noctalia/plugins"
         noctalia config validate ${home.xdg.configFile."noctalia/config.toml".source}
         python ${tests}/theme-rendering.py \
           ${home.xdg.configFile."noctalia/config.toml".source} \

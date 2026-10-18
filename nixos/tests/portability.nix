@@ -289,7 +289,17 @@ let
           "btop"
           "yazi"
           "yazi_syntax"
+          "opencode"
+          "fastfetch"
+          "libreoffice"
+          "gimp"
+          "inkscape"
         ];
+    upstreamUmbrielTemplate = lib.hasSuffix "/assets/templates/umbriel/umbriel.toml" home.programs.noctalia.settings.theme.templates.user.umbriel.input_path;
+    terminalIntegration =
+      home.programs.kitty.settings.shell == lib.getExe base.pkgs.zsh
+      && home.programs.yazi.shellWrapperName == "y"
+      && home.programs.opencode.tui.theme == "noctalia";
     systemThemes =
       home.qt.platformTheme.name == "kde"
       && home.programs.umbriel.settings.environment.QT_QPA_PLATFORMTHEME == "kde"
@@ -314,8 +324,8 @@ let
       base.pkgs.stdenv.cc
     ];
     batSeedOrdering =
-      builtins.elem "batCache" home.home.activation.initializeNoctaliaBat.before
-      && builtins.elem "linkGeneration" home.home.activation.initializeNoctaliaBat.after;
+      builtins.elem "linkGeneration" home.home.activation.initializeNoctaliaTemplates.before
+      && builtins.elem "writeBoundary" home.home.activation.initializeNoctaliaTemplates.after;
     portableDesktopBoundary =
       !tools.xdg.portal.enable
       && !tools.gtk.enable
@@ -483,6 +493,36 @@ let
       command == system.home-manager.users.${profile.username}.home.shellAliases.update
       && lib.hasInfix "/bin/config-update " command
       && builtins.elem "davemhammer/tailscale" settings.plugins.enabled;
+    noctaliaSources =
+      let
+        settings = home.programs.noctalia.settings;
+        sources = settings.plugins.source;
+        managed = builtins.elemAt sources 2;
+      in
+      map (source: source.name) sources == [
+        "official"
+        "community"
+        "nix-managed"
+      ]
+      && managed.kind == "path"
+      && lib.hasPrefix builtins.storeDir managed.location
+      && builtins.all (source: source.enabled) sources
+      && settings.plugins.auto_update == "none"
+      && !(home.xdg.dataFile ? "noctalia/plugins/screen-toolkit");
+    noctaliaDesktopFlow =
+      home.programs.noctalia.settings.shell.umbriel_overview_type_to_launch_enabled
+      && home.programs.noctalia.settings.shell.launcher.layout == "simple"
+      && home.programs.noctalia.settings.widget.privacy.hide_inactive
+      && home.programs.noctalia.settings.notification.follow_focused_output
+      && home.programs.noctalia.settings.notification.max_visible == 3
+      && !home.programs.noctalia.settings.bar.default.reserve_space
+      && !home.programs.noctalia.settings.dock.reserve_space
+      &&
+        home.programs.umbriel.settings.keybinds."Alt+Tab".action
+        == "spawn:noctalia msg window-switcher hold"
+      &&
+        home.programs.umbriel.settings.keybinds."Mod+Alt+V".action
+        == "spawn:noctalia msg panel-toggle davemhammer/tailscale:manager";
     tailscaleOnlyKdeConnect =
       system.networking.firewall.enable
       && system.services.tailscale.enable

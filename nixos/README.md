@@ -21,7 +21,7 @@ desktop. `profile.nix` contains identity and deployment paths;
 | `home/nixos.nix` | Full desktop user configuration for the NixOS host |
 | `home/apps.nix` | Browser, chat, office, media viewers, image editors and scanner UI |
 | `home/files.nix` | File preferences, archive/PDF tools, user folders and file associations |
-| `home/engineering.nix` | Blender, FreeCAD, Logisim, WinBoat and webOS tools |
+| `home/engineering.nix` | FreeCAD, Logisim, WinBoat and webOS tools |
 | `home/kitty.nix` | Declarative terminal settings, shortcuts and migration |
 | `home/terminal.nix` | Command-line utilities/diagnostics |
 | `home/noctalia-settings.nix` | Shell preferences and bar layout |
@@ -57,7 +57,7 @@ in their native formats. No parallel `dotfiles/` configuration tree is used.
   recording, Bluetooth media keys, PipeWire and PulseAudio-client compatibility.
 - **Development:** VSCodium, Neovim, language servers/runtimes, Make/CMake/Ninja,
   pkg-config, Git LFS, GitHub CLI, PlatformIO and project development shells.
-- **Engineering/gaming:** Blender with laptop NVIDIA offload, FreeCAD, Logisim,
+- **Engineering/gaming:** FreeCAD, Logisim,
   Steam/Millennium and ProtonPlus; OrcaSlicer remains a user Flatpak.
 - **Diagnostics:** btop, USB/PCI/storage tools, lsof/strace, sysstat, DNS lookup,
   nmap, iperf3, MTR, ethtool, curl/wget and rsync. Privileged operations still
@@ -284,6 +284,9 @@ extension's own UI.
 
 ## Declarative desktop and shortcuts
 
+The [theming/workspace guide](THEMING.md) lists supported apps, upstream template
+sources, first-run behavior and the Yazi workflow.
+
 On NixOS, use `home/kitty.nix` for terminal behavior, `home/noctalia-settings.nix` for shell
 preferences, and `home/umbriel.nix` for window rules and desktop bindings.
 Noctalia keeps the palette, last wallpaper and theme mode as runtime data;
@@ -294,12 +297,36 @@ center and status controls on the right. The bar and right-hand dock reserve no
 space and hide on occupied workspaces; reveal them at their screen edges.
 Screen Toolkit leads a tools group that expands on hover to show clipboard,
 phone and Pomodoro controls. Their keyboard shortcuts work while collapsed.
-The centered launcher, restrained glass, soft shadows, 12-pixel corners and
-8-pixel window gaps use wallpaper-derived tonal colours across applications.
+The compact, centered launcher, restrained glass, soft shadows, 12-pixel corners
+and 8-pixel window gaps use wallpaper-derived tonal colours across applications.
+Volume, English/Arabic layout, graphical battery and active capture indicators are
+visible in the bar. Notifications follow the focused monitor with at most three
+toasts; the OSD sits at the top center. The dock shows apps on its current monitor.
+A shared critically damped spring coordinates Umbriel transitions; opening/closing
+uses a small 4% scale change. Two blur passes reduce rendering work, and hovering
+partly hidden columns cannot unexpectedly scroll the strip. Type in `Mod+O`'s
+overview to launch apps, or hold `Alt+Tab` to switch windows.
 Disabled, connector-specific desktop/lockscreen widget layouts are omitted.
 Umbriel starts in dwindle; its cycle contains only dwindle and scrolling.
 Scrolling centers when adjacent windows cannot fit; manual dwindle splits stay
 stable. Kitty opacity is configured once; file-manager text stays fully opaque.
+
+Plugin sources are declared in `home/noctalia.nix`, following the official
+[plugin-source model](https://docs.noctalia.dev/noctalia/plugins/). Settings → Plugins
+shows the official and community Git catalogs, then the `nix-managed` read-only
+path source. Later sources take precedence, so the six pinned/patched plugins
+continue to win over catalog copies. Home Manager removes its former per-plugin
+links during activation. Bump `noctalia-plugins` in `flake.nix` to change the curated
+revision; `update` respects that explicit pin. Background Git updates are disabled.
+Catalog refreshes and plugin experiments
+remain available in Settings; declare wanted changes in Nix to keep them on rebuild.
+
+`Mod+Alt+V` opens Tailscale's manager. Its polling interval is 30 seconds and peer
+churn no longer emits notifications. `Mod+S` and the capture submap keep using the
+patched Screen Toolkit, including OCR and recording. Umbriel's integration follows
+its [animation](https://docs.noctalia.dev/umbriel/animation/) and
+[Noctalia](https://docs.noctalia.dev/noctalia/compositor-settings/umbriel/) references;
+features are checked against the locked source versions rather than v4 examples.
 
 Visual inspiration: [Noctalia's quiet-by-design unixporn post](https://www.reddit.com/r/unixporn/comments/1mlboeq/)
 and [Fami-PL's floating Noctalia rice](https://github.com/Fami-PL/hyprland-dots).
@@ -423,4 +450,4 @@ Do not restore the old automatic 60/100/165 Hz switching service or remove
 visual effects as a purported fix. Keep the `amdgpu_dpm` profile action disabled;
 its old policy selected `low` on power saver. NVIDIA runtime suspend already
 worked with `finegrained = false`; changing it requires suspend testing.
-Noctalia's backdrop blur, shader caches and existing render settings are retained.
+Shader caches and hardware render policies are retained.

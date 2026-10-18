@@ -14,30 +14,18 @@ let
   reconcilePython = pkgs.python3.withPackages (ps: [ ps.tomlkit ]);
   themeDir = "${config.xdg.stateHome}/noctalia/theme";
   community = inputs.noctalia-templates;
-  builtin = "${inputs.noctalia}/assets/templates";
-  render = input: output: {
-    input_path = "${input}";
-    output_path = output;
+  appThemes = import ../pkgs/noctalia-app-themes.nix {
+    inherit pkgs lib config;
+    templates = community;
   };
-  zenApply = pkgs.writeShellApplication {
-    name = "noctalia-zen-apply";
-    runtimeInputs = [
-      pkgs.bash
-      pkgs.coreutils
-      pkgs.findutils
-      pkgs.gnused
-    ];
-    text = ''
-      exec bash ${../pkgs}/zen-apply.sh ${lib.escapeShellArg "${community}/zen-browser/apply.sh"} ${lib.escapeShellArg "${zenControls}"}
-    '';
-  };
-  zenControls = ../assets/zen-window-controls.css;
+
 in
 {
   imports = [ inputs.noctalia.homeModules.default ];
 
   # Manual reconciliation previews changes unless --apply is supplied.
   home.packages = [
+    appThemes.libreoffice
     (pkgs.writeShellApplication {
       name = "noctalia-reconcile";
       text = ''
@@ -55,7 +43,27 @@ in
     # Upstream checks this config during builds; warnings need review too.
     checkConfig = true;
     settings = lib.recursiveUpdate settings {
-      plugins.enabled = settings.plugins.enabled ++ [ "davemhammer/tailscale" ];
+      # Later sources win: keep the patched Nix plugins ahead of Git catalog copies.
+      plugins.source = [
+        {
+          name = "official";
+          kind = "git";
+          location = "https://github.com/noctalia-dev/official-plugins";
+          enabled = true;
+        }
+        {
+          name = "community";
+          kind = "git";
+          location = "https://github.com/noctalia-dev/community-plugins";
+          enabled = true;
+        }
+        {
+          name = "nix-managed";
+          kind = "path";
+          location = "${plugins}";
+          enabled = true;
+        }
+      ];
       plugin_settings = {
         "avivbintangaringga/nix-monitor" = {
           update_command = config.home.shellAliases.update;
@@ -63,41 +71,13 @@ in
           hide_optimize_button = false;
         };
       };
-      theme.templates.user = {
-        kitty = (render "${builtin}/kitty/kitty.conf" "${themeDir}/kitty.conf") // {
-          post_hook = "${pkgs.procps}/bin/pkill -USR1 -x kitty || true";
-        };
-        umbriel = render ../assets/umbriel.toml "${themeDir}/umbriel.toml";
-        vscode = render "${community}/vscode/vscode.json" "${themeDir}/vscode.json";
-        steam = render "${community}/steam/steam.css" "${themeDir}/steam.css";
-        zen_chrome =
-          (render "${community}/zen-browser/zen-userChrome.css" "${config.xdg.cacheHome}/noctalia/zen-browser/zen-userChrome.css")
-          // {
-            post_hook = "${zenApply}/bin/noctalia-zen-apply";
-            hook_async = false;
-          };
-        zen_content =
-          (render "${community}/zen-browser/zen-userContent.css" "${config.xdg.cacheHome}/noctalia/zen-browser/zen-userContent.css")
-          // {
-            post_hook = "${zenApply}/bin/noctalia-zen-apply";
-            hook_async = false;
-          };
-        fzf = render "${community}/fzf/fzf.sh" "${themeDir}/fzf.sh";
-        lazygit = render "${community}/lazygit/lazygit.yml" "${themeDir}/lazygit.yml";
-        nvim = render "${community}/neovim/matugen-template.lua" "${themeDir}/nvim.lua";
-        bat =
-          (render "${community}/bat/bat.tmTheme" "${config.xdg.configHome}/bat/themes/noctalia.tmTheme")
-          // {
-            post_hook = "${pkgs.bat}/bin/bat cache --build";
-            hook_async = false;
-          };
-        btop =
-          (render "${builtin}/btop/btop.theme" "${config.xdg.configHome}/btop/themes/noctalia.theme")
-          // {
-            post_hook = "${pkgs.procps}/bin/pkill -USR2 -x btop || true";
-          };
-        yazi = render "${community}/yazi/yazi.toml" "${config.xdg.configHome}/yazi/flavors/noctalia.yazi/flavor.toml";
-        yazi_syntax = render "${community}/yazi/yazi.tmTheme" "${config.xdg.configHome}/yazi/flavors/noctalia.yazi/tmtheme.xml";
+      theme.templates.user = import ./noctalia-templates.nix {
+        inherit
+          inputs
+          pkgs
+          lib
+          config
+          ;
       };
     };
 
@@ -105,29 +85,28 @@ in
     systemd.enable = false;
   };
 
-  # The upstream module selects its cached package.
-
-  # VSCodium only installs its theme watcher after a successful initial load.
-  # Seed a missing palette with Noctalia itself, including in the GNOME fallback.
-  home.activation.initializeNoctaliaVscode = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    if [[ ! -e ${lib.escapeShellArg "${themeDir}/vscode.json"} && ! -L ${lib.escapeShellArg "${themeDir}/vscode.json"} ]]; then
-      run mkdir -p ${lib.escapeShellArg themeDir}
-      run ${config.programs.noctalia.package}/bin/noctalia theme ${../assets/wallpapers/dark-mountain.jpg} \
-        --scheme ${lib.escapeShellArg config.programs.noctalia.settings.theme.wallpaper_scheme} \
-        --render ${lib.escapeShellArg "${community}/vscode/vscode.json:${themeDir}/vscode.json"} -o /dev/null
-    fi
-  '';
-
-  # Seed before HM's own batCache hook, including when Noctalia is not running.
-  home.activation.initializeNoctaliaBat =
-    lib.hm.dag.entryBetween [ "batCache" ] [ "linkGeneration" ]
+  # Seed missing generated palettes before applications observe new HM links.
+  # Explicit --render performs no apply hooks or application preference changes.
+  home.activation.initializeNoctaliaTemplates =
+    lib.hm.dag.entryBetween [ "linkGeneration" ] [ "writeBoundary" ]
       ''
-        bat_theme=${lib.escapeShellArg "${config.xdg.configHome}/bat/themes/noctalia.tmTheme"}
-        if [[ ! -e "$bat_theme" && ! -L "$bat_theme" ]]; then
-          run mkdir -p ${lib.escapeShellArg "${config.xdg.configHome}/bat/themes"}
+        noctalia_renders=()
+        ${lib.concatMapStringsSep "\n" (
+          name:
+          let
+            template = config.programs.noctalia.settings.theme.templates.user.${name};
+          in
+          ''
+            if [[ ! -e ${lib.escapeShellArg template.output_path} && ! -L ${lib.escapeShellArg template.output_path} ]]; then
+              run mkdir -p ${lib.escapeShellArg (builtins.dirOf template.output_path)}
+              noctalia_renders+=(--render ${lib.escapeShellArg "${template.input_path}:${template.output_path}"})
+            fi
+          ''
+        ) (builtins.attrNames config.programs.noctalia.settings.theme.templates.user)}
+        if (( ''${#noctalia_renders[@]} > 0 )); then
           run ${config.programs.noctalia.package}/bin/noctalia theme ${../assets/wallpapers/dark-mountain.jpg} \
             --scheme ${lib.escapeShellArg config.programs.noctalia.settings.theme.wallpaper_scheme} \
-            --render ${lib.escapeShellArg "${community}/bat/bat.tmTheme:${config.xdg.configHome}/bat/themes/noctalia.tmTheme"} -o /dev/null
+            "''${noctalia_renders[@]}" -o /dev/null
         fi
       '';
 
@@ -140,23 +119,6 @@ in
         "$state" ${config.xdg.configFile."noctalia/config.toml".source} --managed --apply
     fi
   '';
-
-  # Immutable local plugins take precedence over downloaded Git sources.
-  # Tailscale controls are enabled on NixOS alongside the host service.
-  # Local discovery reads the manifests, so directory names need no author prefix.
-  xdg.dataFile =
-    lib.genAttrs
-      (map (name: "noctalia/plugins/${name}") [
-        "screen-toolkit"
-        "nix-monitor"
-        "phone-connect"
-        "pomodoro"
-        "tailscale"
-        "game-launcher"
-      ])
-      (path: {
-        source = "${plugins}/${lib.removePrefix "noctalia/plugins/" path}";
-      });
 
   # Paths stay portable through the shell's ~ expansion. Add wallpapers here
   # and rebuild; the selected wallpaper and generated palettes remain writable.

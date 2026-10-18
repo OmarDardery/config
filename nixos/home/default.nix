@@ -3,6 +3,7 @@
   imports = [
     ./development
     ./terminal.nix
+    ./yazi.nix
     ./office.nix
     ./shell.nix
     ./nix-tools.nix

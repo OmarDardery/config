@@ -6,6 +6,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import tomllib
+import xml.etree.ElementTree as ET
 
 
 def main():
@@ -19,7 +20,20 @@ def main():
     args = parser.parse_args()
     settings = tomllib.loads(args.config.read_text())
     templates = settings["theme"]["templates"]["user"]
+    sources = settings["plugins"]["source"]
+    names = [source["name"] for source in sources]
+    assert len(names) == len(set(names)), "Duplicate plugin source names"
+    assert names == ["official", "community", "nix-managed"], names
+    managed = sources[-1]
+    assert managed["kind"] == "path" and managed["enabled"]
+    plugin_root = Path(managed["location"])
+    manifests = [tomllib.loads(path.read_text()) for path in plugin_root.glob("*/plugin.toml")]
+    ids = [manifest["id"] for manifest in manifests]
+    assert len(ids) == len(set(ids)), "Duplicate managed plugin IDs"
+    assert set(settings["plugins"]["enabled"]) <= set(ids), ids
+    print("PASS: each enabled plugin resolves from the final, read-only Nix source")
     closure = set(args.closure.read_text().splitlines())
+    assert str(plugin_root) in closure, "Plugin source not retained in config closure"
     for template in templates.values():
         source = Path(template["input_path"])
         assert source.is_file(), source
@@ -77,8 +91,11 @@ def main():
             assert vscode["tokenColors"]
             palettes[mode] = vscode["colors"]["editor.background"]
             umbrella = tomllib.loads(rendered["umbriel"].read_text())
-            assert umbrella["colors"]["tab_bar"]["urgent"].startswith("#")
-            assert umbrella["colors"]["shadow"].startswith("#")
+            assert umbrella["colors"]["border"]["focused"].startswith("#")
+            assert templates["umbriel"]["input_path"].endswith("/assets/templates/umbriel/umbriel.toml")
+            assert json.loads(rendered["opencode"].read_text())["theme"]
+            assert json.loads(rendered["fastfetch"].read_text())["display"]["color"]
+            ET.parse(rendered["libreoffice"])
             assert '--theme-color: "Matugen"' in rendered["steam"].read_text()
             tomllib.loads(rendered["yazi"].read_text())
             config = output / "umbriel-test.toml"
