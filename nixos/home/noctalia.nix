@@ -81,7 +81,7 @@ in
       };
     };
 
-    # Umbriel starts the shell; no global service inside GNOME.
+    # Umbriel owns the shell lifecycle.
     systemd.enable = false;
   };
 

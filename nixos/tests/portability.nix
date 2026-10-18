@@ -56,10 +56,36 @@ let
         == "4"
       && !(home.home.sessionVariables ? CARGO_BUILD_JOBS)
       && system.hardware.block.defaultScheduler == null
-      && !system.services.scx.enable
-      && !(system.systemd.services ? scx)
       && system.specialisation == { }
       && system.boot.kernelPackages.kernel == base.pkgs.linuxPackages_latest.kernel;
+    nativeScheduler =
+      system.services.scx.enable
+      && system.services.scx.package == base.pkgs.scx.rustscheds
+      && system.services.scx.scheduler == "scx_lavd"
+      && system.services.scx.extraArgs == [ "--autopower" ]
+      && system.services.power-profiles-daemon.enable
+      && !system.services.ananicy.enable
+      && !system.services.tlp.enable
+      && !system.services.auto-cpufreq.enable
+      && system.systemd.services.scx.unitConfig.ConditionPathIsDirectory == "/sys/kernel/sched_ext";
+    schedulerKernel =
+      builtins.all
+        (
+          symbol:
+          (system.boot.kernelPackages.kernel.configfile.structuredConfig.${symbol}.tristate or null) == "y"
+        )
+        [
+          "SCHED_CLASS_EXT"
+          "BPF_SYSCALL"
+          "BPF_JIT"
+          "DEBUG_INFO_BTF"
+        ];
+    backgroundBuilds =
+      system.nix.daemonCPUSchedPolicy == "batch"
+      && system.nix.daemonIOSchedPriority == 6
+      && system.systemd.services.nix-daemon.serviceConfig.Nice == 5
+      && system.nix.settings.max-jobs == 2
+      && system.nix.settings.cores == 4;
     identity =
       home.home.username == alternate.username && home.home.homeDirectory == alternate.homeDirectory;
     noAuthorIdentity = !(home.programs.git.settings ? user);
@@ -262,7 +288,19 @@ let
       && !(home.xdg.configFile ? niri)
       && !(home.xdg.portal.config ? niri)
       && !(home.programs.noctalia.settings.theme.templates.user ? niri);
-    defaultDesktop = system.services.displayManager.defaultSession == "umbriel";
+    defaultDesktop =
+      system.services.displayManager.defaultSession == "umbriel"
+      && !system.services.desktopManager.gnome.enable
+      && system.programs.xwayland.enable
+      && system.services.udisks2.enable
+      && system.services.gnome.gnome-keyring.enable
+      && system.services.gnome.at-spi2-core.enable
+      && !(builtins.elem base.pkgs.gnome-control-center home.home.packages);
+    noDesktopIndexers =
+      !system.services.gnome.localsearch.enable
+      && !system.services.gnome.evolution-data-server.enable
+      && !system.services.gnome.gnome-online-accounts.enable
+      && !system.services.gnome.tinysparql.enable;
     noStaticPalette =
       !(home.programs.umbriel.settings ? colors) && !(home.programs.umbriel.settings.include ? files);
     vscodeTheme =
@@ -360,6 +398,7 @@ let
     portals =
       system.xdg.portal.enable
       && builtins.elem system.programs.umbriel.portalPackage system.xdg.portal.extraPortals
+      && builtins.elem base.pkgs.xdg-desktop-portal-gtk system.xdg.portal.extraPortals
       && !home.xdg.portal.enable;
     userFlatpak =
       system.services.flatpak.enable
@@ -374,7 +413,6 @@ let
       && home.services.kdeconnect.enable
       && system.programs.kdeconnect.package == null
       && builtins.all (package: builtins.elem package home.home.packages) [
-        base.pkgs.gnome-control-center
         base.pkgs.gnome-disk-utility
         base.pkgs.wireshark
         base.pkgs.gpu-screen-recorder
@@ -463,6 +501,8 @@ let
       && system.services.pipewire.alsa.enable
       && !system.services.pulseaudio.enable
       && system.services.printing.enable
+      && system.services.system-config-printer.enable
+      && builtins.elem base.pkgs.system-config-printer system.services.dbus.packages
       && system.services.ipp-usb.enable
       && system.hardware.sane.enable
       && system.services.avahi.nssmdns4

@@ -14,7 +14,8 @@ desktop. `profile.nix` contains identity and deployment paths;
 | `system/base.nix` | Boot, locale, user account, Home Manager wiring, journal limits |
 | `system/networking.nix` | NetworkManager, Tailscale and KDE Connect firewall policy |
 | `system/nix.nix` | Nix build limits, cache, garbage collection and optimisation |
-| `system/desktop.nix` | Umbriel session/portal module, Thunar/GVfs, Flatpak helper, login, audio, printing and power |
+| `system/performance.nix` | Kernel, LAVD scheduler, shared power profiles and compressed swap |
+| `system/desktop.nix` | Umbriel session/portal module, Thunar/GVfs, Flatpak helper, login, audio and printing |
 | `system/development.nix` | Docker, foreign-binary loader and PlatformIO device rules |
 | `system/gaming.nix` | Upstream Steam and GameMode modules, including drivers, units and privileges |
 | `home/default.nix` | Shared shell, Neovim, Git and development tools |
@@ -24,6 +25,7 @@ desktop. `profile.nix` contains identity and deployment paths;
 | `home/engineering.nix` | FreeCAD, Logisim, WinBoat and webOS tools |
 | `home/kitty.nix` | Declarative terminal settings, shortcuts and migration |
 | `home/terminal.nix` | Command-line utilities/diagnostics |
+| `home/yazi.nix` | File-browser preferences and shell integration |
 | `home/noctalia-settings.nix` | Shell preferences and bar layout |
 | `home/desktop.nix` | GTK/Qt, fonts/icons, KDE Connect and Bluetooth media integration |
 | `home/capture.nix` | Screenshot, recording, OCR and annotation dependencies |
@@ -32,7 +34,7 @@ desktop. `profile.nix` contains identity and deployment paths;
 | `home/gaming.nix` | Millennium setup/theme and game launchers |
 | `home/linux.nix` | Portable tools; no desktop, portals, GPU overrides or GUI services |
 | `pkgs/` | Package fixes and scripts that genuinely require wrappers or migrations |
-| `assets/` | Wallpapers/avatar, palette template, browser CSS and tablet profile seed |
+| `assets/` | Wallpapers/avatar, browser CSS and tablet profile seed |
 
 Import lists are explicit. Modules use ordinary Nix attributes, lists and
 conditionals; there is no auto-import framework, custom option tree or overlay
@@ -66,7 +68,9 @@ in their native formats. No parallel `dotfiles/` configuration tree is used.
 ProtonPlus is the one installed Proton-version manager. Swappy is the one
 installed screenshot annotation editor. Rnote, protonup-ng and Satty are absent.
 The two recording backends remain because Screen Toolkit actively supports
-fallback between them. GNOME remains an alternative login session.
+fallback between them. Umbriel is the only desktop session; the GNOME shell,
+settings app, file indexer and calendar/online-account services are omitted.
+Keyring, SSH agent, accessibility, disk mounting and XWayland remain native.
 
 On NixOS, CUPS, IPP-over-USB, SANE/airscan and mDNS discovery provide print/scan
 support. CUPS sharing stays disabled; mDNS discovery uses its standard UDP port.
@@ -85,8 +89,8 @@ can stop its Umbriel session. Then log out completely and log back in.
 Home Manager removes its previous
 managed desktop files and services; a fresh login clears the old session's
 Qt/GIO/graphics environment. Runtime wallpaper/palette data and personal files
-are retained. For the first NixOS ownership migration, use the GNOME fallback
-or a TTY and start Umbriel again afterward. Inspect Home Manager's activation
+are retained. For the first NixOS ownership migration, use a TTY and start
+Umbriel again afterward. Inspect Home Manager's activation
 output if a local edit or
 conflicting file prevents cleanup.
 
@@ -338,8 +342,9 @@ The configuration uses the pinned native Noctalia and Umbriel options.
 
 The next useful upgrades are encrypted backups of home data, project-specific
 `.envrc`/development shells using the existing direnv integration, and CI checks
-for configuration/input updates. Measure boot/session performance before changing
-drivers or schedulers. Nix recreates software; it does not back up
+for configuration/input updates. [PERFORMANCE.md](PERFORMANCE.md) documents the
+native LAVD policy, CachyOS flake audit and runtime comparison/rollback.
+Nix recreates software; it does not back up
 personal documents, browser profiles or credentials.
 
 ## Gaming workflow

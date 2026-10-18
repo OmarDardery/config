@@ -15,8 +15,7 @@ in
     inputs.umbriel.nixosModules.default
   ];
   programs.umbriel.enable = true;
-  # Native GNOME supplies the shared portal frontend. Its system-level lookup
-  # directory must include the Umbriel backend for the registered login session.
+  # The upstream Umbriel module supplies its portal and the GTK file chooser.
   xdg.portal = {
     enable = true;
     config.umbriel.default = [
@@ -55,24 +54,11 @@ in
     })
   ];
 
-  # GNOME is a Wayland fallback session; SDDM remains the login manager.
-  # User applications live in home/apps.nix; session/PAM services stay native.
-  services.desktopManager.gnome.enable = true;
-  services.gnome.core-apps.enable = false;
-
-  # Omit unused speech services and home-owned applications.
-  environment.gnome.excludePackages = with pkgs; [
-    orca
-    # Home Manager owns the user-facing tools.
-    gnome-color-manager
-    gnome-control-center
-    gnome-tour
-    gnome-user-docs
-    gnome-backgrounds
-    glycin-thumbnailer
-    gst-thumbnailers
-  ];
-  services.speechd.enable = false;
+  # One desktop session; retain native integration without a second shell.
+  programs.xwayland.enable = true;
+  services.udisks2.enable = true;
+  services.gnome.at-spi2-core.enable = true;
+  services.gnome.gcr-ssh-agent.enable = true;
 
   # The recorder app is home-owned; only the privileged KMS helper is global.
   # KMS capture needs CAP_SYS_ADMIN; do not expose the helper to every user.
@@ -111,13 +97,11 @@ in
     ];
   };
 
-  # Home Manager owns KDE Connect. Its ports are opened only on Tailscale
-  # above; the NixOS module would open them globally.
+  # Home Manager owns KDE Connect; networking.nix limits its ports to Tailscale.
   programs.kdeconnect = {
     enable = false;
     package = null;
   };
-  services.power-profiles-daemon.enable = true;
   services.upower.enable = true;
   services.fwupd.enable = true;
 

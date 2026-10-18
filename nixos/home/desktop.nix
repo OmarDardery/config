@@ -8,7 +8,7 @@
       BusName = "org.kde.kdeconnect";
     };
   };
-  # GNOME otherwise starts a second daemon through the package's XDG autostart.
+  # XDG autostart must not start a second daemon beside the session service.
   xdg.configFile."autostart/org.kde.kdeconnect.daemon.desktop".text = ''
     [Desktop Entry]
     Type=Application

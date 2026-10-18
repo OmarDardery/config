@@ -11,7 +11,6 @@
   boot.loader.efi.canTouchEfiVariables = true;
   # Bound kernel/initrd retention on the 1 GB EFI partition.
   boot.loader.systemd-boot.configurationLimit = 10;
-  boot.kernelPackages = pkgs.linuxPackages_latest;
 
   # Users
   users.users.${profile.username} = {
