@@ -24,36 +24,30 @@
   };
   bar = {
     default = {
-      background_opacity = 0.6;
-      border = "on_primary";
-      capsule = true;
-      capsule_border = "on_primary";
-      capsule_foreground = "primary";
-      capsule_opacity = 0.39;
-      capsule_thickness = 0.61;
+      background_opacity = 0.88;
+      border = "outline";
+      border_width = 1.0;
+      capsule = false;
       center = [
         "clock"
       ];
       concave_edge_corners = false;
       end = [
-        "screen-toolkit"
-        "phone-connect"
-        "pomodoro"
         "media"
+        "group:tools"
         "tray"
         "notifications"
-        "clipboard"
-        "group:g1"
+        "group:status"
         "session"
       ];
-      margin_edge = 5;
+      margin_edge = 8;
       margin_ends = 12;
-      padding = 6;
+      padding = 10;
       position = "bottom";
-      radius = 13;
-      shadow = false;
-      thickness = 29;
-      reserve_space = true;
+      radius = 12;
+      shadow = true;
+      thickness = 34;
+      reserve_space = false;
       smart_auto_hide = true;
       start = [
         "launcher"
@@ -62,13 +56,28 @@
       ];
       capsule_group = [
         {
-          accordion = false;
-          accordion_direction = "end";
-          border = "on_primary";
+          id = "tools";
+          accordion = true;
+          accordion_direction = "start";
           enabled = true;
           fill = "surface_variant";
-          foreground = "primary";
-          id = "g1";
+          foreground = "on_surface";
+          members = [
+            "screen-toolkit"
+            "clipboard"
+            "phone-connect"
+            "pomodoro"
+          ];
+          opacity = 0.55;
+          padding = 6.0;
+          radius = 8.0;
+        }
+        {
+          accordion = false;
+          enabled = true;
+          fill = "surface_variant";
+          foreground = "on_surface";
+          id = "status";
           members = [
             "network"
             "bluetooth"
@@ -76,8 +85,9 @@
             "battery"
             "control-center"
           ];
-          opacity = 0.39;
+          opacity = 0.55;
           padding = 6.0;
+          radius = 8.0;
         }
       ];
     };
@@ -110,8 +120,13 @@
   };
   dock = {
     enabled = true;
-    icon_size = 31;
-    launcher_icon = "gpu-usage";
+    background_opacity = 0.88;
+    border = "outline";
+    border_width = 1.0;
+    icon_size = 32;
+    margin_edge = 8;
+    radius = 12;
+    magnification_scale = 1.2;
     position = "right";
     reserve_space = false;
     smart_auto_hide = true;
@@ -169,11 +184,15 @@
       ];
     };
     animation = {
-      speed = 2.0;
+      speed = 1.5;
+    };
+    shadow = {
+      alpha = 0.3;
     };
     panel = {
-      launcher_placement = "attached";
-      open_near_click_launcher = true;
+      launcher_placement = "floating";
+      launcher_position = "center";
+      open_near_click_launcher = false;
       open_near_click_wallpaper = true;
       transparency_mode = "glass";
     };
@@ -183,7 +202,7 @@
   };
   theme = {
     source = "wallpaper";
-    wallpaper_scheme = "m3-rainbow";
+    wallpaper_scheme = "m3-tonal-spot";
     templates = {
       builtin_ids = [
         "gtk3"
@@ -204,6 +223,27 @@
     };
   };
   widget = {
+    clock = {
+      format = "{:%a %d %b  %H:%M}";
+    };
+    workspaces = {
+      style = "minimal";
+      show_labels = true;
+      show_icons = false;
+    };
+    media = {
+      max_length = 180;
+      hide_artist = true;
+      hide_when_no_media = true;
+      title_scroll = "on_hover";
+    };
+    network = {
+      show_label = false;
+    };
+    bluetooth = {
+      show_label = false;
+      hide_when_no_connected_device = true;
+    };
     control-center = {
       glyph = "settings";
     };

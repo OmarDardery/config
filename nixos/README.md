@@ -229,13 +229,21 @@ preferences, and `home/umbriel.nix` for window rules and desktop bindings.
 Noctalia keeps the palette, last wallpaper and theme mode as runtime data;
 declared preferences win on rebuild with backups of prior overrides.
 
-The bar places launcher/workspaces on the left, clock in the center and status
-controls on the right. It reserves space instead of covering tiled windows.
+The floating bottom bar places launcher/workspaces on the left, date/time in the
+center and status controls on the right. The bar and right-hand dock reserve no
+space and hide on occupied workspaces; reveal them at their screen edges.
+Screen Toolkit leads a tools group that expands on hover to show clipboard,
+phone and Pomodoro controls. Their keyboard shortcuts work while collapsed.
+The centered launcher, restrained glass, soft shadows, 12-pixel corners and
+8-pixel window gaps use wallpaper-derived tonal colours across applications.
 Disabled, connector-specific desktop/lockscreen widget layouts are omitted.
 Umbriel starts in dwindle; its cycle contains only dwindle and scrolling.
 Scrolling centers when adjacent windows cannot fit; manual dwindle splits stay
-stable. Kitty opacity is configured once, rather than multiplied by a second
-compositor opacity rule.
+stable. Kitty opacity is configured once; file-manager text stays fully opaque.
+
+Visual inspiration: [Noctalia's quiet-by-design unixporn post](https://www.reddit.com/r/unixporn/comments/1mlboeq/)
+and [Fami-PL's floating Noctalia rice](https://github.com/Fami-PL/hyprland-dots).
+The configuration uses the pinned native Noctalia and Umbriel options.
 
 [SHORTCUTS.md](SHORTCUTS.md) lists daily controls. `Mod+S` opens Screen Toolkit;
 `Mod+Shift+S` enters capture shortcuts; `Mod+Ctrl+S` opens settings;

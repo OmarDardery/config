@@ -126,7 +126,7 @@ in
       };
       layout = {
         mode = "dwindle";
-        gap = 6;
+        gap = 8;
         extent_presets = [
           0.33333
           0.5
@@ -148,12 +148,12 @@ in
         prefer_no_csd = true;
         border_width = 1;
         outer_border_width = 1;
-        corner_radius = 8;
+        corner_radius = 12;
         shadow = {
           enabled = true;
-          softness = 20;
+          softness = 24;
           offset_x = 0;
-          offset_y = 3;
+          offset_y = 4;
         };
         tab_bar = {
           style = "indicator";
@@ -376,7 +376,6 @@ in
         }
         {
           match.app_id = "^(thunar|Thunar|org\\.xfce\\.Thunar)$";
-          opacity = 0.8;
           blur = true;
         }
         {

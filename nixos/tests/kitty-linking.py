@@ -58,6 +58,60 @@ def tree_snapshot(home):
                   for path in home.rglob("*"))
 
 
+def parse_kitty(path, home, *, success=True):
+    # Kitty's +runpy uses optimized Python, so assertions in that code are skipped.
+    code = '''
+import json, sys
+from kitty.config import load_config
+bad = []
+opts = load_config(sys.argv[1], accumulate_bad_lines=bad)
+if bad:
+    raise ValueError(f"Kitty configuration errors: {bad}")
+print(json.dumps({"font_size": opts.font_size,
+                  "background": [opts.background.red, opts.background.green, opts.background.blue]}))
+'''
+    result = subprocess.run([
+        fixtures["current"]["kitty"], "+runpy", code, str(path),
+    ], capture_output=True, text=True, env={
+        **os.environ, "HOME": str(home),
+        "XDG_CONFIG_HOME": str(kitty_path(home).parent),
+        "XDG_CACHE_HOME": str(home / "cache"),
+        "XDG_DATA_HOME": str(home / "data"),
+        "XDG_STATE_HOME": str(home / 'state "custom"'),
+    })
+    if success:
+        assert result.returncode == 0, (result.stdout, result.stderr)
+        return json.loads(result.stdout)
+    assert result.returncode != 0, "The parser check accepted an invalid configuration"
+    assert "Kitty configuration errors" in result.stderr, result.stderr
+
+
+def check_palette(config, home):
+    # Relocate the generated fixture's state path into the disposable home.
+    palette = home / 'state "custom"/noctalia/theme/kitty.conf'
+    declared_palette = str(Path(fixtures["current"]["stateHome"]) / "noctalia/theme/kitty.conf")
+    contents = config.read_text()
+    assert f"include {declared_palette}" in contents
+    rendered = home / "parser-kitty.conf"
+    rendered.write_text(contents.replace(declared_palette, str(palette)))
+
+    missing = parse_kitty(rendered, home)
+    assert missing["font_size"] == 14
+    palette.parent.mkdir(parents=True)
+    for color, rgb in (("#123456", [18, 52, 86]), ("#abcdef", [171, 205, 239])):
+        palette.write_text(f"background {color}\n")
+        loaded = parse_kitty(rendered, home)
+        assert loaded["background"] == rgb, loaded
+        assert loaded["font_size"] == 14
+    palette.unlink()
+    assert parse_kitty(rendered, home) == missing
+
+    # Negative control: the exact absolute globinclude regression must fail.
+    invalid = home / "invalid-kitty.conf"
+    invalid.write_text(f"globinclude {palette}\n")
+    parse_kitty(invalid, home, success=False)
+
+
 with tempfile.TemporaryDirectory() as directory:
     root = Path(directory)
     for backup in (False, True):
@@ -69,18 +123,7 @@ with tempfile.TemporaryDirectory() as directory:
         activate(case, home, "current", backup=backup)
         kitty = kitty_path(home)
         assert (kitty / "kitty.conf").is_file() and (kitty / "kitty.conf").is_symlink()
-        subprocess.run([
-            fixtures["current"]["kitty"], "+runpy",
-            "import sys; from kitty.config import load_config; bad = []; "
-            "load_config(sys.argv[1], accumulate_bad_lines=bad); assert not bad, bad",
-            str(kitty / "kitty.conf"),
-        ], check=True, env={
-            **os.environ, "HOME": str(home),
-            "XDG_CONFIG_HOME": str(kitty.parent),
-            "XDG_CACHE_HOME": str(home / "cache"),
-            "XDG_DATA_HOME": str(home / "data"),
-            "XDG_STATE_HOME": str(home / "state"),
-        })
+        check_palette(kitty / "kitty.conf", home)
         (kitty / "user.conf").write_bytes(b"custom settings")
         activate(case, home, "current", "current", backup=backup)
         assert "font_size 14" in (kitty / "kitty.conf").read_text()
@@ -114,7 +157,7 @@ with tempfile.TemporaryDirectory() as directory:
         assert (legacy_kitty / "kitty.conf").is_file()
         assert (legacy_kitty / "kitty.conf").is_symlink()
         assert "font_size 14" in (legacy_kitty / "kitty.conf").read_text()
-        assert "globinclude" in (legacy_kitty / "kitty.conf").read_text()
+        assert "include " in (legacy_kitty / "kitty.conf").read_text()
         backups = list(legacy_kitty.parent.glob("kitty.backup-*"))
         assert len(backups) == 1
         assert (backups[0] / "kitty.conf").read_bytes() == original
@@ -125,4 +168,4 @@ with tempfile.TemporaryDirectory() as directory:
         assert "font_size 14" in (legacy_kitty / "kitty.conf").read_text()
         assert len(list(legacy_kitty.parent.glob("kitty.backup-*"))) == 1
         assert not list(legacy_kitty.parent.glob(".kitty.migration-*"))
-print("PASS: HM collision checks, fresh setup, legacy backups, declarative config and file preservation and dry runs")
+print("PASS: Kitty parsing, palette loading/fallback, HM linking, migration backups, file preservation and dry runs")

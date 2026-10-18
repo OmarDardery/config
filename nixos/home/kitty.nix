@@ -47,7 +47,7 @@
       "ctrl+shift+u" = "kitten hints --type url";
     };
     # A missing palette on the first launch is harmless; Kitty's defaults apply.
-    extraConfig = "globinclude ${config.xdg.stateHome}/noctalia/theme/kitty.conf";
+    extraConfig = "include ${config.xdg.stateHome}/noctalia/theme/kitty.conf";
   };
 
   # Preserve the former writable configuration before HM takes ownership.
