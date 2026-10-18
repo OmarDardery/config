@@ -36,14 +36,6 @@ in
   };
 
   programs.starship.enable = true;
-  programs.yazi = {
-    enable = true;
-    theme.flavor = lib.mkIf isNixOS {
-      dark = "noctalia";
-      light = "noctalia";
-    };
-  };
-
   # These are declared as programs rather than packages so home-manager writes
   # the zsh integration itself — the zoxide hook, the fzf ctrl-r/ctrl-t
   # bindings — instead of us hand-writing rc lines that then drift.

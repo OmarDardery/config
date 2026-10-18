@@ -35,7 +35,6 @@ in
       ++ toolchain.runtimes
       ++ (with pkgs; [
         platformio-core
-        opencode
         (callPackage ../../pkgs/antigravity-cli.nix { })
       ]);
 
@@ -49,6 +48,11 @@ in
       XKB_CONFIG_ROOT = "${pkgs.xkeyboard-config}/share/X11/xkb";
     };
     sessionPath = [ "$HOME/.bun/bin" ];
+  };
+
+  programs.opencode = {
+    enable = true;
+    tui.theme = lib.mkIf isNixOS "noctalia";
   };
 
   # One explicit notebook kernel; regular Python projects select their own .venv.

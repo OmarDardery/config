@@ -147,9 +147,12 @@ let
       configHome = batHome.xdg.configHome;
       cacheHome = batHome.xdg.cacheHome;
       init = batHome.lib.bash.initHomeManagerLib;
-      seed = batHome.home.activation.initializeNoctaliaBat.data;
+      seed = batHome.home.activation.initializeNoctaliaTemplates.data;
       cache = batHome.home.activation.batCache.data;
       bat = batHome.programs.bat.package;
+      zellij = batHome.programs.zellij.package;
+      zellijConfig = batHome.xdg.configFile."zellij/config.kdl".source;
+      opencodeTui = batHome.xdg.configFile."opencode/tui.json".source;
     }
   );
   launcherMocks = pkgs.runCommand "performance-launcher-mocks" { } ''
@@ -254,6 +257,10 @@ in
   portability = pkgs.writeText "portability-checks.json" (builtins.toJSON portability.checks);
   desktop-migrations = scriptCheck "desktop-migration-checks" "python ${tests}/desktop-migrations.py";
   config-update = scriptCheck "configuration-update-checks" "python ${tests}/config-update.py";
+  fastfetch-theme = scriptCheck "fastfetch-theme-checks" ''
+    export PATH=${pkgs.lib.makeBinPath [ pkgs.jq ]}:"$PATH"
+    python ${tests}/noctalia-fastfetch.py ${inputs.noctalia-templates}
+  '';
   reconciliation = scriptCheck "noctalia-reconciliation-checks" "python ${tests}/reconcile-noctalia.py";
   office-convert = scriptCheck "office-conversion-checks" "python ${tests}/office-convert.py";
   bootstrap = scriptCheck "bootstrap-checks" "bash ${tests}/bootstrap.sh";
@@ -307,6 +314,7 @@ in
           python
           home.programs.noctalia.package
           home.programs.umbriel.package
+          home.programs.zellij.package
         ];
         exportReferencesGraph = [
           "config-closure"

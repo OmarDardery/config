@@ -14,6 +14,7 @@
       size = 14;
     };
     settings = {
+      shell = lib.getExe config.programs.zellij.package;
       bold_font = "auto";
       italic_font = "auto";
       bold_italic_font = "auto";

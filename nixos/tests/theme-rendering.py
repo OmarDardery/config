@@ -1,11 +1,13 @@
 """Render deployed palettes in isolation without executing application hooks."""
 
 import argparse
+import ast
 import json
 from pathlib import Path
 import subprocess
 import tempfile
 import tomllib
+import xml.etree.ElementTree as ET
 
 
 def main():
@@ -90,8 +92,19 @@ def main():
             assert vscode["tokenColors"]
             palettes[mode] = vscode["colors"]["editor.background"]
             umbrella = tomllib.loads(rendered["umbriel"].read_text())
-            assert umbrella["colors"]["tab_bar"]["urgent"].startswith("#")
-            assert umbrella["colors"]["shadow"].startswith("#")
+            assert umbrella["colors"]["border"]["focused"].startswith("#")
+            assert templates["umbriel"]["input_path"].endswith("/assets/templates/umbriel/umbriel.toml")
+            assert json.loads(rendered["opencode"].read_text())["theme"]
+            assert json.loads(rendered["fastfetch"].read_text())["display"]["color"]
+            ET.parse(rendered["libreoffice"])
+            ast.parse(rendered["blender"].read_text())
+            zellij_config = output / "zellij-check.kdl"
+            zellij_config.write_text(rendered["zellij"].read_text() + '\ntheme "noctalia"\n')
+            checked = subprocess.run(
+                ["zellij", "--config", str(zellij_config), "setup", "--check"],
+                check=True, capture_output=True, text=True,
+            )
+            assert "[CONFIG FILE]: Well defined." in checked.stdout + checked.stderr, checked.stdout + checked.stderr
             assert '--theme-color: "Matugen"' in rendered["steam"].read_text()
             tomllib.loads(rendered["yazi"].read_text())
             config = output / "umbriel-test.toml"

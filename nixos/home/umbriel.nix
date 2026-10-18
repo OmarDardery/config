@@ -181,6 +181,7 @@ in
       keybinds = {
         "Mod+Shift+Escape" = once "cheatsheet-open";
         "Mod+T" = once "spawn:${pkgs.kitty}/bin/kitty";
+        "Mod+Ctrl+T" = once "spawn:${pkgs.kitty}/bin/kitty ${pkgs.zsh}/bin/zsh";
         "Mod+Space" = once "spawn:noctalia msg panel-toggle launcher";
         "Alt+Tab" = once "spawn:noctalia msg window-switcher hold";
         "Mod+B" = once "spawn:zen";
@@ -192,6 +193,7 @@ in
         };
         "Mod+Shift+F23" = once "spawn:${pkgs.kitty}/bin/kitty";
         "Mod+E" = once "spawn:thunar";
+        "Mod+Shift+E" = once "spawn:${pkgs.kitty}/bin/kitty yazi";
         "Mod+I" = once "spawn:codium";
         "Mod+Ctrl+E" = once "spawn:${pkgs.kitty}/bin/kitty nvim ${lib.escapeShellArg profile.configRepo}";
         "Mod+Shift+D" = once "spawn:nwg-displays";

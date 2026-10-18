@@ -14,7 +14,8 @@ expand clipboard, phone and Pomodoro; their shortcuts work while collapsed.
 
 | Shortcut | Action |
 | --- | --- |
-| Mod+T / Mod+B / Mod+E | Kitty / Zen / Thunar |
+| Mod+T / Mod+B / Mod+E | Kitty/Zellij / Zen / Thunar |
+| Mod+Ctrl+T / Mod+Shift+E | Plain shell / Yazi directly in Kitty |
 | Mod+I / Mod+Ctrl+E | VSCodium / edit the Nix configuration tree |
 | Mod+Space | App launcher, search and calculator |
 | Alt+Tab | Window switcher; release Alt to activate |
@@ -110,3 +111,7 @@ Kitty uses Ctrl+Shift, keeping terminal commands separate from desktop controls.
 
 Kitty's command palette exposes remaining built-in actions. Settings and
 shortcuts belong in `home/kitty.nix`; colours come from Noctalia's generated palette.
+
+Zellij starts locked: `Ctrl+G` unlocks its upstream controls; `Ctrl+P`, `Ctrl+T`
+and `Ctrl+O` select pane, tab and session controls. `zdev` opens the development
+layout; `za` reattaches and `zl` lists sessions. See [THEMING.md](THEMING.md).

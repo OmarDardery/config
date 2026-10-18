@@ -30,6 +30,17 @@ with tempfile.TemporaryDirectory() as directory:
     theme = config / "bat/themes/noctalia.tmTheme"
     assert theme.is_file() and not theme.is_symlink()
     assert "{{" not in theme.read_text()
+    for relative in ["zellij/themes/noctalia.kdl", "opencode/themes/noctalia.json",
+                     "yazi/flavors/noctalia.yazi/flavor.toml"]:
+        assert (config / relative).is_file(), relative
+    zellij_config = config / "zellij/config.kdl"
+    shutil.copyfile(fixture["zellijConfig"], zellij_config)
+    result = subprocess.run([
+        str(Path(fixture["zellij"]) / "bin/zellij"), "--config", str(zellij_config),
+        "setup", "--check",
+    ], env=environment, capture_output=True, text=True, check=True)
+    assert "[CONFIG FILE]: Well defined." in result.stdout + result.stderr
+    assert json.loads(Path(fixture["opencodeTui"]).read_text())["theme"] == "noctalia"
     bat_config = config / "bat/config"
     bat_config.write_text('--theme="noctalia"\n')
     environment["BAT_CONFIG_PATH"] = str(bat_config)
@@ -52,4 +63,4 @@ with tempfile.TemporaryDirectory() as directory:
     subprocess.run(["bash", "-c", script], env=environment, check=True)
     assert theme.read_bytes() == original
     check_bat()
-print("PASS: Bat first-run palette/cache, existing-theme preservation, cache recreation and dry run")
+print("PASS: workspace/editor palettes, native Zellij config, Bat cache, preservation and dry run")

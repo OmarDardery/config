@@ -289,7 +289,26 @@ let
           "btop"
           "yazi"
           "yazi_syntax"
+          "zellij"
+          "opencode"
+          "fastfetch"
+          "libreoffice"
+          "blender"
+          "gimp"
+          "inkscape"
         ];
+    upstreamUmbrielTemplate = lib.hasSuffix "/assets/templates/umbriel/umbriel.toml" home.programs.noctalia.settings.theme.templates.user.umbriel.input_path;
+    terminalWorkspace =
+      home.programs.zellij.enable
+      && tools.programs.zellij.enable
+      && home.programs.zellij.settings.default_mode == "locked"
+      && home.programs.zellij.settings.on_force_close == "detach"
+      && home.programs.zellij.settings.theme == "noctalia"
+      && !(tools.programs.zellij.settings ? theme)
+      && home.programs.kitty.settings.shell == lib.getExe home.programs.zellij.package
+      && !home.programs.zellij.enableZshIntegration
+      && home.programs.yazi.shellWrapperName == "y"
+      && home.programs.opencode.tui.theme == "noctalia";
     systemThemes =
       home.qt.platformTheme.name == "kde"
       && home.programs.umbriel.settings.environment.QT_QPA_PLATFORMTHEME == "kde"
@@ -314,8 +333,8 @@ let
       base.pkgs.stdenv.cc
     ];
     batSeedOrdering =
-      builtins.elem "batCache" home.home.activation.initializeNoctaliaBat.before
-      && builtins.elem "linkGeneration" home.home.activation.initializeNoctaliaBat.after;
+      builtins.elem "linkGeneration" home.home.activation.initializeNoctaliaTemplates.before
+      && builtins.elem "writeBoundary" home.home.activation.initializeNoctaliaTemplates.after;
     portableDesktopBoundary =
       !tools.xdg.portal.enable
       && !tools.gtk.enable
