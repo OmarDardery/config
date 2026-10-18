@@ -212,6 +212,7 @@ let
         export XDG_DATA_HOME="$HOME/data"
         export XDG_STATE_HOME="$HOME/state"
         export XDG_CACHE_HOME="$HOME/cache"
+        export EDITOR_CHECK_DONE="$TMPDIR/editor-check.done"
         mkdir -p "$XDG_CONFIG_HOME/nvim" "$XDG_DATA_HOME/nvim" "$XDG_STATE_HOME" "$XDG_CACHE_HOME"
         cp -rs ${editorConfig editorHome}/. "$XDG_CONFIG_HOME/nvim"
         cp -rs ${editorData editorHome}/. "$XDG_DATA_HOME/nvim"
@@ -220,8 +221,10 @@ let
           "$XDG_DATA_HOME/jupyter/kernels/nix-python/kernel.json"
         # Trigger the UI event that starts LazyVim's deferred configuration.
         timeout 120s nvim --headless \
-          -c "autocmd User VeryLazy ++once lua vim.schedule(function() local ok, err = xpcall(function() dofile('${./tests/editor-integration.lua}') end, debug.traceback); if not ok then io.stderr:write(err, string.char(10)); vim.cmd('cquit') end end)" \
-          -c 'doautocmd UIEnter'
+          --cmd "autocmd User VeryLazy ++once lua vim.schedule(function() local ok, err = xpcall(function() dofile('${./tests/editor-integration.lua}') end, debug.traceback); if not ok then io.stderr:write(err, string.char(10)); vim.cmd('cquit') end end)" \
+          -c 'doautocmd UIEnter' \
+          -c 'lua vim.wait(110000, function() return false end)'
+        test -f "$EDITOR_CHECK_DONE"
         touch "$out"
       '';
   fixtureJson = pkgs.writeText "kitty-linking-fixtures.json" (builtins.toJSON fixtures);

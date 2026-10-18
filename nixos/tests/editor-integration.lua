@@ -142,4 +142,5 @@ print(
   "PASS: Nix plugins, debuggers, tests, LSPs, OpenCode and notebook round-trip"
     .. (execute_notebook and " with execution" or "")
 )
+assert(vim.fn.writefile({ "passed" }, assert(vim.env.EDITOR_CHECK_DONE)) == 0)
 vim.cmd("qa!")
