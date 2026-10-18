@@ -1,8 +1,7 @@
-"""Writable desktop state migrations; backups contain the exact original bytes."""
+"""Desktop configuration migrations; backups contain the exact original bytes."""
 import json
 import os
 from pathlib import Path
-import re
 import shutil
 import stat
 import sys
@@ -11,34 +10,19 @@ import tempfile
 from state_file import identity, replace, snapshot, sync_directory
 
 
-def kitty(target, defaults, legacy_palette=None):
-    original = snapshot(target, missing_ok=True)
-    obsolete = [rb'~/\.local/state/noctalia/theme/kitty\.conf',
-                rb'\$XDG_STATE_HOME/noctalia/theme/kitty\.conf']
-    if legacy_palette is not None:
-        obsolete.append(re.escape(os.fsencode(legacy_palette)))
-    pattern = rb'(?m)^include[ \t]+(?:' + b'|'.join(obsolete) + rb')[ \t]*$'
-    updated = defaults.read_bytes() if original is None else re.sub(
-        pattern, b'include themes/noctalia.conf', original[0])
-    replace(target, original, updated, preserve_mode=True)
-    target.parent.joinpath("themes").mkdir(exist_ok=True)
-
-
-def noctalia(target, marker):
-    if snapshot(marker, missing_ok=True) is not None:
-        return
+def kitty_declarative(target, desired):
+    """Back up unmanaged Kitty settings before Home Manager links the Nix config."""
+    legacy_directory = target.parent.is_symlink()
+    kitty_directory(target.parent)
+    if legacy_directory:
+        return  # The complete directory backup already preserves the original.
+    if target.is_symlink():
+        if target.resolve(strict=True).is_relative_to("/nix/store"):
+            return
+        raise ValueError(f"{target} must not link outside the Nix store")
     original = snapshot(target, missing_ok=True)
     if original is not None:
-        import tomlkit
-        document = tomlkit.parse(original[0].decode())
-        templates = document.setdefault("theme", {}).setdefault("templates", {})
-        ids = list(templates.get("builtin_ids", []))
-        if "kitty" not in ids:
-            ids.append("kitty")
-        templates["builtin_ids"] = ids
-        templates.get("user", {}).pop("kitty", None)
-        replace(target, original, tomlkit.dumps(document).encode(), preserve_mode=True)
-    replace(marker, None, b"kitty builtin migration v1\n")
+        replace(target, original, desired.read_bytes(), preserve_mode=True)
 
 
 def tablet(target, defaults):
@@ -140,5 +124,5 @@ def identity_link(path):
 
 
 if __name__ == "__main__":
-    {"kitty": kitty, "kitty-directory": kitty_directory, "noctalia": noctalia, "tablet": tablet}[sys.argv[1]](
+    {"kitty-declarative": kitty_declarative, "tablet": tablet}[sys.argv[1]](
         *(Path(argument) for argument in sys.argv[2:]))

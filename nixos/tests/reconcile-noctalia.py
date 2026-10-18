@@ -85,6 +85,19 @@ class ReconciliationTests(unittest.TestCase):
         self.assertEqual(set(removed), {'a.b.x', 'a.enabled', 'items'})
         self.assertEqual(tomllib.loads(self.state.read_text()), {'a': {'c': {'z': 3}}})
 
+    def test_managed_fields_win_but_runtime_state_and_unknown_fields_survive(self):
+        original = self.files('config_version = 3\n[bar.default]\nstart = ["old"]\n'
+                              'unknown = true\n[theme]\nmode = "light"\nsource = "builtin"\n'
+                              '[wallpaper.last]\npath = "current.png"\n',
+                              '[bar.default]\nstart = ["clock"]\n[theme]\nsource = "wallpaper"\n')
+        removed, backup = self.run_helper(apply=True, managed=True)
+        self.assertEqual(removed, ['bar.default.start', 'theme.source'])
+        self.assertEqual(backup.read_bytes(), original)
+        self.assertEqual(tomllib.loads(self.state.read_text()), {
+            'config_version': 3, 'bar': {'default': {'unknown': True}},
+            'theme': {'mode': 'light'}, 'wallpaper': {'last': {'path': 'current.png'}}})
+        self.assertEqual(self.run_helper(apply=True, managed=True), ([], None))
+
     def test_version_cannot_be_reset(self):
         original = self.files('config_version = 3\n', 'config_version = 3\n')
         self.assertEqual(self.run_helper(apply=True, resets=['config_version']), ([], None))

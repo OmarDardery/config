@@ -1,25 +1,5 @@
+{ pkgs, lib, ... }:
 {
-  pkgs,
-  lib,
-  config,
-  isLaptop,
-  ...
-}:
-{
-  # Noctalia writes kitty.conf and themes/noctalia.conf. Preserve existing edits
-  # and back up the old directory link before making its configuration writable.
-  home.activation.kittyDirectoryMigration =
-    lib.hm.dag.entryBetween [ "linkGeneration" ] [ "writeBoundary" ]
-      ''
-        run ${pkgs.python3}/bin/python3 ${../pkgs}/migrate-desktop.py kitty-directory \
-          ${lib.escapeShellArg "${config.xdg.configHome}/kitty"}
-      '';
-  home.activation.kittyWritableConfig = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
-    run ${pkgs.python3}/bin/python3 ${../pkgs}/migrate-desktop.py kitty \
-      ${lib.escapeShellArg "${config.xdg.configHome}/kitty/kitty.conf"} ${../dotfiles/kitty/kitty.conf} \
-      ${lib.escapeShellArg "${config.xdg.stateHome}/noctalia/theme/kitty.conf"}
-  '';
-
   services.kdeconnect.enable = true;
   systemd.user.services.kdeconnect = {
     Unit.BindsTo = [ "graphical-session.target" ];
@@ -43,10 +23,7 @@
     SystemdService=kdeconnect.service
   '';
 
-  # The play/pause/skip buttons on Bluetooth headphones speak AVRCP, which
-  # nothing on the desktop listens to by default — so pressing them on the Sony
-  # set did nothing. mpris-proxy is BlueZ's own bridge from AVRCP to MPRIS,
-  # which is the bus playerctl and the noctalia bar already use.
+  # Bridge Bluetooth media buttons to desktop media players.
   services.mpris-proxy.enable = true;
   systemd.user.services.mpris-proxy = {
     Unit = {
@@ -84,87 +61,16 @@
   # searches by default. Without it, kitty's JetBrainsMono falls back to DejaVu.
   fonts.fontconfig.enable = true;
 
-  home.packages =
-    with pkgs;
-    [
-      nerd-fonts.jetbrains-mono
-
-      # Arabic coverage independently of the English locale and US keyboard.
-      noto-fonts
-      adw-gtk3
-      glib # gsettings for Noctalia's dark/light and GTK-theme synchronization
-      dconf
-
-      # capture / selection
-      slurp
-      grim
-      hyprpicker
-
-      # processing
-      # The default includes every OCR model (about 1 GiB). These are the two
-      # languages used on this machine; Tesseract requires English to be present.
-      (tesseract.override {
-        enableLanguages = [
-          "eng"
-          "ara"
-        ];
-      })
-      imagemagick
-      zbar # zbarimg for QR/barcode
-      bc
-
-      # ── Displays ───────────────────────────────────────────────────────
-      # What GNOME's Settings → Displays panel does, split across three tools
-      # for the Umbriel session.
-      #
-      # nwg-displays drives wlr-output-management for interactive changes;
-      # persistent modes and positions are declared in home/umbriel.nix.
-      nwg-displays
-      wlr-randr # the same thing for scripts and one-off queries
-      # Mirroring, which Umbriel has no native support for. Still the right tool for
-      # a projector that will not take an extended desktop — but with the
-      # SAL_USE_VCLPLUGIN fix in ./apps.nix, presenting no longer needs it.
-      wl-mirror
-
-      # network / opening
-      curl
-      jq
-      sshfs # Phone Connect's remote-filesystem integration
-      pulseaudio # pactl, used by recording/audio helpers; no daemon is enabled
-      procps # pkill, used by template reloads and recording helpers
-      xdg-utils
-      wl-clipboard
-
-      # recording
-      wl-screenrec # region recording + mic audio
-      wf-recorder # fallback
-      ffmpeg # also provides ffprobe
-
-      # annotation + extras
-      swappy
-      satty
-      translate-shell # `trans`, for OCR translation
-    ]
-    ++ lib.optionals isLaptop [
-      (pkgs.writeShellApplication {
-        name = "mirror-laptop";
-        runtimeInputs = [
-          config.programs.umbriel.package
-          pkgs.jq
-          pkgs.wl-mirror
-        ];
-        text = ''
-          outputs=$(umbriel outputs --json)
-          panel=$(jq -er '
-            [.[] | select(.make == "BOE" and .model == "NE140QDM-NX7" and .enabled) | .name]
-            | if length == 1 then .[0] else error("Expected one active laptop panel") end
-          ' <<< "$outputs")
-          if ! jq -e 'any(.[]; .name == "HDMI-A-1" and .enabled)' <<< "$outputs" >/dev/null; then
-            printf '%s\n' 'HDMI-A-1 is not active; connect and enable the projector first.' >&2
-            exit 1
-          fi
-          exec wl-mirror --fullscreen-output HDMI-A-1 "$panel"
-        '';
-      })
-    ];
+  home.packages = with pkgs; [
+    nerd-fonts.jetbrains-mono
+    noto-fonts
+    noto-fonts-color-emoji
+    adwaita-icon-theme
+    adw-gtk3
+    glib
+    dconf
+    pavucontrol
+    brightnessctl
+    playerctl
+  ];
 }

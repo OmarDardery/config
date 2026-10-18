@@ -2,7 +2,7 @@
 # Build the NixOS host or standalone Home Manager profile before activation.
 set -euo pipefail
 
-REPO_HTTPS="https://codeberg.org/oadardery/configs.git"
+REPO_HTTPS="https://github.com/OmarDardery/config.git"
 repo_dir="${HOME:?HOME must be set}/configs"
 profile=
 host=

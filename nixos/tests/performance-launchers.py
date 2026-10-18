@@ -34,6 +34,11 @@ with tempfile.TemporaryDirectory() as temporary:
     assert events[1]["offload"] is None
     events = run("game", args, status=73, TEST_PROFILE_FAIL="1")
     assert [e["name"] for e in events] == ["powerprofilesctl"]
+    assert run("game", ["--"], status=2) == []
+    events = run("game", ["--integrated", "--", *args])
+    assert events[2]["args"] == args[1:] and events[1]["offload"] is None
+    events = run("performance", ["--", *args])
+    assert events[1]["args"] == args[1:]
     events = run("portableGame", args)
     assert [e["name"] for e in events] == ["gamemoderun", "test-target"]
     assert events[1]["offload"] is None and events[1]["held"] is None

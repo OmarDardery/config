@@ -1,11 +1,9 @@
-"""State safety, Kitty rollback, and updater confirmation in disposable directories."""
+"""State safety and Kitty rollback in disposable directories."""
 import importlib.util
 import json
 import os
 from pathlib import Path
-import shutil
 import stat
-import subprocess
 import sys
 import tempfile
 import unittest
@@ -29,67 +27,32 @@ class MigrationTests(unittest.TestCase):
     def assert_no_scratch(self):
         self.assertFalse(list(self.root.rglob(".*.migration-*")))
 
-    def test_kitty_fresh_migration_and_later_edits(self):
+    def test_kitty_declarative_backup_and_idempotence(self):
         target = self.root / "kitty/kitty.conf"
-        defaults = ROOT / "dotfiles/kitty/kitty.conf"
-        m.kitty(target, defaults)
-        self.assertEqual(target.read_bytes(), defaults.read_bytes())
-        original = b"font_size 23\ninclude ~/.local/state/noctalia/theme/kitty.conf\n"
-        target.write_bytes(original)
-        m.kitty(target, defaults)
-        self.assertEqual(target.read_bytes(), b"font_size 23\ninclude themes/noctalia.conf\n")
-        self.assertEqual(next(target.parent.glob("kitty.conf.backup-*")).read_bytes(), original)
-        target.write_text("font_size 25\ninclude themes/noctalia.conf\n")
-        m.kitty(target, defaults)
-        self.assertIn("25", target.read_text())
-        self.assertEqual(len(list(target.parent.glob("kitty.conf.backup-*"))), 1)
-
-    def test_kitty_absolute_palette_include_and_custom_include(self):
-        target = self.root / "kitty/kitty.conf"
+        desired = self.root / "desired.conf"
+        desired.write_text("font_size 14\n")
+        m.kitty_declarative(target, desired)
+        self.assertFalse(target.exists())
         target.parent.mkdir()
-        defaults = ROOT / "dotfiles/kitty/kitty.conf"
-        palette = self.root / 'state "custom"/noctalia/theme/kitty.conf'
-        original = f"font_size 23\ninclude {palette}\ninclude custom.conf\n".encode()
+        original = b"font_size 23\ninclude custom.conf\n"
         target.write_bytes(original)
-        m.kitty(target, defaults, palette)
-        self.assertEqual(target.read_bytes(), b"font_size 23\ninclude themes/noctalia.conf\ninclude custom.conf\n")
-        self.assertEqual(next(target.parent.glob("kitty.conf.backup-*")).read_bytes(), original)
-        m.kitty(target, defaults, palette)
+        m.kitty_declarative(target, desired)
+        self.assertEqual(target.read_bytes(), desired.read_bytes())
+        backups = list(target.parent.glob("kitty.conf.backup-*"))
+        self.assertEqual(len(backups), 1)
+        self.assertEqual(backups[0].read_bytes(), original)
+        m.kitty_declarative(target, desired)
         self.assertEqual(len(list(target.parent.glob("kitty.conf.backup-*"))), 1)
-
-    def test_noctalia_backup_marker_and_gui_choices(self):
-        target = self.root / "settings.toml"
-        marker = self.root / ".kitty-template-v1"
-        original = b'# comment\n[other]\nvalue = 4\n[theme.templates]\nbuiltin_ids = ["gtk"]\n[theme.templates.user.kitty]\ninput_path = "old"\n'
-        target.write_bytes(original)
-        m.noctalia(target, marker)
-        import tomlkit
-        result = tomlkit.parse(target.read_text())
-        self.assertEqual(result["other"]["value"], 4)
-        self.assertEqual(result["theme"]["templates"]["builtin_ids"], ["gtk", "kitty"])
-        self.assertNotIn("kitty", result["theme"]["templates"].get("user", {}))
-        self.assertEqual(next(self.root.glob("settings.toml.backup-*")).read_bytes(), original)
-        target.write_text('[theme.templates]\nbuiltin_ids = []\n')
-        m.noctalia(target, marker)
-        self.assertNotIn("kitty", target.read_text())
-
-    def test_malformed_state_and_failed_replace_never_write_marker(self):
-        target = self.root / "settings.toml"
-        marker = self.root / ".kitty-template-v1"
-        target.write_text("bad = [")
-        with self.assertRaises(Exception):
-            m.noctalia(target, marker)
-        self.assertFalse(marker.exists())
-        target.write_text('[theme.templates]\nbuiltin_ids = []\n')
-        with patch.object(state_file.os, "replace", side_effect=OSError("replace failed")):
-            with self.assertRaises(OSError):
-                m.noctalia(target, marker)
-        self.assertFalse(marker.exists())
+        target.unlink()
+        target.symlink_to(desired)
+        with self.assertRaises(ValueError):
+            m.kitty_declarative(target, desired)
+        self.assertTrue(target.is_symlink())
         self.assert_no_scratch()
 
     def test_tablet_preserves_profiles_and_settings(self):
         target = self.root / "tablet.json"
-        defaults = ROOT / "dotfiles/opentabletdriver/settings.json"
+        defaults = ROOT / "assets/tablet-settings.json"
         m.tablet(target, defaults)
         current = json.loads(target.read_text())
         current["Extra"] = "preserve"
@@ -250,38 +213,6 @@ class MigrationTests(unittest.TestCase):
         os.rename(recovery, target)
         m.remove_transaction(recovery.parent)
         self.assert_no_scratch()
-
-    def test_updater_confirmation_and_command_failures(self):
-        bin_dir = self.root / "bin"
-        bin_dir.mkdir()
-        log = self.root / "commands"
-        for name in ("nix", "sudo"):
-            script = bin_dir / name
-            script.write_text('#!' + shutil.which("bash") + '\nprintf "%s\\n" "$*" >> "$LOG"\n[[ "$*" != *"$FAIL"* ]]\n')
-            script.chmod(0o755)
-        cases = [("yes\n", "never", True), ("no\n", "never", False), ("", "never", False),
-                 ("yes\n", "flake update", False), ("yes\n", "build --dry-run", False), ("yes\n", "nixos-rebuild", True)]
-        for answer, failure, switches in cases:
-            with self.subTest(answer=answer, failure=failure):
-                log.write_text("")
-                result = subprocess.run(["bash", str(ROOT / "pkgs/nixos-update.sh"), "/checkout with spaces", "host"], input=answer, text=True, capture_output=True,
-                                        env={**os.environ, "PATH": str(bin_dir) + ":" + os.environ["PATH"], "LOG": str(log), "FAIL": failure})
-                self.assertEqual("nixos-rebuild switch" in log.read_text(), switches)
-                self.assertEqual(result.returncode == 0, switches and failure == "never")
-                commands = log.read_text().splitlines()
-                self.assertEqual(commands[0], "flake update --flake path:/checkout with spaces")
-                if failure != "flake update":
-                    self.assertEqual(commands[1], "build --dry-run path:/checkout with spaces#nixosConfigurations.host.config.system.build.toplevel")
-                if switches:
-                    self.assertEqual(commands[2], "nixos-rebuild switch --flake path:/checkout with spaces#host")
-                if failure == "never":
-                    self.assertIn("lockfile", result.stdout)
-        log.write_text("")
-        result = subprocess.run(["bash", str(ROOT / "pkgs/nixos-update.sh"), "path:/already prefixed", "host"], input="no\n", text=True, capture_output=True,
-                                env={**os.environ, "PATH": str(bin_dir) + ":" + os.environ["PATH"], "LOG": str(log), "FAIL": "never"})
-        self.assertEqual(result.returncode, 1)
-        self.assertIn("--flake path:/already prefixed", log.read_text())
-        self.assertNotIn("path:path:", log.read_text())
 
 
 if __name__ == "__main__":

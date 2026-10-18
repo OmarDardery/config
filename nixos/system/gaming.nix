@@ -20,7 +20,6 @@
       }
     ])
   ];
-  security.polkit.enable = true;
   security.wrappers.gamemoded = {
     owner = "root";
     group = "root";

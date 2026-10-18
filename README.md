@@ -13,9 +13,10 @@ path, host/profile names, platform and Git identity. Defaults remain `oad`,
 
 For another Linux account, set these values explicitly before bootstrapping.
 Use `null` for `gitName`/`gitEmail` if Git identity should remain unmanaged.
-The shared Home Manager modules no longer hardcode the author's account.
+The shared Home Manager modules take identity and paths from `profile.nix`.
 Rebuild aliases and both editors' nixd queries follow the selected profile.
-`cnf` opens the backend's configuration file, not an uneditable directory.
+`cnf` opens the configuration's module tree in `$EDITOR`; `cconf` enters it.
+`neval`, `ncheck`, `nbuild`, `up` and `nfmt` share the selected repository/profile.
 
 `nixos/package-policy.nix` supplies the user/dev-shell package policy, including
 the explicit EOL Electron exception needed by retained WinBoat. Integrated Home
@@ -31,7 +32,7 @@ does not turn this laptop's NixOS configuration into a generic installer.
 From a Debian 13 installation with the `oad` account and working `sudo`, run:
 
 ```sh
-curl -fsSLo "$HOME/debian-setup.sh" https://codeberg.org/oadardery/configs/raw/branch/main/debian-setup.sh && bash "$HOME/debian-setup.sh"
+curl -fsSLo "$HOME/debian-setup.sh" https://raw.githubusercontent.com/OmarDardery/config/main/debian-setup.sh && bash "$HOME/debian-setup.sh"
 ```
 
 The script installs SDDM with Umbriel and GNOME sessions, native graphics/audio,
@@ -176,9 +177,8 @@ when assuming isolated systemd/D-Bus environments.
 
 On standalone hosts, Umbriel starts the native polkit-gnome agent, not Noctalia's
 NixOS-dependent built-in agent. Fedora needs `polkit-gnome`; Debian needs
-`policykit-1-gnome` (included in host setup). GNOME keeps its own agent. If carrying
-old Noctalia GUI settings between hosts, review/reset `shell.polkit_agent` with
-`noctalia-reconcile` so a saved value does not re-enable the incompatible agent.
+`policykit-1-gnome` (included in host setup). GNOME keeps its own agent. Activation
+reconciles saved `shell.polkit_agent` overrides with the host-specific Nix setting.
 
 ## Applications And Desktop
 
@@ -197,9 +197,10 @@ old Noctalia GUI settings between hosts, review/reset `shell.polkit_agent` with
   Noctalia's save/clipboard preferences. `Mod+Ctrl+F` maximizes instead of expanding
   only into free space; `Mod+Ctrl+C` centers the active column, not all visible ones.
   Non-conflicting Umbriel built-in shortcuts remain available.
-- In Umbriel, `Mod+D` cycles the current workspace's layout through scrolling
-  (strip tiling), dwindle (splits), and master. `Mod+Up/Down` switches workspaces;
-  the former workspace bindings `Mod+WheelUp/Down` now navigate windows/tabs,
+- In Umbriel, `Mod+D` cycles **dwindle → scrolling → dwindle**; master is excluded.
+  Scrolling centers overflowing pairs; dwindle preserves manual split choices.
+  `Mod+Up/Down` switches workspaces;
+  `Mod+WheelUp/Down` navigates windows/tabs,
   as do `Mod+K/J`. `Mod+Ctrl+WheelUp/Down` still moves a column between workspaces.
 - User Flatpaks declare OrcaSlicer and ProtonPlus with weekly updates. Unmanaged
   apps/runtimes are preserved. NixOS also prepares the configured NVIDIA GL
@@ -225,37 +226,37 @@ old Noctalia GUI settings between hosts, review/reset `shell.polkit_agent` with
   unchanged; standalone hosts still need native privilege setup.
 - PlatformIO uses one Nix Core across editors and shells. Framework/toolchain
   downloads remain project-specific; notebook environments remain purpose-specific.
-- Neovim's inactive DAP/test plugin packages are omitted; add them with the
-  corresponding LazyVim extras when enabling those workflows.
+- LazyVim enables DAP and Neotest for Python, Go, Rust and C/C++ debugging.
+  Language-specific tests use project dependencies; Mason stays disabled.
+  VSCodium provides Python/Go launch presets, project environment selection,
+  and Nix-managed language integrations. See [editor workflows](nixos/README.md#editor-workflows).
 - Neovim uses LazyVim's native Copilot integration on Neovim 0.12. Run
   `:LspCopilotSignIn` once if the language server has not picked up your GitHub
   login. Inline suggestions use LazyVim's normal `<Tab>` acceptance and
   `Alt-]`/`Alt-[` to cycle. Copilot stays out of the `blink.cmp` source list.
   The Copilot server is pinned to GitHub's npm package because the GitHub
   release download is unreachable on this connection.
-  `<leader>ao` or `:OpenCode` opens OpenCode in a reusable right
+  `<leader>ao` or `:OpenCode` toggles OpenCode in a reusable right
   terminal at the detected project root, using the account's OpenCode login.
+  `<leader>aa` asks with editor context; `<leader>as` opens OpenCode actions.
   Project detection also recognizes PlatformIO, Nix, Python, Go, Rust and
   JavaScript manifests outside Git checkouts.
+- LazyVim edits `.ipynb` files through Jupytext and executes cells through
+  Molten/Quarto, with Nix-built remote-plugin registration and a named Python
+  kernel. Stored outputs are restored when attaching a kernel and saved on
+  write. See [editor workflows](nixos/README.md#editor-workflows) for bindings,
+  environment selection and VSCodium notebook support.
 - Noctalia plugin code is pinned and patched; see [plugin maintenance](#plugin-maintenance).
-  Saved disabled-widget layouts and graphics workarounds are intentionally kept.
+  Inactive connector-specific widget layouts are omitted; graphics workarounds remain.
 
-GNOME's default app bundle originally brought Maps, Connections, Web/Epiphany,
-Calendar, Contacts, Weather and other optional applications into the fallback
-session. It was later copied into Home Manager. These applications are not
-requirements of Umbriel, Noctalia or the GNOME session; the bundle is now replaced
-by an explicit selection. Thunar handles files, Papers handles PDFs, Calculator
-provides a desktop calculator, Disks handles devices, Settings supports the
-GNOME fallback, and Seahorse provides credential management/SSH askpass.
-Papers' optional Nautilus extension is disabled so it does not retain the removed
-file manager as a dependency. GVfs, Tumbler and Xfconf support mounts/trash,
-thumbnails and Thunar preferences.
-Existing Zen, Kitty, imv, mpv and development editors cover the duplicated
-browser, terminal, image/video and text-editor roles. Obsidian is removed.
-Removing packages does not delete their user data. GNOME's native settings,
-keyring, portal and session dependencies remain available.
+Thunar handles files, Papers handles PDFs, Calculator supplies a desktop
+calculator, Disks handles storage devices, and Seahorse supplies credential
+management/SSH askpass. GVfs, Tumbler and Xfconf supply mounts/trash, thumbnails
+and Thunar preferences. Papers' Nautilus extension is disabled. GNOME supplies
+fallback session, settings, keyring and portal services; applications are
+selected explicitly in the Home Manager modules.
 
-The standalone profile now targets the same laptop: it includes the display
+The standalone profile targets the same laptop: it includes the display
 modes, mirroring shortcut, storage alias, tablet service and NVIDIA Blender
 wrapper. `isLaptop` in these modules means this configured laptop, not an
 arbitrary laptop capability claim. On Debian, the NVIDIA settings application
@@ -265,7 +266,7 @@ comes from APT so its version matches the native driver.
 
 Noctalia is the palette source. It generates colors from the selected wallpaper
 and mode; application modules select those palettes rather than hardcoding colors.
-Visual settings remain in `nixos/dotfiles/noctalia/config.toml`; pinned template
+Visual settings live in `nixos/home/noctalia-settings.nix`; pinned template
 inputs and writable destinations are declared in `nixos/home/noctalia.nix`.
 
 | Consumer | Integration / Refresh |
@@ -273,7 +274,7 @@ inputs and writable destinations are declared in `nixos/home/noctalia.nix`.
 | Umbriel | Optional state-file include; borders, tabs, overview and shadows reload automatically |
 | GTK 3/4 | Generated CSS, declarative imports, adw-gtk3 and synchronized appearance preference |
 | Qt/KDE | KDE platform plugin, Breeze style and generated KColorScheme; restart apps if needed |
-| Kitty | Built-in template writes writable `themes/noctalia.conf`; running instances receive reload signal |
+| Kitty | Nix owns kitty.conf; a user template writes the state palette and reloads running instances |
 | VSCodium | Declarative NoctaliaTheme extension reading writable state JSON; no static color overrides |
 | Zen | Pinned CSS and profile-import hook; original CSS/user.js backed up once, restart browser |
 | Steam | Approved pinned Millennium + Material integration; explicit initial setup below |
@@ -314,31 +315,25 @@ Pixie remains the independent greeter. Flatpaks can require sandbox theme access
 host CSS is not automatically available in every sandbox. App-specific theme
 extensions and custom browser CSS may override generated colors.
 
-GUI settings still override declarative settings. The previous overrides were
-backed up/reconciled; future GUI changes are not silently discarded on activation.
-The opt-in helper defaults to previewing only equal overrides:
+Noctalia preferences and Kitty behavior are owned by Nix. GUI changes preview a
+setting until the next activation, which removes overrides for declared fields
+with an exact-byte backup. Runtime-only keys such as theme mode and the last
+wallpaper remain writable. Unknown saved fields are retained.
+
+The manual helper still defaults to a preview:
 
 ```sh
-noctalia-reconcile
-noctalia-reconcile --reset plugins.enabled --reset bar.default.start
-noctalia-reconcile --apply --reset plugins.enabled --reset bar.default.start
+noctalia-reconcile --managed
+noctalia-reconcile --apply --managed
 noctalia msg config-reload
 ```
 
-It preserves unknown/different values and `config_version`, creates a private
-exact-byte backup, checks for intervening changes and atomically replaces state.
-Avoid editing the GUI at the same time: the final check is not a filesystem
-compare-and-swap lock. Do not delete the whole settings file.
+It checks for intervening writes and rejects nonregular/symlink state files.
+Avoid editing settings during activation and retry if a concurrent change is
+reported. Backups remain beside the state file; no whole-state reset is used.
 
-For this palette migration, inspect any saved template overrides before applying:
-
-```sh
-noctalia-reconcile --reset theme.templates.builtin_ids --reset theme.templates.community_ids --reset theme.templates.user.niri
-```
-
-Add `--apply` only after reviewing the preview, then reload config and templates.
-This removes obsolete Niri overrides and lets the declarative template selections
-take effect without discarding unrelated GUI preferences.
+See [shortcuts](nixos/SHORTCUTS.md) for the desktop, capture and terminal keys.
+`Mod+S` opens Screen Toolkit; `Mod+Ctrl+S` opens shell settings.
 
 ## Verification And Deployment
 
@@ -356,9 +351,9 @@ Use `path:` while modules are untracked. The portability tests instantiate a
 different user with custom/quoted paths, not only simulated bootstrap responses.
 The flake checks supply pinned Python/tomlkit, generated fixtures, and renderer
 binaries automatically. They cover portability, reconciliation, state migrations,
-updater confirmations, Steam rollback, Bat first-run behavior, offline Rust
-compilation/lint/format checks, GameMode authorization, bootstrap/host setup, Kitty migrations and dark/light
-rendering of all user templates plus the pinned built-in Kitty template. Template
+update ordering/failures, Steam rollback, Bat first-run behavior, offline Rust
+compilation/lint/format checks, GameMode authorization, bootstrap/host setup,
+headless editor integration, Kitty migrations and dark/light rendering of all user templates plus the pinned built-in Kitty template. Template
 sources are checked against the generated configuration's closure. Kitty checks
 run the pinned Home Manager collision, migration, cleanup and linking stages in
 isolated homes, including custom/quoted paths, backup mode and dry runs. They do
@@ -372,34 +367,27 @@ transactions, SELinux behavior and graphical logins still need VM/hardware tests
 Builds and checks do not activate the system. Keep both state-version values
 unchanged. Hardware testing limits and recorded graphics observations are below.
 
-Nix Monitor runs the packaged `nixos-update` command using `path:` flake
-references, so new untracked modules are included consistently. It updates all inputs,
-previews builds/downloads, and switches only after you type `yes`. Refusal or
-EOF leaves the updated lockfile for inspection; command failures stop the flow.
-This verification does not run the updater against the real checkout.
+Run `update` to refresh flake inputs, build and activate through nh, then update
+user and system Flatpaks. On NixOS, Nix Monitor calls the same packaged `config-update`
+workflow. Both use `path:` flake references and a shared lock. Build failures stop
+activation and leave the lockfile for inspection; Flatpak failures report that
+Nix activation already succeeded. There is no additional confirmation beyond
+normal privilege authentication. Standalone Linux updates its Home Manager
+profile and Flatpaks, while native host packages remain separately managed.
+Tests use mocked tools and never update the real checkout or installed system.
 
 Individual state tests remain available through `nixos/tests/desktop-migrations.py`
-and `nixos/tests/reconcile-noctalia.py` with Python plus `tomlkit`. The flake check is
-the complete verification entrypoint; no manually generated fixture or
-`/tmp/opencode` directory is needed.
+and `nixos/tests/reconcile-noctalia.py` with Python plus `tomlkit`.
 
-Kitty preserves edited settings and creates `kitty.backup-*` before replacing a
-legacy directory symlink. Failed installation restores the original link and
-cleans the transaction directory. If rollback itself fails, the error identifies
-`.kitty.migration-*/original-link`, which is retained for manual recovery. Move
-that link back only after inspecting any file occupying the Kitty path; the
-backup directory retains the original configuration. Existing extra files are
-preserved as writable local files; unused images/themes are no longer shipped.
-Only the obsolete Noctalia palette include is changed; later settings are retained.
+Kitty creates `kitty.conf.backup-*` before replacing an unmanaged file with the
+Nix configuration. A legacy directory symlink receives a complete
+`kitty.backup-*` backup; extra files survive. The live `kitty.conf` then becomes
+a Home Manager link. Edit `home/kitty.nix`, rather than the generated file.
+Noctalia writes only the included state palette and never edits Kitty's config.
 
-State replacements reject symlinks and special files, retain exact mode-0600
-backups, flush writes and detect changes to both contents and file identity.
-Noctalia records `.kitty-template-v1` only after successful migration, preserving
-later GUI choices. Tablet updates preserve unrelated profiles/settings and the
-requested Ctrl+V/F6 bindings. Live rebuilds remain supported without stopping
-applications. Detection is best effort: a GUI write after the final identity
-check can still race replacement. Avoid editing those settings during activation
-and retry when an intervening change is reported.
+State replacements retain exact-byte backups, flush writes and detect changes
+to contents and identity. Tablet updates preserve unrelated profiles/settings
+and the existing Ctrl+V/F6 bindings. Avoid editing settings during activation.
 
 ## Performance And Gaming
 
@@ -439,14 +427,14 @@ establish FPS gains or replace suspend/resume, displays and controller testing.
 
 ## Configuration Layout And Resource Policy
 
-- `nixos/configuration.nix` owns boot, networking/Tailscale, accounts, native
-  privileges, system services and Nix settings. `nixos/desktop.nix` groups SDDM,
-  the GNOME fallback and Umbriel session/portal registration.
-- `nixos/hardware.nix` retains laptop drivers/devices and storage; the generated
-  hardware file remains separate. Host gaming privileges remain in `gaming.nix`.
-- Home modules group applications/3D tools, gaming/Steam, desktop/Kitty, Nix
-  tools/deployment aliases, shell, development, Noctalia, Umbriel and Flatpak.
-  `home/linux.nix` supplies only the standalone backend's native integration.
+- `nixos/configuration.nix` is the entry point; `nixos/system/` separates base
+  system, networking, Nix maintenance, desktop services, development and gaming.
+- `nixos/hardware.nix` and the generated hardware file retain laptop drivers and
+  storage. Identity stays in `profile.nix`.
+- Home modules separate everyday apps, engineering, file integration, terminal
+  tools, appearance/services, capture, displays, development and gaming.
+  `home/linux.nix` supplies standalone integration. See the complete module map
+  and desktop coverage in [nixos/README.md](nixos/README.md).
 - Shared package and state helpers remain separate when used by modules/tests.
   Multiple consumers of a store path do not require duplicate downloads.
 - Nix uses two parallel builds and four cores per build, weekly garbage
@@ -494,8 +482,8 @@ Steam updates can break runtime hooks even when pinned packages build.
 Home Manager ships Screen Toolkit, Nix Monitor, Phone Connect, Pomodoro,
 Tailscale and Game Launcher from the existing community pin. Local plugin
 sources take precedence; Git sources and automatic plugin updates are disabled.
-Tailscale and Nix Monitor are enabled only on NixOS. GUI overrides still take
-precedence over declarative choices; use selective reconciliation when needed.
+Tailscale and Nix Monitor are enabled only on NixOS. Declared settings take
+precedence after activation; prior GUI overrides are backed up and reconciled.
 
 The package applies three maintained patches:
 
@@ -506,8 +494,8 @@ The package applies three maintained patches:
 - Nix Monitor validates complete Git hashes, checks exit statuses, shows failed
   checks as errors/stale data, and suppresses update availability until retry
   succeeds. It ticks every ten seconds, checks local revision once per minute,
-  and leaves expensive store scanning disabled. The packaged updater previews
-  all-input updates and requires `yes` before switching.
+  and leaves expensive store scanning disabled. The packaged updater refreshes
+  inputs, builds and switches through nh, then updates Flatpaks.
 - Game Launcher's C helper is compiled during packaging, avoiding runtime
   recompilation inside an immutable plugin directory.
 
@@ -541,25 +529,3 @@ visual effects as a purported fix. Keep the `amdgpu_dpm` profile action disabled
 its old policy selected `low` on power saver. NVIDIA runtime suspend already
 worked with `finegrained = false`; changing it requires suspend testing.
 Noctalia's backdrop blur, shader caches and existing render settings are retained.
-
-## Previous Deployment And Backups
-
-Earlier changes migrated OrcaSlicer/ProtonPlus to user Flatpaks without deleting
-application data. These recorded backup locations remain useful:
-
-```text
-~/.local/state/noctalia/settings.toml.backup-1790974580636812518-qfo8swpm
-~/.local/state/configs-backups/flatpak-migration-20261002T203459Z-ebFewD/flatpak-orcaslicer-protonplus-settings.tar.gz
-```
-
-Earlier startup cleanup left SolveX and Hermes installed but stopped. Start them
-when needed with `docker compose -f /mnt/storage/Coding/solvex/docker-compose.yml up -d`
-and `systemctl --user start hermes-gateway.service`.
-
-Earlier native activation temporarily left loaded NVIDIA 595.91.07 and configured
-userspace 610.57.04 mismatched until reboot. This cleanup keeps the 610.57.04 pin;
-building does not unload drivers, change live GUI state or reboot. Graphical
-Fedora/Debian sessions, native device integration, printer operation, real Proton
-downloads and hardware suspend/offload still need their own testing. Umbriel is
-pre-release software; the manual Molten registration instructions remain in its
-editor module.

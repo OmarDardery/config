@@ -7,6 +7,10 @@ let
   inherit (pkgs) lib;
   profile = flake.lib.deployment;
   home = flake.homeConfigurations.${profile.profileName}.config;
+  thunar = lib.findFirst (
+    package: lib.getName package == "thunar-with-plugins"
+  ) null home.home.packages;
+  papers = lib.findFirst (package: lib.getName package == "papers") null home.home.packages;
   portability = import ./tests/portability.nix { inherit flake; };
   python = pkgs.python3.withPackages (ps: [ ps.tomlkit ]);
   source = lib.cleanSourceWith {
@@ -24,6 +28,7 @@ let
     findutils
     gnugrep
     gnused
+    gettext
     gawk
     git
     util-linux
@@ -40,7 +45,7 @@ let
         ${command}
         touch "$out"
       '';
-  # Historical files belong in disposable fixtures, not the live dotfiles.
+  # Legacy configurations belong in disposable test fixtures.
   legacyKitty = pkgs.runCommand "legacy-kitty-fixture" { } ''
     mkdir -p "$out"
     printf 'font_size 31\ninclude ~/.local/state/noctalia/theme/kitty.conf\n' > "$out/kitty.conf"
@@ -51,7 +56,11 @@ let
     legacy:
     inputs.home-manager.lib.homeManagerConfiguration {
       inherit pkgs;
-      extraSpecialArgs.isLaptop = false;
+      extraSpecialArgs = {
+        inherit profile;
+        isLaptop = false;
+        isNixOS = false;
+      };
       modules = [
         {
           home.username = "fixture";
@@ -64,7 +73,12 @@ let
           if legacy then
             { xdg.configFile.kitty.source = legacyKitty; }
           else
-            { imports = [ ./home/desktop.nix ]; }
+            {
+              imports = [
+                ./home/kitty.nix
+                ./home/desktop.nix
+              ];
+            }
         )
       ];
     };
@@ -74,13 +88,13 @@ let
       configuration = (mkFixture (name == "legacy")).config;
       stages = [
         "checkLinkTargets"
-        "kittyDirectoryMigration"
+        "kittyDeclarativeConfig"
         "linkGeneration"
-        "kittyWritableConfig"
       ];
     in
     {
       homeDirectory = configuration.home.homeDirectory;
+      kitty = lib.getExe configuration.programs.kitty.package;
       configHome = configuration.xdg.configHome;
       stateHome = configuration.xdg.stateHome;
       init = configuration.lib.bash.initHomeManagerLib;
@@ -161,12 +175,67 @@ let
       target = "${launcherMocks}/bin/test-target";
     }
   );
+  editorConfig = pkgs.linkFarm "nvim-test-config" (
+    lib.mapAttrsToList (name: file: {
+      name = lib.removePrefix "nvim/" name;
+      path = file.source;
+    }) (lib.filterAttrs (name: _: lib.hasPrefix "nvim/" name) home.xdg.configFile)
+  );
+  editorData = pkgs.linkFarm "nvim-test-data" (
+    lib.mapAttrsToList (name: file: {
+      name = lib.removePrefix "nvim/" name;
+      path = file.source;
+    }) (lib.filterAttrs (name: _: lib.hasPrefix "nvim/" name) home.xdg.dataFile)
+  );
+  editorCheck =
+    executeNotebook:
+    pkgs.runCommand (if executeNotebook then "editor-notebook-checks" else "editor-integration-checks")
+      {
+        nativeBuildInputs = [ home.programs.neovim.finalPackage ];
+        NOTEBOOK_EXECUTION_TEST = if executeNotebook then "1" else "0";
+      }
+      ''
+        export HOME="$TMPDIR/home"
+        export XDG_CONFIG_HOME="$HOME/config"
+        export XDG_DATA_HOME="$HOME/data"
+        export XDG_STATE_HOME="$HOME/state"
+        export XDG_CACHE_HOME="$HOME/cache"
+        mkdir -p "$XDG_CONFIG_HOME/nvim" "$XDG_DATA_HOME/nvim" "$XDG_STATE_HOME" "$XDG_CACHE_HOME"
+        cp -rs ${editorConfig}/. "$XDG_CONFIG_HOME/nvim"
+        cp -rs ${editorData}/. "$XDG_DATA_HOME/nvim"
+        mkdir -p "$XDG_DATA_HOME/jupyter/kernels/nix-python"
+        cp ${home.xdg.dataFile."jupyter/kernels/nix-python/kernel.json".source} \
+          "$XDG_DATA_HOME/jupyter/kernels/nix-python/kernel.json"
+        # Trigger the UI event that starts LazyVim's deferred configuration.
+        timeout 120s nvim --headless \
+          -c "autocmd User VeryLazy ++once lua vim.schedule(function() local ok, err = xpcall(function() dofile('${./tests/editor-integration.lua}') end, debug.traceback); if not ok then io.stderr:write(err, string.char(10)); vim.cmd('cquit') end end)" \
+          -c 'doautocmd UIEnter'
+        touch "$out"
+      '';
   fixtureJson = pkgs.writeText "kitty-linking-fixtures.json" (builtins.toJSON fixtures);
 in
 {
+  editor-integration = editorCheck false;
+  editor-notebooks = editorCheck true;
+  desktop-integration =
+    pkgs.runCommand "desktop-integration-checks"
+      {
+        nativeBuildInputs = [ pkgs.gnugrep ];
+      }
+      ''
+        test -x ${thunar}/bin/thunar-volman
+        test -f ${thunar}/lib/thunarx-3/thunar-archive-plugin.so
+        grep -F '${thunar}/bin/' ${thunar}/share/dbus-1/services/org.xfce.Thunar.service
+        test -f ${papers}/share/applications/org.gnome.Papers.desktop
+        test -f ${pkgs.file-roller}/share/applications/org.gnome.FileRoller.desktop
+        test -f ${pkgs.imv}/share/applications/imv.desktop
+        test -f ${pkgs.mpv}/share/applications/mpv.desktop
+        touch "$out"
+      '';
   performance-launchers = scriptCheck "performance-launcher-checks" "python ${tests}/performance-launchers.py ${launcherFixture}";
   portability = pkgs.writeText "portability-checks.json" (builtins.toJSON portability.checks);
   desktop-migrations = scriptCheck "desktop-migration-checks" "python ${tests}/desktop-migrations.py";
+  config-update = scriptCheck "configuration-update-checks" "python ${tests}/config-update.py";
   reconciliation = scriptCheck "noctalia-reconciliation-checks" "python ${tests}/reconcile-noctalia.py";
   bootstrap = scriptCheck "bootstrap-checks" "bash ${tests}/bootstrap.sh";
   host-setup = scriptCheck "host-setup-checks" "bash ${tests}/host-setup.sh";
@@ -174,7 +243,7 @@ in
   steam-setup = scriptCheck "steam-setup-checks" "python ${tests}/steam-setup.py ${steamFixture}";
   bat-first-run = scriptCheck "bat-first-run-checks" "python ${tests}/bat-first-run.py ${batFixture}";
   zen-window-controls = scriptCheck "zen-window-controls-checks" ''
-    bash ${tests}/zen-window-controls.sh ${./pkgs/zen-apply.sh} ${inputs.noctalia-templates}/zen-browser/apply.sh ${./dotfiles/zen/zen-window-controls.css}
+    bash ${tests}/zen-window-controls.sh ${./pkgs/zen-apply.sh} ${inputs.noctalia-templates}/zen-browser/apply.sh ${./assets/zen-window-controls.css}
   '';
   rust-toolchain =
     pkgs.runCommand "rust-toolchain-checks"
@@ -228,10 +297,20 @@ in
         PYTHONDONTWRITEBYTECODE = "1";
       }
       ''
+        export HOME="$TMPDIR/home"
+        export XDG_CONFIG_HOME="$HOME/config"
+        export XDG_DATA_HOME="$HOME/data"
+        export XDG_STATE_HOME="$HOME/state"
+        export XDG_CACHE_HOME="$HOME/cache"
+        mkdir -p "$XDG_CONFIG_HOME" "$XDG_DATA_HOME/noctalia" "$XDG_STATE_HOME" "$XDG_CACHE_HOME"
+        ln -s ${
+          home.xdg.dataFile."noctalia/plugins/screen-toolkit".source
+        }/.. "$XDG_DATA_HOME/noctalia/plugins"
+        noctalia config validate ${home.xdg.configFile."noctalia/config.toml".source}
         python ${tests}/theme-rendering.py \
           ${home.xdg.configFile."noctalia/config.toml".source} \
           ${home.xdg.configFile."umbriel/config.toml".source} \
-          ${./dotfiles/Pictures/Wallpapers/dark-mountain.jpg} \
+          ${./assets/wallpapers/dark-mountain.jpg} \
           --closure config-closure \
           --kitty-template ${inputs.noctalia}/assets/templates/kitty/kitty.conf \
           --extension ${portability.fixtures.vscode}

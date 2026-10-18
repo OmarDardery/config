@@ -35,7 +35,7 @@ def activate(root, home, name, old=None, *, backup=False, dry=False, success=Tru
     script += 'newGenPath=' + shell_quote(str(new)) + '\n'
     if old:
         script += 'oldGenPath=' + shell_quote(str(root / ("generation-" + old))) + '\n'
-    for stage in ("checkLinkTargets", "kittyDirectoryMigration", "linkGeneration", "kittyWritableConfig"):
+    for stage in ("checkLinkTargets", "kittyDeclarativeConfig", "linkGeneration"):
         script += fixture["activation"][stage].replace(fixture["homeDirectory"], str(home)) + '\n'
     result = subprocess.run(["bash", "-c", script], env=environment, capture_output=True, text=True)
     assert (result.returncode == 0) == success, (name, old, result.stdout, result.stderr)
@@ -68,12 +68,22 @@ with tempfile.TemporaryDirectory() as directory:
         # Fresh installation and later edits survive repeated activation.
         activate(case, home, "current", backup=backup)
         kitty = kitty_path(home)
-        assert (kitty / "kitty.conf").is_file() and not (kitty / "kitty.conf").is_symlink()
-        assert (kitty / "themes").is_dir()
-        (kitty / "kitty.conf").write_text("font_size 29\ninclude themes/noctalia.conf\n")
+        assert (kitty / "kitty.conf").is_file() and (kitty / "kitty.conf").is_symlink()
+        subprocess.run([
+            fixtures["current"]["kitty"], "+runpy",
+            "import sys; from kitty.config import load_config; bad = []; "
+            "load_config(sys.argv[1], accumulate_bad_lines=bad); assert not bad, bad",
+            str(kitty / "kitty.conf"),
+        ], check=True, env={
+            **os.environ, "HOME": str(home),
+            "XDG_CONFIG_HOME": str(kitty.parent),
+            "XDG_CACHE_HOME": str(home / "cache"),
+            "XDG_DATA_HOME": str(home / "data"),
+            "XDG_STATE_HOME": str(home / "state"),
+        })
         (kitty / "user.conf").write_bytes(b"custom settings")
         activate(case, home, "current", "current", backup=backup)
-        assert "29" in (kitty / "kitty.conf").read_text()
+        assert "font_size 14" in (kitty / "kitty.conf").read_text()
         assert (kitty / "user.conf").read_bytes() == b"custom settings"
         before = tree_snapshot(home)
         activate(case, home, "current", "current", backup=backup, dry=True)
@@ -102,17 +112,17 @@ with tempfile.TemporaryDirectory() as directory:
         activate(case, legacy, "current", "legacy", backup=backup)
         assert not legacy_kitty.is_symlink()
         assert (legacy_kitty / "kitty.conf").is_file()
-        assert "font_size 31" in (legacy_kitty / "kitty.conf").read_text()
-        assert "include themes/noctalia.conf" in (legacy_kitty / "kitty.conf").read_text()
+        assert (legacy_kitty / "kitty.conf").is_symlink()
+        assert "font_size 14" in (legacy_kitty / "kitty.conf").read_text()
+        assert "globinclude" in (legacy_kitty / "kitty.conf").read_text()
         backups = list(legacy_kitty.parent.glob("kitty.backup-*"))
         assert len(backups) == 1
         assert (backups[0] / "kitty.conf").read_bytes() == original
         for name in ("legacy-image.png", "custom.conf"):
             assert (legacy_kitty / name).read_bytes() == (backups[0] / name).read_bytes()
             assert not (legacy_kitty / name).is_symlink()
-        (legacy_kitty / "kitty.conf").write_text("font_size 33\ninclude themes/noctalia.conf\n")
         activate(case, legacy, "current", "current", backup=backup)
-        assert "33" in (legacy_kitty / "kitty.conf").read_text()
+        assert "font_size 14" in (legacy_kitty / "kitty.conf").read_text()
         assert len(list(legacy_kitty.parent.glob("kitty.backup-*"))) == 1
         assert not list(legacy_kitty.parent.glob(".kitty.migration-*"))
-print("PASS: HM collision checks, fresh setup, legacy backups, settings preservation and dry runs")
+print("PASS: HM collision checks, fresh setup, legacy backups, declarative config and file preservation and dry runs")

@@ -11,6 +11,9 @@ let
   performanceRun = pkgs.writeShellApplication {
     name = "performance-run";
     text = ''
+      if [[ "''${1:-}" == -- ]]; then
+        shift
+      fi
       if [[ $# == 0 ]]; then
         printf '%s\n' 'Usage: performance-run COMMAND [ARG...]' >&2
         exit 2
@@ -28,24 +31,18 @@ let
         offload_game=false
         shift
       fi
+      if [[ "''${1:-}" == -- ]]; then
+        shift
+      fi
       if [[ $# == 0 ]]; then
         printf '%s\n' 'Usage: game-run [--integrated] COMMAND [ARG...]' >&2
         exit 2
       fi
       command=( ${lib.getExe' gameMode "gamemoderun"} "$@" )
       if [[ "$offload_game" == true ]]; then
-        ${if isLaptop then ''command=( ${lib.getExe offload} "''${command[@]}" )'' else ":"}
+        command=( ${lib.getExe offload} "''${command[@]}" )
       fi
-      ${
-        if isNixOS then
-          ''
-            exec ${lib.getExe performanceRun} "''${command[@]}"
-          ''
-        else
-          ''
-            exec "''${command[@]}"
-          ''
-      }
+      exec ${if isNixOS then lib.getExe performanceRun else ""} "''${command[@]}"
     '';
   };
 in

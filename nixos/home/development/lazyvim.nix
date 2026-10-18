@@ -1,16 +1,5 @@
-# LazyVim, with every plugin coming from nixpkgs instead of being cloned at
-# runtime.
-#
-# lazy.nvim still runs and still resolves LazyVim's plugin specs, but its `dev`
-# path points at a linkFarm of `pkgs.vimPlugins.*` below. `dev.patterns = { "" }`
-# makes every plugin match the dev rule, so lazy looks each one up in the store
-# instead of on GitHub, and `dev.fallback = false` turns a plugin we forgot to
-# list into a visible "not installed" entry in `:Lazy` rather than a silent
-# background clone. Pattern is from LazyVim discussion #1972.
-#
-# The trade-off, stated plainly: `:Lazy update` and `:LazyExtras` no longer
-# change anything. Plugins move when nixpkgs moves, and enabling an extra means
-# editing the `spec` and `plugins` lists in this file.
+# Nix supplies plugins, grammars and language tools; lazy.nvim controls loading.
+# Enable extras here and add their plugins/tools to the corresponding lists.
 {
   pkgs,
   lib,
@@ -21,8 +10,7 @@
 }:
 let
   toolchain = import ./toolchain.nix { inherit pkgs; };
-  # GitHub release downloads are unreachable on this connection. GitHub also
-  # publishes this exact server version to npm, whose registry is reachable.
+  # Use the pinned npm distribution of the Copilot language server.
   copilotLanguageServer = pkgs.copilot-language-server.overrideAttrs (_: {
     version = "1.495.0";
     src = pkgs.fetchurl {
@@ -39,13 +27,10 @@ let
     '';
   });
 
-  # Rendered into the Lua below. Same flags VSCodium passes — see
-  # ./toolchain.nix for what --query-driver buys and ./default.nix for the
-  # editor-independent half.
+  # Share clangd arguments with VSCodium.
   clangdArgs = lib.generators.toLua { } (toolchain.clangdArgs config.home.homeDirectory);
 
-  # Not in nixpkgs, so it is pinned by hand. This is the only plugin here not
-  # coming from the flake's nixpkgs.
+  # PlatformIO plugin pin; not packaged in the locked nixpkgs.
   nvim-platformio = pkgs.vimUtils.buildVimPlugin {
     pname = "nvim-platformio.lua";
     version = "0-unstable-2026-05-12";
@@ -55,38 +40,28 @@ let
       rev = "e65fd65565da5c1d98c568bd0cdcad16627cdb14";
       hash = "sha256-vIO+Un5BAzVU6JmHueSSRGujaTZcjfVBvh+sq/7CLgk=";
     };
-    # nixpkgs' require-check hook loads every lua module with only these on the
-    # path, so the plugin's own runtime deps have to be named.
+    # Declare dependencies for nixpkgs plugin checks.
     dependencies = with pkgs.vimPlugins; [
       toggleterm-nvim
       plenary-nvim
       which-key-nvim
     ];
-    # plugin/platformio.lua bails out with "Platformio not found in the path"
-    # when `pio` is absent, and the check sources it before every require, so
-    # without this every module in the plugin fails. It probes with
-    # `io.popen("which pio")`, so the `which` binary has to be there too — a
-    # shell builtin will not do. Both are in extraPackages below for runtime.
+    # Plugin checks and runtime both require pio and an external which binary.
     nativeBuildInputs = [
       pkgs.platformio-core
       pkgs.which
     ];
     nvimSkipModules = [
-      # One of two picker backends; the other is vim.ui.select, which snacks
-      # provides. Telescope is not installed, so skip the module rather than
-      # pull in a picker we do not use.
+      # Use vim.ui.select through Snacks; Telescope is not installed.
       "platformio.pickers.telescope"
-      # A bug-report reproduction script at the repo root, not plugin code. It
-      # calls lazy.setup itself, which the check has no business running.
+      # Skip the standalone reproduction script that calls lazy.setup.
       "minimal_config"
     ];
   };
 
-  # Everything lazy.nvim is allowed to load. Derived by grepping the plugin
-  # specs in pkgs.vimPlugins.LazyVim for "owner/repo" strings, so it tracks
-  # what LazyVim 15.15 actually references rather than what a blog post said.
+  # Plugins required by the enabled LazyVim extras.
   plugins = with pkgs.vimPlugins; [
-    # ── LazyVim core ─────────────────────────────────────────────────────
+    # LazyVim core
     LazyVim
     base16-nvim
     bufferline-nvim
@@ -99,6 +74,7 @@ let
     mini-ai
     mini-icons
     mini-pairs
+    mini-surround
     noice-nvim
     nui-nvim
     nvim-lint
@@ -113,14 +89,17 @@ let
     trouble-nvim
     ts-comments-nvim
     which-key-nvim
+    yanky-nvim
+    diffview-nvim
+    opencode-nvim
 
-    # ── Defaults picked by vim.g.lazyvim_{picker,cmp,explorer} below ─────
+    # Defaults picked by vim.g.lazyvim_{picker,cmp,explorer} below
     blink-cmp
     blink-compat
     friendly-snippets
     nvim-cmp # blink.compat shim + the cmp-git source want it on disk
 
-    # ── Language extras ──────────────────────────────────────────────────
+    # Language extras
     SchemaStore-nvim # json, yaml
     clangd_extensions-nvim # clangd
     cmp-git # git
@@ -130,20 +109,29 @@ let
     rustaceanvim # rust
     venv-selector-nvim # python
 
-    # ── Notebooks (see lua/plugins/jupyter.lua below) ─────────────────────
+    # Debugging and tests
+    nvim-dap
+    nvim-dap-ui
+    nvim-dap-virtual-text
+    nvim-nio
+    nvim-dap-python
+    nvim-dap-go
+    neotest
+    neotest-python
+    neotest-golang
+
+    # Notebooks (see lua/plugins/jupyter.lua below)
     image-nvim
     jupytext-nvim
     molten-nvim
     otter-nvim
+    quarto-nvim
 
-    # ── PlatformIO ───────────────────────────────────────────────────────
+    # PlatformIO
     nvim-platformio
     toggleterm-nvim
 
-    # lazy.nvim derives a plugin's name from the last path segment of its
-    # repo, and matches that against the linkFarm entry names. `lib.getName`
-    # returns nixpkgs' `pname`, which already equals that segment for every
-    # plugin above ("snacks.nvim", "blink.cmp", "mini.ai", ...).
+    # Plugin names match the repository names used by lazy.nvim.
   ];
 
   mkEntryFromDrv =
@@ -158,16 +146,7 @@ let
 
   lazyPath = pkgs.linkFarm "lazy-plugins" (map mkEntryFromDrv plugins);
 
-  # nvim-treesitter's `main` branch — which LazyVim 15 requires and nixpkgs now
-  # ships — does not bundle grammars. nixpkgs exposes them as one plugin per
-  # language under `grammarPlugins`, each containing only `parser/<lang>.so`,
-  # while the queries stay in the main plugin under `runtime/queries`.
-  #
-  # Neither `withAllGrammars` nor `withPlugins` does anything anymore: both
-  # return the base plugin unchanged. And putting the grammars on the
-  # runtimepath is not enough either, because LazyVim gates highlighting on
-  # `nvim-treesitter.get_installed("parsers")`, which reads `install_dir/parser`
-  # and ignores the runtimepath entirely. So: build the directory it wants.
+  # LazyVim checks install_dir for parsers; expose the pinned grammars there.
   tsGrammars = with pkgs.vimPlugins.nvim-treesitter.grammarPlugins; [
     # LazyVim's default ensure_installed
     bash
@@ -224,56 +203,26 @@ let
   '';
 in
 {
+  imports = [ ./notebooks.nix ];
+
   programs.neovim = {
     enable = true;
     defaultEditor = true;
     viAlias = true;
     vimAlias = true;
 
-    # Molten's remote plugin requires these imports when registering and running.
-    withPython3 = true;
-    extraPython3Packages =
-      ps: with ps; [
-        pynvim
-        jupyter-client
-        ipykernel
-        jupytext
-        nbformat
-        cairosvg
-        pnglatex
-        plotly
-        pillow
-        requests
-        websocket-client
-      ];
-
-    # image.nvim binds to ImageMagick through this rock. Supplying it here is
-    # what lets lazy's rockspec build be turned off entirely.
-    extraLuaPackages = ps: [ ps.magick ];
-
-    # Only the loader goes on the runtimepath. Everything else is reached
-    # through lazyPath, so lazy.nvim stays in charge of load order and
-    # lazy-loading rather than having 60 plugins sourced at startup.
+    # Load the remaining plugins on demand through lazyPath.
     plugins = [ pkgs.vimPlugins.lazy-nvim ];
 
-    # Mason is disabled in the spec below, so every binary LazyVim would have
-    # asked Mason for is listed here instead. The servers, formatters and
-    # linters are the shared set from ./toolchain.nix — which language gets
-    # which tool, and why, is documented there. Only the entries LazyVim needs
-    # and the other editors do not are listed below.
+    # Nix provides the shared toolchain and Neovim-specific runtime dependencies.
     extraPackages =
       toolchain.languageServers
+      ++ [
+        toolchain.debugAdapters.python
+        toolchain.debugAdapters.lldb
+      ]
       ++ (with pkgs; [
-        # Molten uses the Python provider; jupytext.nvim shells out for conversion.
-        python3Packages.jupytext
-        # The quarto CLI was here for .qmd rendering and pulled in R,
-        # gfortran, BLAS/LAPACK and a JVM for a 2.76 GiB closure — put it back
-        # only if you actually start writing Quarto documents.
-
-        # Embedded. nvim-platformio probes for the toolchain with
-        # `io.popen("which pio")`, so `which` has to be a real binary on the
-        # wrapper's PATH — NixOS does not install one by default and the zsh
-        # builtin is not visible to io.popen's /bin/sh.
+        # nvim-platformio invokes which pio at runtime.
         platformio-core
         which
         # Used by plugins rather than by a language: tree-sitter for :checkhealth,
@@ -283,30 +232,29 @@ in
         wget
         # LazyVim's native Copilot extra uses Neovim 0.12 inline LSP completion.
         copilotLanguageServer
+        opencode
+        curl
+        lsof
+        procps
+        fd
+        ripgrep
+        git
       ]);
 
     initLua = ''
-      -- Must be set before lazy.setup, or LazyVim's <leader> maps land on the
-      -- wrong key.
+      -- Set leaders before LazyVim creates its mappings.
       vim.g.mapleader = " "
       vim.g.maplocalleader = "\\"
 
-      -- LazyVim writes this file when it migrates or when :LazyExtras toggles
-      -- something. ~/.config/nvim/lua is a read-only store symlink, so point it
-      -- at the data dir, which is writable. The write is wrapped in a guarded
-      -- io.open upstream, so leaving it would fail silently instead of loudly —
-      -- worse.
+      -- Keep LazyVim metadata in writable data, outside the generated configuration.
       vim.g.lazyvim_json = vim.fn.stdpath("data") .. "/lazyvim.json"
 
-      -- LazyVim picks these three by probing for a lazyvim.json on first run.
-      -- Pinning them makes the resolved plugin set a property of this file
-      -- rather than of whatever state the data dir happens to be in.
+      -- Choose defaults independently of saved LazyVim metadata.
       vim.g.lazyvim_picker = "snacks"
       vim.g.lazyvim_cmp = "blink.cmp"
       vim.g.lazyvim_explorer = "snacks"
 
-      -- The python extra defaults to pyright. basedpyright is the maintained
-      -- fork, is what extraPackages installs, and is a drop-in replacement.
+      -- Both editors use basedpyright.
       vim.g.lazyvim_python_lsp = "basedpyright"
 
       require("lazy").setup({
@@ -318,33 +266,22 @@ in
           fallback = false,  -- never clone; surface the gap instead
         },
 
-        -- The store is the source of truth: nothing to install, nothing to
-        -- check for updates, nothing to watch for changes.
+        -- Updates and plugin installation are handled by Nix.
         install = { missing = false },
         checker = { enabled = false },
         change_detection = { enabled = false },
 
-        -- image.nvim declares `build = "rockspec"` because it needs the magick
-        -- luarock. lazy's answer to that is to download and compile hererocks
-        -- on first start; ours is extraLuaPackages below, which puts the same
-        -- rock on the lua path from nixpkgs. `hererocks = false` is the part
-        -- that matters — lazy injects the hererocks plugin off that flag alone
-        -- and does not consult `enabled` first.
+        -- The magick rock is provided by extraLuaPackages; disable runtime builds.
         rocks = { enabled = false, hererocks = false },
 
-        -- performance.rtp.reset is left at its default of true, and it has to
-        -- be. home-manager delivers lazy.nvim through packpath rather than the
-        -- runtimepath, so lazy's directory is only reachable via packpath
-        -- expansion. Its own module loader indexes the runtimepath string, and
-        -- with reset disabled it cannot find lazy.pkg.* and startup dies. The
-        -- reset puts lazy's own path on the rtp explicitly, which fixes it.
+        -- Keep lazy.nvim's default rtp reset so the HM-installed loader is discoverable.
 
         spec = {
           { "LazyVim/LazyVim", import = "lazyvim.plugins" },
 
-          -- :LazyExtras cannot persist a choice against a read-only config, so
-          -- extras are imported here instead. Adding one means adding its
-          -- plugins to `plugins` and its binaries to `extraPackages` too.
+          -- Enable extras declaratively; add their dependencies to the package lists.
+          { import = "lazyvim.plugins.extras.dap.core" },
+          { import = "lazyvim.plugins.extras.test.core" },
           { import = "lazyvim.plugins.extras.lang.nix" },
           { import = "lazyvim.plugins.extras.lang.clangd" },
           { import = "lazyvim.plugins.extras.lang.go" },
@@ -358,21 +295,19 @@ in
           { import = "lazyvim.plugins.extras.lang.docker" },
           { import = "lazyvim.plugins.extras.lang.git" },
           { import = "lazyvim.plugins.extras.formatting.prettier" },
+          { import = "lazyvim.plugins.extras.linting.eslint" },
           { import = "lazyvim.plugins.extras.ai.copilot-native" },
+          { import = "lazyvim.plugins.extras.coding.mini-surround" },
+          { import = "lazyvim.plugins.extras.coding.yanky" },
 
           { import = "plugins" },
 
-          -- Nix owns the toolchain; Mason would download dynamically linked
-          -- binaries that do not run here.
+          -- Disable runtime tool installers.
           { "mason-org/mason.nvim", enabled = false },
           { "mason-org/mason-lspconfig.nvim", enabled = false },
+          { "jay-babu/mason-nvim-dap.nvim", enabled = false },
 
-          -- Last on purpose. `ensure_installed` is declared in opts_extend, so
-          -- every extra appends to it and a plain `ensure_installed = {}` would
-          -- be appended to rather than replace. A function opts gets the merged
-          -- table and its return value wins, which is the only reliable way to
-          -- clear it. `build = false` stops LazyVim calling :TSUpdate against
-          -- the read-only store path.
+          -- Clear merged install requests after all extras; parsers are immutable.
           {
             "nvim-treesitter/nvim-treesitter",
             build = false,
@@ -387,14 +322,13 @@ in
     '';
   };
 
-  # ~/.config/nvim itself stays a real directory — home-manager only symlinks
-  # the leaves — so lazy.nvim's state under ~/.local/share/nvim and the
-  # redirected lazyvim.json both remain writable.
+  # Home Manager links configuration files; editor data remains writable.
   xdg.configFile."nvim/lua/config/options.lua".text = ''
     -- Loaded after lazyvim.config.options, so this only needs the deltas.
     local opt = vim.opt
 
     opt.scrolloff = 8
+    opt.inccommand = "split"
 
     -- Put project tools and the OpenCode terminal at the actual project root,
     -- including non-Git PlatformIO and language projects.
@@ -408,19 +342,57 @@ in
     opt.listchars = { tab = "» ", trail = "·", nbsp = "␣" }
   '';
 
-  xdg.configFile."nvim/lua/config/keymaps.lua".text = ''
-    -- OpenCode shares the account's CLI login and runs at LazyVim's project root.
-    -- Snacks keeps the session alive when its terminal is hidden.
-    local function opencode()
-      local root = LazyVim.root()
-      Snacks.terminal.focus({ "${pkgs.opencode}/bin/opencode" }, {
-        cwd = root,
-        win = { position = "right", width = 0.45 },
-      })
-    end
-
-    vim.keymap.set("n", "<leader>ao", opencode, { desc = "OpenCode (project root)" })
-    vim.api.nvim_create_user_command("OpenCode", opencode, { desc = "Open OpenCode at the project root" })
+  xdg.configFile."nvim/lua/plugins/workflow.lua".text = ''
+    return {
+      {
+        "nickjvandyke/opencode.nvim",
+        cmd = "OpenCode",
+        keys = {
+          { "<leader>ao", function() require("opencode").toggle() end, desc = "OpenCode: toggle" },
+          { "<leader>aa", function() require("opencode").ask("@this: ", { submit = true }) end,
+            mode = { "n", "x" }, desc = "OpenCode: ask with context" },
+          { "<leader>as", function() require("opencode").select() end,
+            mode = { "n", "x" }, desc = "OpenCode: actions" },
+        },
+        config = function()
+          vim.o.autoread = true
+          local command = { "${pkgs.opencode}/bin/opencode", "--port", "0" }
+          local function terminal_opts()
+            return {
+              cwd = LazyVim.root(),
+              win = {
+                position = "right",
+                width = 0.45,
+                on_win = function(win) require("opencode.terminal").setup(win.win) end,
+              },
+            }
+          end
+          local opts = require("opencode.config").opts
+          opts.server = vim.tbl_deep_extend("force", opts.server, {
+            start = function() Snacks.terminal.open(command, terminal_opts()) end,
+            stop = function()
+              local options = terminal_opts()
+              options.create = false
+              local terminal = Snacks.terminal.get(command, options)
+              if terminal then terminal:close() end
+            end,
+            toggle = function() Snacks.terminal.toggle(command, terminal_opts()) end,
+          })
+          vim.api.nvim_create_user_command("OpenCode", function() require("opencode").toggle() end,
+            { desc = "Toggle OpenCode at the project root" })
+        end,
+      },
+      {
+        "sindrets/diffview.nvim",
+        cmd = { "DiffviewOpen", "DiffviewClose", "DiffviewFileHistory" },
+        opts = {},
+        keys = {
+          { "<leader>gD", "<cmd>DiffviewOpen<cr>", desc = "Git: review changes" },
+          { "<leader>gH", "<cmd>DiffviewFileHistory %<cr>", desc = "Git: file history" },
+          { "<leader>gq", "<cmd>DiffviewClose<cr>", desc = "Git: close diff review" },
+        },
+      },
+    }
   '';
 
   xdg.configFile."nvim/lua/config/autocmds.lua".text = ''
@@ -505,16 +477,24 @@ in
         "neovim/nvim-lspconfig",
         opts = {
           setup = {
-            -- LazyVim's go extra installs a workaround for gopls not
-            -- advertising semanticTokensProvider (golang/go#54531, fixed years
-            -- ago). On Neovim 0.12 it throws, because
-            -- client.config.capabilities.textDocument is nil now — every Go
-            -- buffer opens with an error popup. Replacing it with a no-op costs
-            -- nothing: modern gopls advertises the capability itself.
+            -- Skip the legacy semantic-token workaround; current gopls advertises support.
             gopls = function() end,
           },
           servers = {
             bashls = {},
+            gopls = {
+              settings = { gopls = ${lib.generators.toLua { } toolchain.goplsSettings} },
+            },
+            basedpyright = {
+              settings = {
+                basedpyright = {
+                  disableOrganizeImports = true,
+                  analysis = ${lib.generators.toLua { } toolchain.pythonAnalysis},
+                },
+              },
+            },
+            -- Ruff owns import actions; ordinary sessions do not need protocol tracing.
+            ruff = { cmd_env = { RUFF_TRACE = "off" } },
             nil_ls = { enabled = false },
             -- nixd needs to be told where the flake is to offer completion on
             -- options rather than just on syntax.
@@ -534,8 +514,16 @@ in
           formatters_by_ft = {
             sh = { "shfmt" },
             bash = { "shfmt" },
+            python = { "ruff_organize_imports", "ruff_format" },
           },
         },
+      },
+      {
+        "mfussenegger/nvim-lint",
+        opts = function(_, opts)
+          -- gopls runs Staticcheck; golangci-lint stays an explicit project command.
+          opts.linters_by_ft.go = {}
+        end,
       },
       {
         "saghen/blink.cmp",
@@ -546,13 +534,7 @@ in
         build = false,
       },
       {
-        -- rustup puts a `rust-analyzer` shim in ~/.nix-profile/bin, and the
-        -- neovim wrapper appends its own PATH entries rather than prepending,
-        -- so that shim wins over the nix package. When the active toolchain has
-        -- no rust-analyzer component the shim "falls back" to the next one on
-        -- PATH — itself — and rust-analyzer dies with "infinite recursion
-        -- detected" on every Rust buffer. Naming the store path sidesteps the
-        -- shim entirely, and works whether or not rustup has the component.
+        -- Use the pinned server directly to avoid rustup shim recursion.
         "mrcjkb/rustaceanvim",
         opts = {
           server = {
@@ -566,102 +548,58 @@ in
     }
   '';
 
-  xdg.configFile."nvim/lua/plugins/jupyter.lua".text = ''
-    -- Notebooks. molten runs the kernel and renders output, quarto/otter give
-    -- LSP and completion inside code cells, jupytext converts .ipynb on open so
-    -- the buffer is plain text.
-    --
-    -- HM 26.05 clears the wrapper's build-time plugin packpath, so merely
-    -- adding Molten to programs.neovim.plugins does not register it reliably.
-    -- After rebuilding (also after Molten updates), open a Python/Markdown
-    -- buffer, run :Lazy load molten-nvim then :UpdateRemotePlugins and restart.
-    -- The manifest lives in the writable data directory, not the Nix store.
-    --
-    -- Inline images work because kitty speaks the graphics protocol; imagemagick
-    -- comes from ../desktop.nix.
+  xdg.configFile."nvim/lua/plugins/debugging.lua".text = ''
     return {
       {
-        "benlubas/molten-nvim",
-        version = false,
-        ft = { "quarto", "markdown", "python" },
-        dependencies = { "3rd/image.nvim" },
-        init = function()
-          vim.g.molten_image_provider = "image.nvim"
-          vim.g.molten_output_win_max_height = 20
-          vim.g.molten_auto_open_output = false
-          vim.g.molten_wrap_output = true
-          vim.g.molten_virt_text_output = true
-          vim.g.molten_virt_lines_off_by_1 = true
+        "mfussenegger/nvim-dap",
+        dependencies = { "mfussenegger/nvim-dap-python", "leoluz/nvim-dap-go" },
+        opts = function()
+          local dap = require("dap")
+          dap.adapters.debugpy = dap.adapters.python
+          dap.adapters.lldb = dap.adapters.codelldb
+          local vscode = require("dap.ext.vscode")
+          vscode.type_to_filetypes.debugpy = { "python" }
+          vscode.type_to_filetypes.lldb = { "c", "cpp", "rust" }
         end,
-        keys = {
-          { "<leader>mi", "<cmd>MoltenInit<cr>", desc = "Molten: init kernel" },
-          { "<leader>me", "<cmd>MoltenEvaluateOperator<cr>", desc = "Molten: evaluate operator" },
-          { "<leader>ml", "<cmd>MoltenEvaluateLine<cr>", desc = "Molten: evaluate line" },
-          { "<leader>mr", "<cmd>MoltenReevaluateCell<cr>", desc = "Molten: re-evaluate cell" },
-          { "<leader>mo", "<cmd>MoltenShowOutput<cr>", desc = "Molten: show output" },
-          { "<leader>mv", ":<C-u>MoltenEvaluateVisual<cr>gv", mode = "v", desc = "Molten: evaluate selection" },
-        },
       },
       {
-        "3rd/image.nvim",
-        version = false,
-        -- The magick rock comes from programs.neovim.extraLuaPackages, so
-        -- there is nothing to build — and the plugin dir is read-only anyway.
-        build = false,
-        opts = {
-          backend = "kitty",
-          max_width = 100,
-          max_height = 12,
-          max_height_window_percentage = math.huge,
-          max_width_window_percentage = math.huge,
-          window_overlap_clear_enabled = true,
-        },
-      },
-      {
-        -- Gives you real LSP inside the code cells of a converted notebook —
-        -- completion, hover and diagnostics from basedpyright on the python
-        -- chunks rather than plain markdown. quarto-nvim used to activate this;
-        -- with quarto gone it is driven off a FileType autocmd instead.
-        "jmbuhr/otter.nvim",
-        ft = { "markdown" },
+        "mfussenegger/nvim-dap-python",
         config = function()
-          vim.api.nvim_create_autocmd("FileType", {
-            group = vim.api.nvim_create_augroup("oad_otter", { clear = true }),
-            pattern = "markdown",
-            callback = function()
-              pcall(require("otter").activate, { "python", "bash", "lua" })
-            end,
-          })
+          require("dap-python").setup("${toolchain.debugAdapters.python}/bin/python3")
         end,
       },
       {
-        "GCBallesteros/jupytext.nvim",
-        lazy = false,
+        "leoluz/nvim-dap-go",
+        opts = { delve = { path = "${pkgs.delve}/bin/dlv" } },
+      },
+      {
+        "mrcjkb/rustaceanvim",
+        opts = function(_, opts)
+          opts.dap = {
+            adapter = require("rustaceanvim.config").get_codelldb_adapter(
+              "${toolchain.debugAdapters.lldb}/bin/codelldb",
+              "${toolchain.debugAdapters.lldb}/share/lldb/lib/liblldb.so"
+            ),
+          }
+        end,
+      },
+      {
+        "nvim-neotest/neotest",
         opts = {
-          style = "markdown",
-          output_extension = "md",
-          force_ft = "markdown",
+          discovery = { concurrent = 2 },
+          output = { open_on_run = false },
         },
       },
     }
   '';
 
   xdg.configFile."nvim/lua/plugins/platformio.lua".text = ''
-    -- Embedded work. clangd needs a compile_commands.json before it can
-    -- resolve <Arduino.h>; `:PioLSP` writes one, and the opts below decide how.
-    -- This adds the build/upload/monitor side, driven through toggleterm.
-    --
-    -- The pio CLI comes from programs.neovim.extraPackages (platformio-core);
-    -- udev rules for flashing are system-wide, already set in
-    -- ../../configuration.nix.
+    -- PlatformIO build/upload/monitor commands use toggleterm.
+    -- :PioLSP generates the shared compilation database; host rules are in system/development.nix.
     return {
       {
         "anurag3301/nvim-platformio.lua",
-        -- Every command the plugin defines in plugin/platformio.lua. lazy only
-        -- loads it when one of these is typed, and the plugin's commands do not
-        -- exist until it loads — so a name missing here is a "Not an editor
-        -- command" error until some other Pio* command has been run first.
-        -- Note it is Piocmdh/Piocmdf (horizontal/float), not Piocmd.
+        -- Register every command so lazy loading works on the first invocation.
         cmd = {
           "Pioinit",
           "PioLSP",
@@ -675,19 +613,8 @@ in
           "PioTermList",
         },
         dependencies = { "akinsho/toggleterm.nvim" },
-        -- The plugin defaults to lsp = "ccls", and on that path :PioLSP writes
-        -- a .ccls file and nothing else. clangd cannot read .ccls, so it finds
-        -- no compilation database, falls back to a bare host `clang` with none
-        -- of the framework's include paths, and every <Arduino.h> comes back
-        -- "file not found".
-        --
-        -- clangd_source = "compiledb" runs `pio run -t compiledb`, which emits
-        -- the real build command line for every translation unit — the
-        -- framework's sources included, so `gd` reaches them. It is also the
-        -- file VSCodium's clangd reads, so the two editors cannot disagree.
-        -- The plugin's own :help warns this combination breaks on Espressif
-        -- boards: the xtensa build line carries GCC-only flags that clang
-        -- rejects outright. That is what ../default.nix removes.
+        -- Use the real PlatformIO compilation database in both editors.
+        -- GCC-only flags are removed by the shared clangd configuration.
         opts = {
           lsp = "clangd",
           clangd_source = "compiledb",
@@ -695,16 +622,14 @@ in
       },
       { "akinsho/toggleterm.nvim", opts = {} },
       {
-        -- clangd resolves <Arduino.h> from the database above, then dies on
-        -- <stdio.h> unless it can ask the cross-compiler where newlib is.
-        -- LazyVim's clangd extra owns `cmd`, so append rather than replace.
+        -- Use shared cross-compiler arguments for framework and system headers.
         "neovim/nvim-lspconfig",
         opts = function(_, opts)
           local clangd = opts.servers and opts.servers.clangd
           if not clangd then
             return
           end
-          clangd.cmd = vim.list_extend(vim.deepcopy(clangd.cmd or { "clangd" }), ${clangdArgs})
+          clangd.cmd = vim.list_extend({ "${pkgs.clang-tools}/bin/clangd" }, ${clangdArgs})
         end,
       },
     }

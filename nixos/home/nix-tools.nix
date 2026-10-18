@@ -8,6 +8,19 @@
   lib,
   ...
 }:
+let
+  repository = lib.escapeShellArg "path:${profile.configRepo}";
+  directory = lib.escapeShellArg profile.configRepo;
+  switchCommand =
+    if isNixOS then
+      "nh os switch --hostname ${lib.escapeShellArg profile.hostName}"
+    else
+      "nh home switch -c ${lib.escapeShellArg profile.profileName}";
+  updater = pkgs.callPackage ../pkgs/config-update.nix { };
+  updateCommand = "${updater}/bin/config-update ${directory} ${if isNixOS then "os" else "home"} ${
+    lib.escapeShellArg (if isNixOS then profile.hostName else profile.profileName)
+  }";
+in
 {
   imports = [ inputs.nix-index-database.homeModules.nix-index ];
 
@@ -30,20 +43,29 @@
   };
 
   home.packages = with pkgs; [
-    nix-output-monitor # `nom`, readable build progress
-    nvd # diff two generations' package lists
-    nix-tree # walk a closure to find what pulled something in
+    nix-output-monitor
+    nvd
+    nix-tree
+    updater
   ];
 
   programs.nh.flake = "path:${profile.configRepo}";
 
   home.shellAliases = {
-    up =
+    update = updateCommand;
+    up = switchCommand;
+    rebuild = switchCommand;
+    nbuild =
       if isNixOS then
-        "nh os switch --hostname ${lib.escapeShellArg profile.hostName}"
+        "nh os build --hostname ${lib.escapeShellArg profile.hostName}"
       else
-        "nh home switch -c ${lib.escapeShellArg profile.profileName}";
-    cnf = "\${EDITOR:-nvim} ${lib.escapeShellArg "${profile.configRepo}/${if isNixOS then "configuration.nix" else "profile.nix"}"}";
+        "nh home build -c ${lib.escapeShellArg profile.profileName}";
+    neval = "nix flake check ${repository} --no-build --no-write-lock-file";
+    ncheck = "nix flake check ${repository} --no-write-lock-file";
+    nupdate = "nix flake update --flake ${repository}";
+    nfmt = "(cd ${directory} && nix fmt --no-write-lock-file)";
+    cnf = "\${EDITOR:-nvim} ${directory}";
+    cconf = "cd ${directory}";
   }
   // lib.optionalAttrs isLaptop { lc = "cd /mnt/storage/Coding"; };
 }

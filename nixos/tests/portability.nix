@@ -52,7 +52,28 @@ let
     repository = home.programs.nh.flake == "path:${alternate.configRepo}";
     noNixOSXkb = !(home.home.sessionVariables ? XKB_CONFIG_ROOT);
     nativeShell = home.programs.bash.enable && home.programs.zsh.enable;
-    sharedAliases = home.programs.bash.shellAliases.up == home.programs.zsh.shellAliases.up;
+    sharedAliases =
+      builtins.all
+        (name: home.programs.bash.shellAliases.${name} == home.programs.zsh.shellAliases.${name})
+        [
+          "up"
+          "rebuild"
+          "nbuild"
+          "neval"
+          "ncheck"
+          "nupdate"
+          "update"
+          "nfmt"
+          "cnf"
+          "cconf"
+        ];
+    commandWorkflow =
+      home.home.shellAliases.up == home.home.shellAliases.rebuild
+      && lib.hasInfix "--no-write-lock-file" home.home.shellAliases.neval
+      && lib.hasInfix "--no-build" home.home.shellAliases.neval
+      && lib.hasInfix (lib.escapeShellArg alternate.configRepo) home.home.shellAliases.cnf
+      && lib.hasInfix (lib.escapeShellArg alternate.configRepo) home.home.shellAliases.nfmt
+      && home.home.shellAliases.lt == "eza --tree --level=2";
     nixFeatures =
       home.nix.settings.experimental-features == [
         "nix-command"
@@ -61,8 +82,11 @@ let
     nixd = home.programs.vscodium.profiles.default.userSettings."nix.serverSettings".nixd == nixd;
     noSystemOptions = !(nixd.options ? nixos);
     templates =
-      builtins.elem "kitty" home.programs.noctalia.settings.theme.templates.builtin_ids
-      && !(home.programs.noctalia.settings.theme.templates.user ? kitty);
+      !(builtins.elem "kitty" home.programs.noctalia.settings.theme.templates.builtin_ids)
+      && home.programs.noctalia.settings.theme.templates.user ? kitty
+      && home.programs.kitty.enable
+      && home.xdg.configFile."kitty/kitty.conf".force
+      && !(home.home.activation ? kittyWritableConfig);
     cursor = home.programs.umbriel.settings.input.cursor.size == home.home.pointerCursor.size;
     keyboard = home.programs.umbriel.settings.input.keyboard.layout == "us,ara";
     umbrielInput =
@@ -82,6 +106,9 @@ let
       &&
         home.programs.umbriel.settings.keybinds."Mod+Space".action
         == "spawn:noctalia msg panel-toggle launcher"
+      &&
+        home.programs.umbriel.settings.keybinds."Mod+S".action
+        == "spawn:noctalia msg plugin alexander/screen-toolkit:service all toggle"
       && home.programs.umbriel.settings.keybinds."Mod+Shift+Left" == "output-focus-left"
       && home.programs.umbriel.settings.keybinds."Mod+Ctrl+9" == "column-move-to-workspace:9"
       && home.programs.umbriel.settings.keybinds."Mod+Tab" == "workspace-focus-last"
@@ -89,8 +116,23 @@ let
       && home.programs.umbriel.settings.keybinds."XF86AudioMicMute".allow_when_locked
       && home.programs.umbriel.settings.keybinds."Mod+Ctrl+WheelDown".cooldown_ms == 150
       && !(home.programs.umbriel.settings.keybinds ? "Mod+Shift+M");
-    umbrielKeyCoverage =
-      builtins.length (builtins.attrNames home.programs.umbriel.settings.keybinds) == 99;
+    umbrielKeyCoverage = builtins.all (key: home.programs.umbriel.settings.keybinds ? ${key}) [
+      "Mod+A"
+      "Mod+S"
+      "Mod+V"
+      "Mod+N"
+      "Mod+P"
+      "Mod+R"
+      "Mod+Shift+Space"
+      "Mod+Ctrl+Space"
+      "Mod+Alt+Space"
+      "Mod+Alt+1"
+      "Mod+Alt+2"
+      "Mod+Alt+C"
+      "Mod+Alt+N"
+      "Mod+Alt+D"
+      "Print"
+    ];
     powerButton =
       system.services.logind.settings.Login.HandlePowerKey == "ignore"
       && system.services.logind.settings.Login.HandlePowerKeyLongPress == "ignore"
@@ -100,17 +142,14 @@ let
       && home.programs.umbriel.settings.keybinds."XF86PowerOff".allow_when_locked
       && home.programs.umbriel.settings.keybinds."XF86PowerOff".allow_when_inhibited;
     lockScreenPowerOptions =
-      home.programs.noctalia.settings.lockscreen_widgets.widget."lockscreen-login-box@eDP-1".settings.show_session_buttons
-      && home.programs.noctalia.settings.lockscreen_widgets.widget."lockscreen-login-box@eDP-2".settings.show_session_buttons
-      &&
-        map (entry: entry.action) home.programs.noctalia.settings.shell.session.actions == [
-          "lock"
-          "logout"
-          "lock_and_suspend"
-          "reboot"
-          "shutdown"
-          "suspend"
-        ]
+      map (entry: entry.action) home.programs.noctalia.settings.shell.session.actions == [
+        "lock"
+        "logout"
+        "lock_and_suspend"
+        "reboot"
+        "shutdown"
+        "suspend"
+      ]
       &&
         (builtins.elemAt home.programs.noctalia.settings.shell.session.actions 5).command
         == "noctalia msg session lock-and-suspend";
@@ -162,8 +201,31 @@ let
       && home.programs.umbriel.settings.keybinds."Mod+Down" == "workspace-next"
       && home.programs.umbriel.settings.keybinds."Mod+WheelUp".cooldown_ms == 150;
     umbrielLayoutSwitch =
-      home.programs.umbriel.settings.keybinds."Mod+D".action == "workspace-set-layout:toggle"
+      home.programs.umbriel.settings.keybinds."Mod+D".action
+      == "workspace-set-layout:toggle:dwindle,scrolling"
       && !home.programs.umbriel.settings.keybinds."Mod+D".repeat;
+    noMasterLayout = builtins.all (
+      binding:
+      let
+        action = if builtins.isString binding then binding else binding.action;
+      in
+      !(lib.hasInfix "master" action)
+    ) (builtins.attrValues home.programs.umbriel.settings.keybinds);
+    editorWorkflow =
+      home.programs.vscodium.profiles.default.userSettings."python.defaultInterpreterPath"
+      == "\${workspaceFolder}/.venv"
+      &&
+        home.programs.vscodium.profiles.default.userSettings."basedpyright.analysis.typeCheckingMode"
+        == "standard"
+      && home.programs.vscodium.profiles.default.userSettings."go.lintOnSave" == "off"
+      &&
+        home.programs.vscodium.profiles.default.userSettings."basedpyright.importStrategy"
+        == "fromEnvironment"
+      && home.programs.vscodium.profiles.default.userSettings."ruff.importStrategy" == "fromEnvironment"
+      && home.programs.vscodium.profiles.default.userSettings."basedpyright.disableOrganizeImports"
+      && !(home.programs.vscodium.profiles.default.userSettings ? "ruff.path")
+      && !(home.programs.vscodium.profiles.default.userSettings ? "prettier.prettierPath")
+      && home.xdg.dataFile ? "jupyter/kernels/nix-python/kernel.json";
     umbrielLaptopMirror =
       system.home-manager.users.${profile.username}.programs.umbriel.settings.keybinds."Mod+Shift+M".action
       == "spawn:mirror-laptop";
@@ -265,9 +327,16 @@ let
       builtins.all
         (
           configuration:
+          let
+            thunar = lib.findFirst (
+              package: lib.getName package == "thunar-with-plugins"
+            ) null configuration.home.packages;
+          in
           configuration.xdg.mimeApps.defaultApplications."inode/directory" == [ "thunar.desktop" ]
           && configuration.programs.umbriel.settings.keybinds."Mod+E".action == "spawn:thunar"
-          && builtins.elem base.pkgs.thunar configuration.home.packages
+          && thunar != null
+          && configuration.xfconf.settings.thunar.misc-volume-management
+          && configuration.xdg.userDirs.createDirectories
           &&
             builtins.all
               (
@@ -276,7 +345,7 @@ let
                 && builtins.elem package configuration.systemd.user.packages
               )
               [
-                base.pkgs.thunar
+                thunar
                 base.pkgs.tumbler
                 base.pkgs.xfconf
                 base.pkgs.gvfs
@@ -299,6 +368,9 @@ let
               "gnome-connections"
               "epiphany"
               "sushi"
+              "rnote"
+              "satty"
+              "protonup-ng"
             ]
           ) packages)
         )
@@ -316,6 +388,41 @@ let
       !system.home-manager.useGlobalPkgs
       && (system.nixpkgs.config.permittedInsecurePackages or [ ]) == [ ]
       && (portable.pkgs.config.permittedInsecurePackages or [ ]) == [ "electron-40.10.5" ];
+    desktopBasics =
+      builtins.all
+        (
+          configuration:
+          configuration.xdg.mimeApps.defaultApplications."application/pdf" == [ "org.gnome.Papers.desktop" ]
+          &&
+            configuration.xdg.mimeApps.defaultApplications."application/zip"
+            == [ "org.gnome.FileRoller.desktop" ]
+          && configuration.xdg.mimeApps.defaultApplications."video/mp4" == [ "mpv.desktop" ]
+          && configuration.xdg.mimeApps.defaultApplications."image/png" == [ "imv.desktop" ]
+          && builtins.all (package: builtins.elem package configuration.home.packages) [
+            base.pkgs.gimp
+            base.pkgs.inkscape
+            base.pkgs.simple-scan
+            base.pkgs.system-config-printer
+            base.pkgs.file-roller
+            base.pkgs.noto-fonts-color-emoji
+          ]
+        )
+        [
+          home
+          system.home-manager.users.${profile.username}
+        ];
+    desktopHostServices =
+      system.services.pipewire.enable
+      && system.services.pipewire.pulse.enable
+      && system.services.pipewire.alsa.enable
+      && !system.services.pulseaudio.enable
+      && system.services.printing.enable
+      && system.services.ipp-usb.enable
+      && system.hardware.sane.enable
+      && system.services.avahi.nssmdns4
+      && !system.services.printing.openFirewall
+      && system.programs.mtr.enable
+      && system.security.wrappers.mtr-packet.capabilities == "cap_net_raw+p";
     userSessionPath = builtins.elem "${home.home.homeDirectory}/.local/bin" home.home.sessionPath;
     nativeAuthentication =
       !home.programs.noctalia.settings.shell.polkit_agent
@@ -337,7 +444,8 @@ let
         settings = system.home-manager.users.${profile.username}.programs.noctalia.settings;
         command = settings.plugin_settings."avivbintangaringga/nix-monitor".update_command;
       in
-      lib.hasInfix "/bin/nixos-update " command
+      command == system.home-manager.users.${profile.username}.home.shellAliases.update
+      && lib.hasInfix "/bin/config-update " command
       && builtins.elem "davemhammer/tailscale" settings.plugins.enabled;
     tailscaleOnlyKdeConnect =
       system.networking.firewall.enable
@@ -375,7 +483,7 @@ assert lib.assertMsg (
   inherit checks;
   # These fixtures exercise actual generated files, not only mocked identities.
   fixtures = {
-    kitty = ../dotfiles/kitty;
+    kitty = home.xdg.configFile."kitty/kitty.conf".source;
     umbriel = home.xdg.configFile."umbriel/config.toml".source;
     vscode = vscodeThemeExtension;
     units = home.xdg.dataFile."systemd/user".source;

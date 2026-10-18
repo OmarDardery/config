@@ -5,14 +5,13 @@
   lib,
   config,
   isNixOS,
-  profile,
   ...
 }:
 let
   plugins = pkgs.callPackage ../pkgs/noctalia-plugins.nix {
     src = inputs.noctalia-plugins;
   };
-  settings = builtins.fromTOML (builtins.readFile ../dotfiles/noctalia/config.toml);
+  settings = import ./noctalia-settings.nix;
   reconcilePython = pkgs.python3.withPackages (ps: [ ps.tomlkit ]);
   themeDir = "${config.xdg.stateHome}/noctalia/theme";
   community = inputs.noctalia-templates;
@@ -20,15 +19,6 @@ let
   render = input: output: {
     input_path = "${input}";
     output_path = output;
-  };
-  nixosUpdate = pkgs.writeShellApplication {
-    name = "nixos-update";
-    runtimeInputs = [
-      pkgs.nix
-      pkgs.nixos-rebuild
-      pkgs.sudo
-    ];
-    text = builtins.readFile ../pkgs/nixos-update.sh;
   };
   zenApply = pkgs.writeShellApplication {
     name = "noctalia-zen-apply";
@@ -42,12 +32,12 @@ let
       exec bash ${../pkgs}/zen-apply.sh ${lib.escapeShellArg "${community}/zen-browser/apply.sh"} ${lib.escapeShellArg "${zenControls}"}
     '';
   };
-  zenControls = ../dotfiles/zen/zen-window-controls.css;
+  zenControls = ../assets/zen-window-controls.css;
 in
 {
   imports = [ inputs.noctalia.homeModules.default ];
 
-  # Opt-in reconciliation, not a hook that silently discards future GUI changes.
+  # Manual reconciliation previews changes unless --apply is supplied.
   home.packages = [
     (pkgs.writeShellApplication {
       name = "noctalia-reconcile";
@@ -57,13 +47,12 @@ in
           ${lib.escapeShellArg "${config.xdg.configHome}/noctalia/config.toml"} "$@"
       '';
     })
-  ]
-  ++ lib.optional isNixOS nixosUpdate;
+  ];
 
   programs.noctalia = {
     enable = true;
 
-    # Keep visual settings in TOML; adapt backend-specific fields declaratively.
+    # Keep preferences in Nix; adapt backend-specific fields here.
     # Upstream checks this config during builds; warnings need review too.
     checkConfig = true;
     settings =
@@ -85,13 +74,16 @@ in
           bar.default.start = builtins.filter (id: isNixOS || id != "nix-monitor") settings.bar.default.start;
           plugin_settings = lib.optionalAttrs isNixOS {
             "avivbintangaringga/nix-monitor" = {
-              update_command = "${nixosUpdate}/bin/nixos-update ${lib.escapeShellArg profile.configRepo} ${lib.escapeShellArg profile.hostName}";
+              update_command = config.home.shellAliases.update;
               hide_clean_button = false;
               hide_optimize_button = false;
             };
           };
           theme.templates.user = {
-            umbriel = render ../dotfiles/noctalia/templates/umbriel.toml "${themeDir}/umbriel.toml";
+            kitty = (render "${builtin}/kitty/kitty.conf" "${themeDir}/kitty.conf") // {
+              post_hook = "${pkgs.procps}/bin/pkill -USR1 -x kitty || true";
+            };
+            umbriel = render ../assets/umbriel.toml "${themeDir}/umbriel.toml";
             vscode = render "${community}/vscode/vscode.json" "${themeDir}/vscode.json";
             steam = render "${community}/steam/steam.css" "${themeDir}/steam.css";
             zen_chrome =
@@ -129,20 +121,14 @@ in
     systemd.enable = false;
   };
 
-  # The package comes from the module: homeModules.default sets
-  # programs.noctalia.package to noctalia's own build with mkDefault, which is
-  # what keeps the cachix substituter hitting. That is why it is no longer
-  # listed by hand in desktop.nix.
-
-  # Templates are immutable; all rendered palettes are writable runtime data.
-  xdg.configFile."noctalia/templates".source = ../dotfiles/noctalia/templates;
+  # The upstream module selects its cached package.
 
   # VSCodium only installs its theme watcher after a successful initial load.
   # Seed a missing palette with Noctalia itself, including in the GNOME fallback.
   home.activation.initializeNoctaliaVscode = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
     if [[ ! -e ${lib.escapeShellArg "${themeDir}/vscode.json"} && ! -L ${lib.escapeShellArg "${themeDir}/vscode.json"} ]]; then
       run mkdir -p ${lib.escapeShellArg themeDir}
-      run ${config.programs.noctalia.package}/bin/noctalia theme ${../dotfiles/Pictures/Wallpapers/dark-mountain.jpg} \
+      run ${config.programs.noctalia.package}/bin/noctalia theme ${../assets/wallpapers/dark-mountain.jpg} \
         --scheme ${lib.escapeShellArg config.programs.noctalia.settings.theme.wallpaper_scheme} \
         --render ${lib.escapeShellArg "${community}/vscode/vscode.json:${themeDir}/vscode.json"} -o /dev/null
     fi
@@ -155,17 +141,20 @@ in
         bat_theme=${lib.escapeShellArg "${config.xdg.configHome}/bat/themes/noctalia.tmTheme"}
         if [[ ! -e "$bat_theme" && ! -L "$bat_theme" ]]; then
           run mkdir -p ${lib.escapeShellArg "${config.xdg.configHome}/bat/themes"}
-          run ${config.programs.noctalia.package}/bin/noctalia theme ${../dotfiles/Pictures/Wallpapers/dark-mountain.jpg} \
+          run ${config.programs.noctalia.package}/bin/noctalia theme ${../assets/wallpapers/dark-mountain.jpg} \
             --scheme ${lib.escapeShellArg config.programs.noctalia.settings.theme.wallpaper_scheme} \
             --render ${lib.escapeShellArg "${community}/bat/bat.tmTheme:${config.xdg.configHome}/bat/themes/noctalia.tmTheme"} -o /dev/null
         fi
       '';
 
-  # Migrate saved GUI state to the builtin while preserving other selections.
-  home.activation.noctaliaKittyTemplate = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    run ${reconcilePython}/bin/python3 ${../pkgs}/migrate-desktop.py noctalia \
-      ${lib.escapeShellArg "${config.xdg.stateHome}/noctalia/settings.toml"} \
-      ${lib.escapeShellArg "${config.xdg.stateHome}/noctalia/.kitty-template-v1"}
+  # GUI edits preview a setting until the next rebuild. Keep runtime-only keys
+  # (e.g. theme mode/current wallpaper) and back up any overridden preferences.
+  home.activation.noctaliaDeclarativeSettings = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+    state=${lib.escapeShellArg "${config.xdg.stateHome}/noctalia/settings.toml"}
+    if [[ -e "$state" || -L "$state" ]]; then
+      run ${reconcilePython}/bin/python3 ${../pkgs}/reconcile-noctalia.py \
+        "$state" ${config.xdg.configFile."noctalia/config.toml".source} --managed --apply
+    fi
   '';
 
   # Immutable local plugins take precedence over downloaded Git sources.
@@ -185,16 +174,7 @@ in
         source = "${plugins}/${lib.removePrefix "noctalia/plugins/" path}";
       });
 
-  # The wallpapers config.toml points at. This is not decoration: theme.source
-  # is "wallpaper", so the entire palette is generated from whichever of these
-  # is selected. Without them deployed, a fresh machine gets no wallpaper and a
-  # fallback palette instead of yours.
-  #
-  # config.toml refers to them by their ~/Pictures path rather than a store
-  # path, because it is real TOML and cannot interpolate one. That also keeps
-  # switching wallpapers from the noctalia UI working.
-  #
-  # Read-only, so adding a wallpaper means
-  # dropping it in dotfiles/Pictures/Wallpapers and rebuilding.
-  home.file."Pictures/Wallpapers".source = ../dotfiles/Pictures/Wallpapers;
+  # Paths stay portable through the shell's ~ expansion. Add wallpapers here
+  # and rebuild; the selected wallpaper and generated palettes remain writable.
+  home.file."Pictures/Wallpapers".source = ../assets/wallpapers;
 }

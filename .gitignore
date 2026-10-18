@@ -1,2 +1,6 @@
 # nixos-rebuild build drops this symlink; it must never be committed.
 result
+
+# Python helpers and tests generate these locally.
+__pycache__/
+*.pyc
