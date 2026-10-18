@@ -96,13 +96,6 @@ def main():
             assert json.loads(rendered["opencode"].read_text())["theme"]
             assert json.loads(rendered["fastfetch"].read_text())["display"]["color"]
             ET.parse(rendered["libreoffice"])
-            zellij_config = output / "zellij-check.kdl"
-            zellij_config.write_text(rendered["zellij"].read_text() + '\ntheme "noctalia"\n')
-            checked = subprocess.run(
-                ["zellij", "--config", str(zellij_config), "setup", "--check"],
-                check=True, capture_output=True, text=True,
-            )
-            assert "[CONFIG FILE]: Well defined." in checked.stdout + checked.stderr, checked.stdout + checked.stderr
             assert '--theme-color: "Matugen"' in rendered["steam"].read_text()
             tomllib.loads(rendered["yazi"].read_text())
             config = output / "umbriel-test.toml"

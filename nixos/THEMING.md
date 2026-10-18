@@ -1,4 +1,4 @@
-# Upstream theming and terminal workspaces
+# Upstream theming and terminal tools
 
 Noctalia and Umbriel use their upstream Home Manager/NixOS modules. Template
 files come directly from the locked Noctalia and community-template inputs;
@@ -16,7 +16,7 @@ Noctalia's shipped palette template rather than a separately maintained copy.
 | Starship | Built-in integration | Native prompt palette |
 | LazyVim, VSCodium, Yazi, Fzf, Lazygit | Community templates | Existing native theme loaders/watchers |
 | Zen, Steam/Millennium | Community templates | Existing profile-aware adapters |
-| Zellij, OpenCode | Community templates | Native theme directories and Home Manager settings |
+| OpenCode | Community templates | Native theme directories and Home Manager settings |
 | GIMP, Inkscape | Community CSS | Personal override CSS; GIMP path matches the pinned 3.0 series |
 | Fastfetch | Community colors/apply script | Disposable color processing plus native CLI overrides; user JSONC stays intact |
 | LibreOffice | Community ColorScheme extension | Apply script staged in writable cache; skips installation while Office is open |
@@ -45,19 +45,9 @@ store. These are documented patches to upstream community plugins, not an
 alternative shell or compositor. Updating their explicit input pins remains a
 reviewed flake change.
 
-## Zellij and Yazi
+## Kitty and Yazi
 
-Kitty's normal shell starts Zellij. Its panes run Zsh without shell auto-start,
-so opening a pane does not start another multiplexer. The upstream compact layout
-and built-in plugins provide tabs, panes, session management and persistent
-sessions. Closing a terminal detaches the session. Restore one with `za`; `zl`
-lists sessions. `zdev` opens Code, Files, Git and Shell tabs in the current folder.
-
-Zellij starts locked so editor shortcuts pass through. Press **Ctrl+G** to unlock,
-then use its visible hints: **Ctrl+P** for panes, **Ctrl+T** for tabs, **Ctrl+O**
-for sessions, and **Ctrl+G** to lock again. Colors use the generated Noctalia
-KDL theme; already-running sessions may need a config reload/new session to read
-a changed theme. Portable Home Manager uses Zellij's built-in theme.
+Kitty opens Zsh directly; use its native splits and tabs for terminal workspaces.
 
 Yazi remains the file browser. `y` returns the shell to the directory selected
 when Yazi exits; `yazi` runs it without changing the shell's working directory.
@@ -65,13 +55,6 @@ Natural sorting and directories-first ordering use upstream Yazi settings.
 
 | Desktop binding | Action |
 | --- | --- |
-| Mod+T | Kitty with Zellij |
-| Mod+Ctrl+T | Plain Kitty/Zsh |
+| Mod+T | Kitty with Zsh |
 | Mod+Shift+E | Yazi directly in Kitty |
 | Mod+E | Thunar |
-
-Zellij 0.45 adds Kitty graphics support, but
-[Yazi documents remaining preview issues](https://yazi-rs.github.io/docs/next/image-preview/#zellij-users).
-Use the direct Yazi shortcut for reliable native Kitty previews; terminal identity
-variables are not spoofed. This path also stays available when troubleshooting a
-multiplexer session.

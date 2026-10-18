@@ -64,7 +64,6 @@ in
     // {
       post_hook = "${pkgs.procps}/bin/pkill -USR2 -x btop || true";
     };
-  zellij = render "${community}/zellij/zellij.kdl" "${config.xdg.configHome}/zellij/themes/noctalia.kdl";
   opencode = render "${community}/opencode/opencode.json" "${config.xdg.configHome}/opencode/themes/noctalia.json";
   gimp = render "${community}/gimp/gimp.css" "${config.xdg.configHome}/GIMP/${lib.versions.majorMinor pkgs.gimp.version}/gimp.css";
   inkscape = render "${community}/inkscape/user.css" "${config.xdg.configHome}/inkscape/ui/user.css";

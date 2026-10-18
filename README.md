@@ -45,14 +45,14 @@ separate review; see [migration details](nixos/README.md#moving-from-the-old-sta
 - `update`: update flake inputs, build/switch, then update Flatpaks if installed.
 - `ppt2pdf` / `ppt2txt`, `doc2pdf` / `doc2txt`, `xls2csv`: batch Office conversions.
 - `cconf` / `cnf`: enter or edit the configuration directory.
-- `zdev` / `za` / `zl`: open a development workspace, attach or list Zellij sessions; `y` browses files with Yazi.
+- `y`: browse files with Yazi and return to the selected directory.
 - `neval` / `ncheck` / `nbuild` / `nfmt`: evaluate, check, build or format.
 
 Full module map, editor/notebook workflows, desktop theming, Steam maintenance,
 plugin patches and recorded hardware observations are in
 [nixos/README.md](nixos/README.md). Desktop bindings are in
 [nixos/SHORTCUTS.md](nixos/SHORTCUTS.md).
-Upstream app templates and terminal workspace setup are documented in
+Upstream app templates and Yazi setup are documented in
 [nixos/THEMING.md](nixos/THEMING.md).
 
 ## Validation

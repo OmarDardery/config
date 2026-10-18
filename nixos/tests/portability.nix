@@ -289,7 +289,6 @@ let
           "btop"
           "yazi"
           "yazi_syntax"
-          "zellij"
           "opencode"
           "fastfetch"
           "libreoffice"
@@ -297,15 +296,8 @@ let
           "inkscape"
         ];
     upstreamUmbrielTemplate = lib.hasSuffix "/assets/templates/umbriel/umbriel.toml" home.programs.noctalia.settings.theme.templates.user.umbriel.input_path;
-    terminalWorkspace =
-      home.programs.zellij.enable
-      && tools.programs.zellij.enable
-      && home.programs.zellij.settings.default_mode == "locked"
-      && home.programs.zellij.settings.on_force_close == "detach"
-      && home.programs.zellij.settings.theme == "noctalia"
-      && !(tools.programs.zellij.settings ? theme)
-      && home.programs.kitty.settings.shell == lib.getExe home.programs.zellij.package
-      && !home.programs.zellij.enableZshIntegration
+    terminalIntegration =
+      home.programs.kitty.settings.shell == lib.getExe base.pkgs.zsh
       && home.programs.yazi.shellWrapperName == "y"
       && home.programs.opencode.tui.theme == "noctalia";
     systemThemes =

@@ -285,7 +285,7 @@ extension's own UI.
 ## Declarative desktop and shortcuts
 
 The [theming/workspace guide](THEMING.md) lists supported apps, upstream template
-sources, first-run behavior and the Zellij/Yazi workflow.
+sources, first-run behavior and the Yazi workflow.
 
 On NixOS, use `home/kitty.nix` for terminal behavior, `home/noctalia-settings.nix` for shell
 preferences, and `home/umbriel.nix` for window rules and desktop bindings.

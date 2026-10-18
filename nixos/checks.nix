@@ -150,8 +150,6 @@ let
       seed = batHome.home.activation.initializeNoctaliaTemplates.data;
       cache = batHome.home.activation.batCache.data;
       bat = batHome.programs.bat.package;
-      zellij = batHome.programs.zellij.package;
-      zellijConfig = batHome.xdg.configFile."zellij/config.kdl".source;
       opencodeTui = batHome.xdg.configFile."opencode/tui.json".source;
     }
   );
@@ -314,7 +312,6 @@ in
           python
           home.programs.noctalia.package
           home.programs.umbriel.package
-          home.programs.zellij.package
         ];
         exportReferencesGraph = [
           "config-closure"
