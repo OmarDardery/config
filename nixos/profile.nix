@@ -2,7 +2,7 @@
 rec {
   username = "oad";
   homeDirectory = "/home/${username}";
-  configRepo = "${homeDirectory}/configs/nixos";
+  configRepo = "${homeDirectory}/config/nixos";
   profileName = username;
   hostName = "nixos";
   system = "x86_64-linux";

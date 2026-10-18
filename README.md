@@ -17,7 +17,7 @@ NixOS and its integrated Home Manager share the same package set.
 
 Edit [nixos/profile.nix](nixos/profile.nix) for your account, checkout and output
 names. The shipped defaults are user `oad`, home `/home/oad`, flake directory
-`~/configs/nixos`, and NixOS host `nixos`. Hardware files are specific to this
+`~/config/nixos`, and NixOS host `nixos`. Hardware files are specific to this
 laptop; review them before deploying NixOS elsewhere. Keep state versions unchanged.
 
 With Nix installed, run from the checkout:
@@ -43,6 +43,7 @@ separate review; see [migration details](nixos/README.md#moving-from-the-old-sta
 
 - `up` / `rebuild`: apply the selected system or Home Manager configuration.
 - `update`: update flake inputs, build/switch, then update Flatpaks if installed.
+- `ppt2pdf` / `ppt2txt`, `doc2pdf` / `doc2txt`, `xls2csv`: batch Office conversions.
 - `cconf` / `cnf`: enter or edit the configuration directory.
 - `neval` / `ncheck` / `nbuild` / `nfmt`: evaluate, check, build or format.
 

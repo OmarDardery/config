@@ -94,7 +94,8 @@ The standalone profile no longer installs Umbriel, Noctalia, Steam, Flatpak,
 portals or graphical user services, and does not change desktop MIME defaults,
 GTK/Qt themes or GPU library paths. Install a native compositor/session through
 the distribution separately if wanted. The former `--setup-host` installer was
-removed; `debian-setup.sh` now only forwards to the tools bootstrap from a checkout.
+removed; `debian-setup.sh` now forwards to the tools bootstrap beside the script
+or in `~/config`. The flake and follow-up update commands use `~/config/nixos`.
 
 If you used the old Debian installer, its APT packages, service settings and
 udev rules remain native host configuration. After switching from a native
@@ -156,6 +157,27 @@ The same names work in Bash and Zsh on both backends:
 | `update` | Update flake inputs, build and switch, then update user/system Flatpaks |
 | `nupdate` | Refresh the lockfile only; inspect/build before switching |
 | `nfmt` | Format the configuration tree without changing the shell's directory |
+
+LibreOffice shortcuts accept multiple files and `-o DIR` (default: the current
+directory), and refuse to overwrite existing outputs:
+
+```sh
+ppt2pdf "Lecture 1.pptx" "Lecture 2.ppt" -o ~/Documents/PDF
+ppt2txt *.pptx -o ~/Documents/Notes
+doc2pdf report.docx
+doc2txt report.docx
+xls2csv budget.xlsx
+```
+
+`office2pdf` handles any supported Office document. `ppt2pptx`, `doc2docx`,
+`xls2xlsx` and `xls2pdf` cover the other common conversions. The `ppt2*` aliases
+also accept PPTX/ODP, `doc2*` accept DOCX/ODT, and `xls2*` accept XLSX/ODS.
+Presentation text is extracted from LibreOffice's flat XML export in slide order;
+it includes text boxes and tables, excludes speaker notes and masters, and does
+not OCR images. CSV exports the active sheet with UTF-8 encoding. Each invocation
+uses a temporary LibreOffice profile so an open GUI cannot intercept the command.
+On NixOS LibreOffice is supplied by Nix; on Debian/Fedora these shortcuts use the
+native LibreOffice installation, keeping the desktop owned by the distribution.
 
 Eza supplies the standard listing aliases; `lt` limits the tree to two levels.
 The formatter uses upstream `nixfmt-tree`, so `nix fmt` formats repository files

@@ -3,7 +3,7 @@
 set -euo pipefail
 
 REPO_HTTPS="https://github.com/OmarDardery/config.git"
-repo_dir="${HOME:?HOME must be set}/configs"
+repo_dir="${HOME:?HOME must be set}/config"
 profile=
 host=
 backup_extension=
@@ -26,7 +26,7 @@ usage() {
     'Linux only; run as your normal user, never root.' \
     'NixOS builds nixosConfigurations.<host>; other Linux builds Home Manager.' \
     '' \
-    '  --repo-dir DIR  Existing checkout or new clone destination (default: ~/configs)' \
+    '  --repo-dir DIR  Existing checkout or new clone destination (default: ~/config)' \
     '  --profile NAME Standalone named profile (default: profile.nix profileName)' \
     '  --host NAME    NixOS flake host (default: profile.nix hostName)' \
     '  --build-only   Build without activation (default)' \

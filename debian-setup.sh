@@ -4,9 +4,13 @@ set -euo pipefail
 
 repo_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 if [[ ! -f "$repo_dir/nixos/bootstrap.sh" ]]; then
+  repo_dir="${HOME:?HOME must be set}/config"
+fi
+if [[ ! -f "$repo_dir/nixos/bootstrap.sh" ]]; then
   printf '%s\n' \
-    'Use this entry point from a config repository checkout.' \
-    'Clone https://github.com/OmarDardery/config.git, then run bash nixos/bootstrap.sh.' \
+    'No configuration checkout found beside this script or at ~/config.' \
+    'Run: git clone https://github.com/OmarDardery/config.git ~/config' \
+    'Then: bash ~/config/nixos/bootstrap.sh --activate' \
     'The old privileged Debian desktop installer has been retired.' >&2
   exit 1
 fi
