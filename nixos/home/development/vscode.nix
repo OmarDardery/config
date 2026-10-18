@@ -104,6 +104,8 @@ in
         charliermarsh.ruff
         # Notebook integration uses the configured Python kernel.
         ms-toolsai.jupyter
+        ms-toolsai.jupyter-renderers
+        ms-toolsai.jupyter-keymap
         # Markdown
         yzhang.markdown-all-in-one
         davidanson.vscode-markdownlint
@@ -125,6 +127,8 @@ in
         mkhl.direnv
         editorconfig.editorconfig
         usernamehw.errorlens
+        gruntfuggly.todo-tree
+        github.vscode-pull-request-github
         anthropic.claude-code
         noctaliaTheme
         pkief.material-icon-theme
@@ -158,6 +162,14 @@ in
           path = bin pkgs.opencode "opencode";
           icon = "sparkle";
         };
+        "notebook.lineNumbers" = "on";
+        "notebook.output.scrolling" = true;
+        "notebook.output.textLineLimit" = 200;
+        "notebook.formatOnSave.enabled" = true;
+        "jupyter.askForKernelRestart" = true;
+        "todo-tree.ripgrep.ripgrep" = bin pkgs.ripgrep "rg";
+        "todo-tree.filtering.useBuiltInExcludes" = "file and search excludes";
+        "todo-tree.filtering.excludeGlobs" = toolchain.watcherExcludes;
 
         # Use the family name provided by the installed Nerd Font.
         "editor.fontFamily" = "'JetBrainsMono Nerd Font', monospace";

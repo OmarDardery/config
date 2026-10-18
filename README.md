@@ -236,10 +236,16 @@ reconciles saved `shell.polkit_agent` overrides with the host-specific Nix setti
   `Alt-]`/`Alt-[` to cycle. Copilot stays out of the `blink.cmp` source list.
   The Copilot server is pinned to GitHub's npm package because the GitHub
   release download is unreachable on this connection.
-  `<leader>ao` or `:OpenCode` opens OpenCode in a reusable right
+  `<leader>ao` or `:OpenCode` toggles OpenCode in a reusable right
   terminal at the detected project root, using the account's OpenCode login.
+  `<leader>aa` asks with editor context; `<leader>as` opens OpenCode actions.
   Project detection also recognizes PlatformIO, Nix, Python, Go, Rust and
   JavaScript manifests outside Git checkouts.
+- LazyVim edits `.ipynb` files through Jupytext and executes cells through
+  Molten/Quarto, with Nix-built remote-plugin registration and a named Python
+  kernel. Stored outputs are restored when attaching a kernel and saved on
+  write. See [editor workflows](nixos/README.md#editor-workflows) for bindings,
+  environment selection and VSCodium notebook support.
 - Noctalia plugin code is pinned and patched; see [plugin maintenance](#plugin-maintenance).
   Inactive connector-specific widget layouts are omitted; graphics workarounds remain.
 

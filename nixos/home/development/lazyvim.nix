@@ -74,6 +74,7 @@ let
     mini-ai
     mini-icons
     mini-pairs
+    mini-surround
     noice-nvim
     nui-nvim
     nvim-lint
@@ -88,6 +89,9 @@ let
     trouble-nvim
     ts-comments-nvim
     which-key-nvim
+    yanky-nvim
+    diffview-nvim
+    opencode-nvim
 
     # Defaults picked by vim.g.lazyvim_{picker,cmp,explorer} below
     blink-cmp
@@ -121,6 +125,7 @@ let
     jupytext-nvim
     molten-nvim
     otter-nvim
+    quarto-nvim
 
     # PlatformIO
     nvim-platformio
@@ -198,32 +203,13 @@ let
   '';
 in
 {
+  imports = [ ./notebooks.nix ];
+
   programs.neovim = {
     enable = true;
     defaultEditor = true;
     viAlias = true;
     vimAlias = true;
-
-    # Molten's remote plugin requires these imports when registering and running.
-    withPython3 = true;
-    extraPython3Packages =
-      ps: with ps; [
-        pynvim
-        jupyter-client
-        ipykernel
-        jupytext
-        nbformat
-        cairosvg
-        pnglatex
-        plotly
-        pillow
-        requests
-        websocket-client
-      ];
-
-    # image.nvim binds to ImageMagick through this rock. Supplying it here is
-    # what lets lazy's rockspec build be turned off entirely.
-    extraLuaPackages = ps: [ ps.magick ];
 
     # Load the remaining plugins on demand through lazyPath.
     plugins = [ pkgs.vimPlugins.lazy-nvim ];
@@ -236,9 +222,6 @@ in
         toolchain.debugAdapters.lldb
       ]
       ++ (with pkgs; [
-        # Molten uses the Python provider; jupytext.nvim shells out for conversion.
-        python3Packages.jupytext
-
         # nvim-platformio invokes which pio at runtime.
         platformio-core
         which
@@ -249,6 +232,13 @@ in
         wget
         # LazyVim's native Copilot extra uses Neovim 0.12 inline LSP completion.
         copilotLanguageServer
+        opencode
+        curl
+        lsof
+        procps
+        fd
+        ripgrep
+        git
       ]);
 
     initLua = ''
@@ -307,6 +297,8 @@ in
           { import = "lazyvim.plugins.extras.formatting.prettier" },
           { import = "lazyvim.plugins.extras.linting.eslint" },
           { import = "lazyvim.plugins.extras.ai.copilot-native" },
+          { import = "lazyvim.plugins.extras.coding.mini-surround" },
+          { import = "lazyvim.plugins.extras.coding.yanky" },
 
           { import = "plugins" },
 
@@ -350,19 +342,57 @@ in
     opt.listchars = { tab = "» ", trail = "·", nbsp = "␣" }
   '';
 
-  xdg.configFile."nvim/lua/config/keymaps.lua".text = ''
-    -- OpenCode shares the account's CLI login and runs at LazyVim's project root.
-    -- Snacks keeps the session alive when its terminal is hidden.
-    local function opencode()
-      local root = LazyVim.root()
-      Snacks.terminal.focus({ "${pkgs.opencode}/bin/opencode" }, {
-        cwd = root,
-        win = { position = "right", width = 0.45 },
-      })
-    end
-
-    vim.keymap.set("n", "<leader>ao", opencode, { desc = "OpenCode (project root)" })
-    vim.api.nvim_create_user_command("OpenCode", opencode, { desc = "Open OpenCode at the project root" })
+  xdg.configFile."nvim/lua/plugins/workflow.lua".text = ''
+    return {
+      {
+        "nickjvandyke/opencode.nvim",
+        cmd = "OpenCode",
+        keys = {
+          { "<leader>ao", function() require("opencode").toggle() end, desc = "OpenCode: toggle" },
+          { "<leader>aa", function() require("opencode").ask("@this: ", { submit = true }) end,
+            mode = { "n", "x" }, desc = "OpenCode: ask with context" },
+          { "<leader>as", function() require("opencode").select() end,
+            mode = { "n", "x" }, desc = "OpenCode: actions" },
+        },
+        config = function()
+          vim.o.autoread = true
+          local command = { "${pkgs.opencode}/bin/opencode", "--port", "0" }
+          local function terminal_opts()
+            return {
+              cwd = LazyVim.root(),
+              win = {
+                position = "right",
+                width = 0.45,
+                on_win = function(win) require("opencode.terminal").setup(win.win) end,
+              },
+            }
+          end
+          local opts = require("opencode.config").opts
+          opts.server = vim.tbl_deep_extend("force", opts.server, {
+            start = function() Snacks.terminal.open(command, terminal_opts()) end,
+            stop = function()
+              local options = terminal_opts()
+              options.create = false
+              local terminal = Snacks.terminal.get(command, options)
+              if terminal then terminal:close() end
+            end,
+            toggle = function() Snacks.terminal.toggle(command, terminal_opts()) end,
+          })
+          vim.api.nvim_create_user_command("OpenCode", function() require("opencode").toggle() end,
+            { desc = "Toggle OpenCode at the project root" })
+        end,
+      },
+      {
+        "sindrets/diffview.nvim",
+        cmd = { "DiffviewOpen", "DiffviewClose", "DiffviewFileHistory" },
+        opts = {},
+        keys = {
+          { "<leader>gD", "<cmd>DiffviewOpen<cr>", desc = "Git: review changes" },
+          { "<leader>gH", "<cmd>DiffviewFileHistory %<cr>", desc = "Git: file history" },
+          { "<leader>gq", "<cmd>DiffviewClose<cr>", desc = "Git: close diff review" },
+        },
+      },
+    }
   '';
 
   xdg.configFile."nvim/lua/config/autocmds.lua".text = ''
@@ -555,73 +585,6 @@ in
         opts = {
           discovery = { concurrent = 2 },
           output = { open_on_run = false },
-        },
-      },
-    }
-  '';
-
-  xdg.configFile."nvim/lua/plugins/jupyter.lua".text = ''
-    -- Molten runs kernels; Jupytext converts notebooks; Otter provides cell LSP support.
-    -- After Molten updates: :Lazy load molten-nvim, :UpdateRemotePlugins, then restart.
-    -- Image previews use Kitty and ImageMagick.
-    return {
-      {
-        "benlubas/molten-nvim",
-        version = false,
-        ft = { "quarto", "markdown", "python" },
-        dependencies = { "3rd/image.nvim" },
-        init = function()
-          vim.g.molten_image_provider = "image.nvim"
-          vim.g.molten_output_win_max_height = 20
-          vim.g.molten_auto_open_output = false
-          vim.g.molten_wrap_output = true
-          vim.g.molten_virt_text_output = true
-          vim.g.molten_virt_lines_off_by_1 = true
-        end,
-        keys = {
-          { "<leader>mi", "<cmd>MoltenInit<cr>", desc = "Molten: init kernel" },
-          { "<leader>me", "<cmd>MoltenEvaluateOperator<cr>", desc = "Molten: evaluate operator" },
-          { "<leader>ml", "<cmd>MoltenEvaluateLine<cr>", desc = "Molten: evaluate line" },
-          { "<leader>mr", "<cmd>MoltenReevaluateCell<cr>", desc = "Molten: re-evaluate cell" },
-          { "<leader>mo", "<cmd>MoltenShowOutput<cr>", desc = "Molten: show output" },
-          { "<leader>mv", ":<C-u>MoltenEvaluateVisual<cr>gv", mode = "v", desc = "Molten: evaluate selection" },
-        },
-      },
-      {
-        "3rd/image.nvim",
-        version = false,
-        -- Nix supplies magick; skip builds in the immutable plugin directory.
-        build = false,
-        opts = {
-          backend = "kitty",
-          max_width = 100,
-          max_height = 12,
-          max_height_window_percentage = math.huge,
-          max_width_window_percentage = math.huge,
-          window_overlap_clear_enabled = true,
-        },
-      },
-      {
-        -- Attach basedpyright to Python cells through Otter.
-        "jmbuhr/otter.nvim",
-        ft = { "markdown" },
-        config = function()
-          vim.api.nvim_create_autocmd("FileType", {
-            group = vim.api.nvim_create_augroup("oad_otter", { clear = true }),
-            pattern = "markdown",
-            callback = function()
-              pcall(require("otter").activate, { "python", "bash", "lua" })
-            end,
-          })
-        end,
-      },
-      {
-        "GCBallesteros/jupytext.nvim",
-        lazy = false,
-        opts = {
-          style = "markdown",
-          output_extension = "md",
-          force_ft = "markdown",
         },
       },
     }

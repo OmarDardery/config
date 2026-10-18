@@ -187,13 +187,12 @@ let
       path = file.source;
     }) (lib.filterAttrs (name: _: lib.hasPrefix "nvim/" name) home.xdg.dataFile)
   );
-  fixtureJson = pkgs.writeText "kitty-linking-fixtures.json" (builtins.toJSON fixtures);
-in
-{
-  editor-integration =
-    pkgs.runCommand "editor-integration-checks"
+  editorCheck =
+    executeNotebook:
+    pkgs.runCommand (if executeNotebook then "editor-notebook-checks" else "editor-integration-checks")
       {
         nativeBuildInputs = [ home.programs.neovim.finalPackage ];
+        NOTEBOOK_EXECUTION_TEST = if executeNotebook then "1" else "0";
       }
       ''
         export HOME="$TMPDIR/home"
@@ -204,12 +203,20 @@ in
         mkdir -p "$XDG_CONFIG_HOME/nvim" "$XDG_DATA_HOME/nvim" "$XDG_STATE_HOME" "$XDG_CACHE_HOME"
         cp -rs ${editorConfig}/. "$XDG_CONFIG_HOME/nvim"
         cp -rs ${editorData}/. "$XDG_DATA_HOME/nvim"
+        mkdir -p "$XDG_DATA_HOME/jupyter/kernels/nix-python"
+        cp ${home.xdg.dataFile."jupyter/kernels/nix-python/kernel.json".source} \
+          "$XDG_DATA_HOME/jupyter/kernels/nix-python/kernel.json"
         # Trigger the UI event that starts LazyVim's deferred configuration.
-        timeout 60s nvim --headless \
-          -c "autocmd User VeryLazy ++once lua local ok, err = pcall(dofile, '${./tests/editor-integration.lua}'); if not ok then vim.api.nvim_err_writeln(err); vim.cmd('cquit') end" \
+        timeout 120s nvim --headless \
+          -c "autocmd User VeryLazy ++once lua vim.schedule(function() local ok, err = xpcall(function() dofile('${./tests/editor-integration.lua}') end, debug.traceback); if not ok then io.stderr:write(err, string.char(10)); vim.cmd('cquit') end end)" \
           -c 'doautocmd UIEnter'
         touch "$out"
       '';
+  fixtureJson = pkgs.writeText "kitty-linking-fixtures.json" (builtins.toJSON fixtures);
+in
+{
+  editor-integration = editorCheck false;
+  editor-notebooks = editorCheck true;
   desktop-integration =
     pkgs.runCommand "desktop-integration-checks"
       {

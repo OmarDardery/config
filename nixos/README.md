@@ -156,7 +156,10 @@ and include pytest in the project's development dependencies. The separate
   `.vscode/launch.json`; the Testing view runs pytest; Go/Rust code lenses run
   their project tests.
   CodeLLDB supplies C/C++ and Rust debugging. `Ctrl+Alt+O` opens an OpenCode
-  terminal at the workspace; LazyVim uses `<leader>ao`.
+  terminal at the workspace. LazyVim's `<leader>ao` toggles its reusable project
+  terminal, `<leader>aa` asks with the current selection/cursor context, and
+  `<leader>as` opens actions for diagnostics, explanations and diff review.
+  Save files before sharing context. Authenticate with `opencode auth login`.
 - Python formatting uses Ruff; Go uses gofumpt/Staticcheck; Rust uses
   rust-analyzer/Clippy. Golangci-lint remains an explicit project command rather
   than another save-time diagnostic worker. ESLint and Prettier use project
@@ -165,10 +168,38 @@ and include pytest in the project's development dependencies. The separate
   reports diagnostics for open files; test discovery on every save is disabled.
   Debug/test plugins load on demand and Nix owns every plugin and adapter.
 
+LazyVim also includes surround editing (`gsa`, `gsd`, `gsr`), yank history
+(`<leader>p`, `[y`/`]y`) and Diffview (`<leader>gD`, file history with
+`<leader>gH`, close with `<leader>gq`). These complement the existing Snacks
+picker, explorer, terminal, TODO search and Git tools. VSCodium adds TODO Tree
+and GitHub Pull Requests, plus Jupyter keymaps and rich output renderers.
+
+Open an existing `.ipynb` in LazyVim to edit its Markdown/code representation;
+Jupytext writes the notebook back on save. Molten registration is built by Nix.
+Start **Python (Nix notebooks)** with `<leader>mi`, or choose another installed
+kernel with `<leader>mI`. Starting restores stored outputs without running code.
+Use `<leader>mc` for the current cell, `<leader>ma` through the current cell,
+`<leader>mb` from the current cell down, and `<leader>mA` for all Python cells.
+`<leader>mo` enters output, `<leader>mh` hides it, `<leader>mx` interrupts and
+`<leader>mq` stops the kernel. Outputs are saved with the notebook once a kernel
+is attached. Kitty displays image outputs; text execution also works headlessly.
+Quarto/Otter supplies Python completion and diagnostics within Markdown cells;
+the Quarto publishing CLI is separate from this notebook workflow.
+
+VSCodium uses the same named Nix kernel. Select it in the notebook kernel picker;
+project environments need their own `ipykernel` and project dependencies. Both
+editors retain project-specific kernels and dependencies rather than adding
+every scientific package globally. Jupyter's usual `Shift+Enter` and
+`Ctrl+Enter` bindings are available in VSCodium, with scrollable output.
+
+`editor-integration` checks notebook conversion, cell support, kernel discovery
+and source/output preservation. `editor-notebooks` additionally starts a local
+kernel, executes an edited cell and checks saved results. The latter needs local
+socket access; restricted execution environments can block Jupyter communication.
+
 The built-in debugger understands standard Python/LLDB entries in workspace
 `launch.json`. VS Code extension-specific launch features can still require the
-extension's own UI. Notebook remote-plugin registration remains the explicit
-Molten setup described in the root README.
+extension's own UI.
 
 ## Declarative desktop and shortcuts
 
