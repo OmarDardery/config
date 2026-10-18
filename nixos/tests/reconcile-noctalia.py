@@ -98,6 +98,19 @@ class ReconciliationTests(unittest.TestCase):
             'theme': {'mode': 'light'}, 'wallpaper': {'last': {'path': 'current.png'}}})
         self.assertEqual(self.run_helper(apply=True, managed=True), ([], None))
 
+    def test_managed_plugin_sources_replace_gui_overrides_without_losing_state(self):
+        original = self.files(
+            '[theme]\nmode = "light"\n[plugins]\nenabled = ["old/plugin"]\n'
+            '[[plugins.source]]\nname = "old-local"\nkind = "path"\nlocation = "/old"\n',
+            '[plugins]\nenabled = ["alexander/screen-toolkit"]\n'
+            '[[plugins.source]]\nname = "nix-managed"\nkind = "path"\n'
+            'location = "/nix/store/fixture-plugins"\nenabled = true\n',
+        )
+        removed, backup = self.run_helper(apply=True, managed=True)
+        self.assertEqual(set(removed), {'plugins.enabled', 'plugins.source'})
+        self.assertEqual(backup.read_bytes(), original)
+        self.assertEqual(tomllib.loads(self.state.read_text()), {'theme': {'mode': 'light'}})
+
     def test_version_cannot_be_reset(self):
         original = self.files('config_version = 3\n', 'config_version = 3\n')
         self.assertEqual(self.run_helper(apply=True, resets=['config_version']), ([], None))

@@ -19,7 +19,20 @@ def main():
     args = parser.parse_args()
     settings = tomllib.loads(args.config.read_text())
     templates = settings["theme"]["templates"]["user"]
+    sources = settings["plugins"]["source"]
+    names = [source["name"] for source in sources]
+    assert len(names) == len(set(names)), "Duplicate plugin source names"
+    assert names == ["official", "community", "nix-managed"], names
+    managed = sources[-1]
+    assert managed["kind"] == "path" and managed["enabled"]
+    plugin_root = Path(managed["location"])
+    manifests = [tomllib.loads(path.read_text()) for path in plugin_root.glob("*/plugin.toml")]
+    ids = [manifest["id"] for manifest in manifests]
+    assert len(ids) == len(set(ids)), "Duplicate managed plugin IDs"
+    assert set(settings["plugins"]["enabled"]) <= set(ids), ids
+    print("PASS: each enabled plugin resolves from the final, read-only Nix source")
     closure = set(args.closure.read_text().splitlines())
+    assert str(plugin_root) in closure, "Plugin source not retained in config closure"
     for template in templates.values():
         source = Path(template["input_path"])
         assert source.is_file(), source

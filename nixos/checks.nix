@@ -321,9 +321,6 @@ in
         export XDG_STATE_HOME="$HOME/state"
         export XDG_CACHE_HOME="$HOME/cache"
         mkdir -p "$XDG_CONFIG_HOME" "$XDG_DATA_HOME/noctalia" "$XDG_STATE_HOME" "$XDG_CACHE_HOME"
-        ln -s ${
-          home.xdg.dataFile."noctalia/plugins/screen-toolkit".source
-        }/.. "$XDG_DATA_HOME/noctalia/plugins"
         noctalia config validate ${home.xdg.configFile."noctalia/config.toml".source}
         python ${tests}/theme-rendering.py \
           ${home.xdg.configFile."noctalia/config.toml".source} \

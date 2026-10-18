@@ -1,9 +1,5 @@
 # Shell preferences. Palettes, theme mode and the current wallpaper remain runtime state.
 {
-  backdrop = {
-    blur_intensity = 0.56;
-    tint_intensity = 0.35;
-  };
   idle = {
     behavior_order = [
       "lock"
@@ -24,7 +20,7 @@
   };
   bar = {
     default = {
-      background_opacity = 0.88;
+      background_opacity = 0.90;
       border = "outline";
       border_width = 1.0;
       capsule = false;
@@ -36,6 +32,7 @@
         "media"
         "group:tools"
         "tray"
+        "privacy"
         "notifications"
         "group:status"
         "session"
@@ -43,6 +40,7 @@
       margin_edge = 8;
       margin_ends = 12;
       padding = 10;
+      widget_spacing = 4;
       position = "bottom";
       radius = 12;
       shadow = true;
@@ -66,6 +64,7 @@
             "screen-toolkit"
             "clipboard"
             "phone-connect"
+            "tailscale"
             "pomodoro"
           ];
           opacity = 0.55;
@@ -81,6 +80,8 @@
           members = [
             "network"
             "bluetooth"
+            "volume"
+            "keyboard_layout"
             "power_profile"
             "battery"
             "control-center"
@@ -120,21 +121,37 @@
   };
   dock = {
     enabled = true;
-    background_opacity = 0.88;
+    background_opacity = 0.90;
     border = "outline";
     border_width = 1.0;
     icon_size = 32;
     margin_edge = 8;
     radius = 12;
-    magnification_scale = 1.2;
+    magnification_scale = 1.15;
+    active_monitor_only = true;
     position = "right";
     reserve_space = false;
     smart_auto_hide = true;
+  };
+  notification = {
+    follow_focused_output = true;
+    max_visible = 3;
+    background_opacity = 0.94;
+    offset_x = 12;
+    offset_y = 8;
+  };
+  osd = {
+    position = "top_center";
+    hide_delay_ms = 1000;
   };
   lockscreen_widgets = {
     enabled = false;
   };
   plugin_settings = {
+    "davemhammer/tailscale" = {
+      refresh_interval = 30;
+      notify_on_peer_change = false;
+    };
     "avivbintangaringga/nix-monitor" = {
       branch = "nixos-26.05";
       system_stats_check_mode = "off";
@@ -147,12 +164,16 @@
       "icefish/phone-connect"
       "thepunkoff/pomodoro"
       "alexander/game-launcher"
+      "davemhammer/tailscale"
     ];
-    source = [ ];
+    # Catalogs can be refreshed in Settings; Nix-managed plugins follow the flake pin.
     auto_update = "none";
   };
   shell = {
     polkit_agent = true;
+    setup_wizard_enabled = false;
+    settings_window_translucent = true;
+    umbriel_overview_type_to_launch_enabled = true;
     session = {
       actions = [
         {
@@ -184,7 +205,7 @@
       ];
     };
     animation = {
-      speed = 1.5;
+      speed = 1.25;
     };
     shadow = {
       alpha = 0.3;
@@ -195,6 +216,10 @@
       open_near_click_launcher = false;
       open_near_click_wallpaper = true;
       transparency_mode = "glass";
+    };
+    launcher = {
+      layout = "simple";
+      category_icons_only = true;
     };
     clipboard_history_max_entries = 100;
     clipboard_keep_from_closed_apps = true;
@@ -215,9 +240,6 @@
   };
   wallpaper = {
     transition_on_startup = true;
-    automation = {
-      interval_seconds = 300;
-    };
     default = {
       path = "~/Pictures/Wallpapers/wp9432445-4k-mountains-desktop-wallpapers.jpg";
     };
@@ -232,7 +254,7 @@
       show_icons = false;
     };
     media = {
-      max_length = 180;
+      max_length = 140;
       hide_artist = true;
       hide_when_no_media = true;
       title_scroll = "on_hover";
@@ -243,6 +265,23 @@
     bluetooth = {
       show_label = false;
       hide_when_no_connected_device = true;
+    };
+    volume = {
+      show_label = false;
+    };
+    privacy = {
+      hide_inactive = true;
+    };
+    keyboard_layout = {
+      hide_when_single_layout = true;
+      show_glyph = false;
+    };
+    battery = {
+      display_mode = "graphic";
+    };
+    tailscale = {
+      type = "davemhammer/tailscale:status";
+      show_counts = false;
     };
     control-center = {
       glyph = "settings";

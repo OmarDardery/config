@@ -100,10 +100,15 @@ in
           natural_scroll = true;
         };
         mouse.accel_profile = "flat";
-        focus.follows_mouse = true;
+        focus = {
+          follows_mouse = true;
+          # Hovering a partially visible column should not move the whole strip.
+          follows_mouse_max_scroll = 0.0;
+        };
         cursor = {
           theme = config.home.pointerCursor.name;
           size = config.home.pointerCursor.size;
+          hide_when_typing = true;
         };
       };
       workspaces = {
@@ -135,6 +140,10 @@ in
         border_width = 1;
         outer_border_width = 1;
         corner_radius = 12;
+        blur = {
+          passes = 2;
+          radius = 4;
+        };
         shadow = {
           enabled = true;
           softness = 24;
@@ -151,14 +160,15 @@ in
         };
       };
       animation = {
-        windows_in.curve = "spring:1,800";
-        windows_out.curve = "spring:1,800";
-        windows_move.curve = "spring:1,900";
-        workspaces.curve = "spring:1,1000";
-        overview = {
-          curve = "spring:1,900";
-          workspace_curve = "spring:1,1000";
+        # One critically damped spring for reflow, workspaces and overview.
+        curve = "spring:1,900";
+        windows_in.scale = 0.96;
+        windows_out = {
+          curve = "spring:1,1400";
+          scale = 0.96;
         };
+        overview.workspace_curve = "spring:1,900";
+        scratchpad.dim = 0.45;
       };
       environment = {
         ELECTRON_OZONE_PLATFORM_HINT = "wayland";
@@ -172,6 +182,7 @@ in
         "Mod+Shift+Escape" = once "cheatsheet-open";
         "Mod+T" = once "spawn:${pkgs.kitty}/bin/kitty";
         "Mod+Space" = once "spawn:noctalia msg panel-toggle launcher";
+        "Alt+Tab" = once "spawn:noctalia msg window-switcher hold";
         "Mod+B" = once "spawn:zen";
         "Mod+Alt+L" = once "spawn:noctalia msg session lock";
         "Mod+Shift+Q" = once "spawn:noctalia msg panel-toggle session";
@@ -208,6 +219,7 @@ in
         "Mod+P" = once "window-toggle-pinned";
         "Alt+Print" = once "spawn:noctalia msg screenshot-annotate";
         "Mod+Alt+G" = once "spawn:noctalia msg panel-toggle alexander/game-launcher:browser";
+        "Mod+Alt+V" = once "spawn:noctalia msg panel-toggle davemhammer/tailscale:manager";
         "Mod+Alt+M" = once "spawn:noctalia msg panel-toggle icefish/phone-connect:details";
         "Mod+Alt+O" = once "spawn:noctalia msg panel-toggle thepunkoff/pomodoro:panel";
         "Mod+Shift+S" = once "submap:capture";
@@ -372,6 +384,7 @@ in
         # Retain Umbriel's shell and share-picker placement rules.
         {
           match.app_id = "^dev.noctalia.Noctalia$";
+          blur = true;
           default_floating = true;
           default_floating_size_px = {
             width = 1020;
@@ -409,7 +422,7 @@ in
       ];
       layer_rule = [
         {
-          match.namespace = "^noctalia-(bar-[^\"]+|notification|dock|panel|attached-panel|osd|desktop-widget-[^\"]*)$";
+          match.namespace = "^noctalia-(bar-[^\"]+|notification|dock|panel|attached-panel|osd|window-switcher|desktop-widget-[^\"]*)$";
           blur = true;
           blur_ignore_alpha = 0.5;
           blur_popups = true;

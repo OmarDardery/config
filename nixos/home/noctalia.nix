@@ -55,7 +55,27 @@ in
     # Upstream checks this config during builds; warnings need review too.
     checkConfig = true;
     settings = lib.recursiveUpdate settings {
-      plugins.enabled = settings.plugins.enabled ++ [ "davemhammer/tailscale" ];
+      # Later sources win: keep the patched Nix plugins ahead of Git catalog copies.
+      plugins.source = [
+        {
+          name = "official";
+          kind = "git";
+          location = "https://github.com/noctalia-dev/official-plugins";
+          enabled = true;
+        }
+        {
+          name = "community";
+          kind = "git";
+          location = "https://github.com/noctalia-dev/community-plugins";
+          enabled = true;
+        }
+        {
+          name = "nix-managed";
+          kind = "path";
+          location = "${plugins}";
+          enabled = true;
+        }
+      ];
       plugin_settings = {
         "avivbintangaringga/nix-monitor" = {
           update_command = config.home.shellAliases.update;
@@ -105,8 +125,6 @@ in
     systemd.enable = false;
   };
 
-  # The upstream module selects its cached package.
-
   # VSCodium only installs its theme watcher after a successful initial load.
   # Seed a missing palette with Noctalia itself, including in the GNOME fallback.
   home.activation.initializeNoctaliaVscode = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
@@ -140,23 +158,6 @@ in
         "$state" ${config.xdg.configFile."noctalia/config.toml".source} --managed --apply
     fi
   '';
-
-  # Immutable local plugins take precedence over downloaded Git sources.
-  # Tailscale controls are enabled on NixOS alongside the host service.
-  # Local discovery reads the manifests, so directory names need no author prefix.
-  xdg.dataFile =
-    lib.genAttrs
-      (map (name: "noctalia/plugins/${name}") [
-        "screen-toolkit"
-        "nix-monitor"
-        "phone-connect"
-        "pomodoro"
-        "tailscale"
-        "game-launcher"
-      ])
-      (path: {
-        source = "${plugins}/${lib.removePrefix "noctalia/plugins/" path}";
-      });
 
   # Paths stay portable through the shell's ~ expansion. Add wallpapers here
   # and rebuild; the selected wallpaper and generated palettes remain writable.

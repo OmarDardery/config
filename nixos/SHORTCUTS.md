@@ -4,6 +4,8 @@
 bindings inherited from upstream. The same physical shortcuts work with English
 or Arabic input. Power actions are available from the session menu.
 
+Open `Mod+O` and type to launch applications directly from the overview.
+
 The bottom bar and right-hand dock hide on occupied workspaces and reveal at the
 screen edge without reserving window space. Hover Screen Toolkit in the bar to
 expand clipboard, phone and Pomodoro; their shortcuts work while collapsed.
@@ -15,6 +17,7 @@ expand clipboard, phone and Pomodoro; their shortcuts work while collapsed.
 | Mod+T / Mod+B / Mod+E | Kitty / Zen / Thunar |
 | Mod+I / Mod+Ctrl+E | VSCodium / edit the Nix configuration tree |
 | Mod+Space | App launcher, search and calculator |
+| Alt+Tab | Window switcher; release Alt to activate |
 | Mod+A / Mod+Ctrl+S | Control center / Noctalia settings |
 | Mod+V / Mod+N | Clipboard history / notifications |
 | Mod+Shift+N / Mod+Ctrl+N | Toggle Do Not Disturb / dismiss active notifications |
@@ -22,6 +25,7 @@ expand clipboard, phone and Pomodoro; their shortcuts work while collapsed.
 | Mod+Alt+W / Mod+Alt+D | Wallpaper chooser / light-dark theme |
 | Mod+Alt+C / Mod+Alt+N | Caffeine / force night light |
 | Mod+Alt+P | Cycle power profile |
+| Mod+Alt+V | Tailscale peers, VPN and exit-node manager |
 | Mod+Alt+A / Mod+Alt+B | Audio / Bluetooth controls |
 | Mod+Alt+E | Emoji picker |
 | Mod+Alt+G / Mod+Alt+M / Mod+Alt+O | Games / phone / Pomodoro |
