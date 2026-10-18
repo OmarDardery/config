@@ -6,14 +6,8 @@
 }:
 let
   toolchain = import ./toolchain.nix { inherit pkgs; };
-  # A pre-script, not a post one: the tool works by wrapping the object
-  # builder's emitter, so it has to be loaded before $BUILD_SCRIPT creates the
-  # source nodes. PlatformIO runs pre-scripts at builder/main.py:172, post ones
-  # at :183 — after the sources exist, which would leave the database empty.
-  #
-  # The guard keeps `pio run -t compiledb` working: PlatformIO loads the same
-  # tool itself for that target, and applying it twice records every
-  # translation unit twice.
+  # Load compilation_db before SCons creates source nodes.
+  # Skip the explicit compiledb target to avoid duplicate entries.
   compiledb = pkgs.writeText "pio-compiledb.py" ''
     Import("env")
     from SCons.Script import COMMAND_LINE_TARGETS, Default
@@ -35,9 +29,7 @@ in
     ./lazyvim.nix
   ];
 
-  # Language servers, formatters and linters. These are installed rather than
-  # left on the editor wrappers' private PATHs because VSCodium's extensions
-  # spawn them from the session PATH — see ./toolchain.nix.
+  # Install shared tools on the session PATH for GUI editors and shells.
   home = {
     packages =
       toolchain.languageServers
@@ -59,6 +51,19 @@ in
       XKB_CONFIG_ROOT = "${pkgs.xkeyboard-config}/share/X11/xkb";
     };
     sessionPath = [ "$HOME/.bun/bin" ];
+  };
+
+  # One explicit notebook kernel; regular Python projects select their own .venv.
+  xdg.dataFile."jupyter/kernels/nix-python/kernel.json".text = builtins.toJSON {
+    argv = [
+      "${toolchain.jupyterPython}/bin/python3"
+      "-m"
+      "ipykernel_launcher"
+      "-f"
+      "{connection_file}"
+    ];
+    display_name = "Python (Nix notebooks)";
+    language = "python";
   };
 
   xdg.configFile."clangd/config.yaml".text = ''

@@ -1,6 +1,6 @@
 { ... }:
 {
-  # ── Nix ────────────────────────────────────────────────────────────────
+  # Nix
   nix = {
     settings = {
       # Keep parallel native builds from exhausting this laptop's 14 GiB RAM.

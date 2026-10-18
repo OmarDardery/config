@@ -4,23 +4,8 @@
   fetchurl,
   autoPatchelfHook,
 }:
-# Google Antigravity CLI (`agy`) — the replacement for Gemini CLI.
-#
-# Single dynamically-linked Go binary distributed via a manifest at:
-#   https://antigravity-cli-auto-updater-974169037036.us-central1.run.app/manifests/linux_amd64.json
-# That manifest yields the canonical tarball URL (which we pin here).
-#
-# To bump: fetch the manifest, copy `version` + `url`, then prefetch
-# the tarball:
-#   curl -s https://antigravity-cli-auto-updater-974169037036.us-central1.run.app/manifests/linux_amd64.json
-#   nix-prefetch-url --type sha256 <url from manifest>
-#
-# We skip upstream's install.sh path-snippet handoff (`agy install`)
-# because Nix manages PATH. The binary is renamed from `antigravity` →
-# `agy` (matching upstream's install convention so user docs/migration
-# instructions still apply).
-#
-# Closed-source proprietary Google binary, license is unfree.
+# Pinned Antigravity CLI binary; Nix manages its PATH entry.
+# Update version, URL and hash together from the upstream release manifest.
 stdenv.mkDerivation {
   pname = "antigravity-cli";
   version = "1.1.13-6057583128215552";

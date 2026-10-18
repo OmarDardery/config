@@ -45,7 +45,7 @@ let
         ${command}
         touch "$out"
       '';
-  # Historical files belong in disposable fixtures, not the live dotfiles.
+  # Legacy configurations belong in disposable test fixtures.
   legacyKitty = pkgs.runCommand "legacy-kitty-fixture" { } ''
     mkdir -p "$out"
     printf 'font_size 31\ninclude ~/.local/state/noctalia/theme/kitty.conf\n' > "$out/kitty.conf"
@@ -57,6 +57,7 @@ let
     inputs.home-manager.lib.homeManagerConfiguration {
       inherit pkgs;
       extraSpecialArgs = {
+        inherit profile;
         isLaptop = false;
         isNixOS = false;
       };
@@ -74,7 +75,7 @@ let
           else
             {
               imports = [
-                ./home/terminal.nix
+                ./home/kitty.nix
                 ./home/desktop.nix
               ];
             }
@@ -87,13 +88,13 @@ let
       configuration = (mkFixture (name == "legacy")).config;
       stages = [
         "checkLinkTargets"
-        "kittyDirectoryMigration"
+        "kittyDeclarativeConfig"
         "linkGeneration"
-        "kittyWritableConfig"
       ];
     in
     {
       homeDirectory = configuration.home.homeDirectory;
+      kitty = lib.getExe configuration.programs.kitty.package;
       configHome = configuration.xdg.configHome;
       stateHome = configuration.xdg.stateHome;
       init = configuration.lib.bash.initHomeManagerLib;
@@ -174,9 +175,31 @@ let
       target = "${launcherMocks}/bin/test-target";
     }
   );
+  editorConfig = pkgs.linkFarm "nvim-test-config" (
+    lib.mapAttrsToList (name: file: {
+      name = lib.removePrefix "nvim/" name;
+      path = file.source;
+    }) (lib.filterAttrs (name: _: lib.hasPrefix "nvim/" name) home.xdg.configFile)
+  );
   fixtureJson = pkgs.writeText "kitty-linking-fixtures.json" (builtins.toJSON fixtures);
 in
 {
+  editor-integration =
+    pkgs.runCommand "editor-integration-checks"
+      {
+        nativeBuildInputs = [ home.programs.neovim.finalPackage ];
+      }
+      ''
+        export HOME="$TMPDIR/home"
+        export XDG_CONFIG_HOME="$HOME/config"
+        export XDG_DATA_HOME="$HOME/data"
+        export XDG_STATE_HOME="$HOME/state"
+        export XDG_CACHE_HOME="$HOME/cache"
+        mkdir -p "$XDG_CONFIG_HOME" "$XDG_DATA_HOME" "$XDG_STATE_HOME" "$XDG_CACHE_HOME"
+        ln -s ${editorConfig} "$XDG_CONFIG_HOME/nvim"
+        nvim --headless -c "lua local ok, err = pcall(dofile, '${./tests/editor-integration.lua}'); if not ok then vim.api.nvim_err_writeln(err); vim.cmd('cquit') end"
+        touch "$out"
+      '';
   desktop-integration =
     pkgs.runCommand "desktop-integration-checks"
       {
@@ -202,7 +225,7 @@ in
   steam-setup = scriptCheck "steam-setup-checks" "python ${tests}/steam-setup.py ${steamFixture}";
   bat-first-run = scriptCheck "bat-first-run-checks" "python ${tests}/bat-first-run.py ${batFixture}";
   zen-window-controls = scriptCheck "zen-window-controls-checks" ''
-    bash ${tests}/zen-window-controls.sh ${./pkgs/zen-apply.sh} ${inputs.noctalia-templates}/zen-browser/apply.sh ${./dotfiles/zen/zen-window-controls.css}
+    bash ${tests}/zen-window-controls.sh ${./pkgs/zen-apply.sh} ${inputs.noctalia-templates}/zen-browser/apply.sh ${./assets/zen-window-controls.css}
   '';
   rust-toolchain =
     pkgs.runCommand "rust-toolchain-checks"
@@ -256,10 +279,20 @@ in
         PYTHONDONTWRITEBYTECODE = "1";
       }
       ''
+        export HOME="$TMPDIR/home"
+        export XDG_CONFIG_HOME="$HOME/config"
+        export XDG_DATA_HOME="$HOME/data"
+        export XDG_STATE_HOME="$HOME/state"
+        export XDG_CACHE_HOME="$HOME/cache"
+        mkdir -p "$XDG_CONFIG_HOME" "$XDG_DATA_HOME/noctalia" "$XDG_STATE_HOME" "$XDG_CACHE_HOME"
+        ln -s ${
+          home.xdg.dataFile."noctalia/plugins/screen-toolkit".source
+        }/.. "$XDG_DATA_HOME/noctalia/plugins"
+        noctalia config validate ${home.xdg.configFile."noctalia/config.toml".source}
         python ${tests}/theme-rendering.py \
           ${home.xdg.configFile."noctalia/config.toml".source} \
           ${home.xdg.configFile."umbriel/config.toml".source} \
-          ${./dotfiles/Pictures/Wallpapers/dark-mountain.jpg} \
+          ${./assets/wallpapers/dark-mountain.jpg} \
           --closure config-closure \
           --kitty-template ${inputs.noctalia}/assets/templates/kitty/kitty.conf \
           --extension ${portability.fixtures.vscode}

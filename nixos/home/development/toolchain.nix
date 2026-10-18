@@ -1,12 +1,5 @@
-# The language toolchain, in one place.
-#
-# Neovim and VSCodium use the same servers, formatters and linters. VSCodium
-# extensions spawn tools from the session PATH, so these are installed packages.
-#
-# So this file is the single list, and ./default.nix installs it into
-# home.packages. Each editor adds its own extras where needed.
-#
-# Plain function, not a NixOS module: it is `import`ed, not `imports`ed.
+# Shared runtimes, language tools and editor settings.
+# Imported by development modules and project shells.
 { pkgs }:
 {
   # Shared by GUI editors and the general development shells.
@@ -70,10 +63,7 @@
 
   # Servers, formatters and linters shared by Neovim and VSCodium.
   languageServers = with pkgs; [
-    # Nix. nixd over nil/rnix-lsp: it is the only one of the three installed, so
-    # nvim-lspconfig resolves to it. statix is what nvim-lint
-    # points at for .nix files; without it every write logs "Error running
-    # statix: ENOENT".
+    # Nix: nixd, formatter and linter.
     nixd
     nixfmt
     statix
@@ -92,11 +82,8 @@
     # Rust. rustup does not put rust-analyzer on PATH unless the component is
     # added, so the package is used instead.
     rust-analyzer
-    # TypeScript / JavaScript. Both prettiers are needed: conform runs the fast
-    # prettierd daemon, but LazyVim's prettier extra shells out to plain
-    # `prettier --find-config-path` to decide whether a file is formattable.
+    # TypeScript / JavaScript. The Prettier extra uses the CLI directly.
     vtsls
-    prettierd
     prettier
     # Python
     basedpyright
@@ -105,47 +92,75 @@
     marksman
     markdownlint-cli2
     markdown-toc
-    # JSON / YAML. jsonls is vscode-json-language-server, which only ships as
-    # part of vscode-langservers-extracted.
+    # JSON / YAML.
     yaml-language-server
     vscode-langservers-extracted
     # TOML
     taplo
-    # Bash — LazyVim has no bash extra, so it is wired in lazyvim.nix's
-    # overrides.lua by hand.
+    # Bash; configured explicitly in LazyVim overrides.
     bash-language-server
     shfmt
     shellcheck
-    # Docker. Provides the `docker-langserver` binary eglot looks for.
+    # Docker.
     dockerfile-language-server
     hadolint
+  ];
+
+  # The debugger runs independently of each project's selected interpreter.
+  debugAdapters = {
+    python = pkgs.python3.withPackages (ps: [ ps.debugpy ]);
+    lldb = pkgs.vscode-extensions.vadimcn.vscode-lldb.adapter;
+  };
+
+  goplsSettings = {
+    gofumpt = true;
+    staticcheck = true;
+    usePlaceholders = true;
+    completeUnimported = true;
+  };
+
+  pythonAnalysis = {
+    typeCheckingMode = "standard";
+    diagnosticMode = "openFilesOnly";
+  };
+
+  # Keep dependency/output trees out of editor watchers, not out of file pickers.
+  watcherExcludes = [
+    "**/.git/objects/**"
+    "**/.git/subtree-cache/**"
+    "**/.direnv/**"
+    "**/.venv/**"
+    "**/node_modules/**"
+    "**/target/**"
+    "**/.next/**"
+    "**/__pycache__/**"
   ];
 
   # Editor-only limits leave explicit builds and game processes unrestricted.
   rustAnalyzerSettings = {
     numThreads = 4;
     cachePriming.numThreads = 4;
-    cargo.extraEnv.CARGO_BUILD_JOBS = "4";
+    cargo = {
+      allFeatures = false;
+      extraEnv.CARGO_BUILD_JOBS = "4";
+    };
+    check.command = "clippy";
   };
 
-  # Extra clangd flags every editor here passes. --query-driver lets clangd run
-  # a cross-compiler it does not recognise and ask that compiler where its own
-  # system headers live. Without it an ESP32 translation unit resolves
-  # <Arduino.h> from compile_commands.json and then dies on <stdio.h>: clang
-  # looks for newlib in its own resource dir, which has no xtensa sysroot in it.
-  # Only cross GCC drivers may be executed, not arbitrary package binaries.
-  # Cover xtensa, riscv, avr and arm toolchains, not only today's installation.
-  #
-  # A function of the home dir rather than a hardcoded path: clangd expands
-  # neither ~ nor $HOME here, so callers pass config.home.homeDirectory.
-  # Flag removals for those toolchains are editor-independent and live in
-  # ./default.nix instead.
+  # Allow only PlatformIO cross-GCC drivers to supply target system headers.
+  # clangd requires absolute paths here; it does not expand ~ or $HOME.
   clangdArgs =
     homeDir:
     let
       bin = "${homeDir}/.platformio/packages/**/bin";
     in
     [
+      "--background-index"
+      "--clang-tidy"
+      "--header-insertion=iwyu"
+      "--completion-style=detailed"
+      "--function-arg-placeholders"
+      "--fallback-style=llvm"
       "-j=4"
       (
         "--query-driver="

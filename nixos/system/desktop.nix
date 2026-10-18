@@ -57,8 +57,8 @@ in
   environment.systemPackages = [
     home.home.pointerCursor.package
     (inputs.pixie-sddm.packages.${pkgs.stdenv.hostPlatform.system}.pixie-sddm.override {
-      background = ../dotfiles/Pictures/Wallpapers/dark-mountain.jpg;
-      avatar = ../dotfiles/Pictures/face.jpg;
+      background = ../assets/wallpapers/dark-mountain.jpg;
+      avatar = ../assets/avatar.jpg;
       autoColor = true;
       # The nerd-fonts package provides this name, never "JetBrains Mono".
       fontFamily = "JetBrainsMono Nerd Font";

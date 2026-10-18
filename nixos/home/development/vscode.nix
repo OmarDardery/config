@@ -1,28 +1,8 @@
-# VSCodium.
-#
-# `programs.vscodium`, NOT `programs.vscode`. As of home-manager 26.05 each
-# VSCode fork has its own module, and `programs.vscode` unconditionally writes
-# to upstream VS Code's paths — ~/.vscode/extensions and ~/.config/Code/User.
-# Setting `programs.vscode.package = vscodium` therefore installs every
-# extension into a directory VSCodium never reads, which shows up as an empty
-# Extensions pane and nothing else. home-manager warns about it, but the warning
-# is easy to miss in a rebuild log. This module writes to ~/.vscode-oss and
-# ~/.config/VSCodium/User instead.
-#
-# Extensions all come from nixpkgs, so the marketplace is only used for manual
-# installs. VSCodium ships pointed at Open VSX; Microsoft's marketplace terms
-# forbid non-official builds from using it, and Microsoft's own proprietary
-# extensions (cpptools, Pylance) refuse to activate outside a
-# Microsoft-published editor anyway. The open equivalents below are also what
-# ./lazyvim.nix already uses, which is the point: the two editors should
-# disagree about keybindings, not about what a diagnostic says.
-#
-# Every server, formatter and linter referenced here is installed by
-# ./toolchain.nix. Paths below are absolute store paths rather than bare names —
-# an extension that spawns `ruff` picks up whatever PATH ordering gives it,
-# which is how you end up debugging why one editor formats differently.
+# Use the VSCodium-specific Home Manager module for its config and extension paths.
+# Nix supplies extensions and the shared toolchain; store paths select those tools.
 {
   pkgs,
+  lib,
   config,
   profile,
   isNixOS,
@@ -90,14 +70,12 @@ in
   programs.vscodium = {
     enable = true;
 
-    # The FHS wrapper, not the plain package. PlatformIO downloads its own
-    # toolchain binaries into ~/.platformio at runtime; those are ordinary
-    # dynamically-linked ELF files that need an /lib ld.so to start.
+    # PlatformIO downloads foreign toolchain binaries; use the FHS wrapper.
     package = pkgs.vscodium.fhs;
 
     profiles.default = {
       extensions = with pkgs.vscode-extensions; [
-        # ── Languages ────────────────────────────────────────────────────
+        # Languages
         # Nix. nix-ide is the extension; nixd and nixfmt below do the work.
         jnoortheen.nix-ide
         # Lua
@@ -106,18 +84,8 @@ in
         llvm-vs-code-extensions.vscode-clangd
         vadimcn.vscode-lldb
         ms-vscode.cmake-tools
-        # Present for exactly one reason: platformio-ide declares
-        # `extensionDependencies: ["ms-vscode.cpptools"]`, and VSCodium refuses
-        # to activate an extension whose hard dependency is missing — which is
-        # why the PlatformIO toolbar never appeared.
-        #
-        # Microsoft's fork block is real, but it lives in the *native* server:
-        # `bin/cpptools` in this package carries the string "The C/C++ extension
-        # may be used only with Microsoft Visual Studio … and successor
-        # Microsoft products". The JavaScript half activates fine. So the
-        # dependency resolves, and the IntelliSense settings below make sure the
-        # gated binary is never launched to fail in the first place. clangd was
-        # already doing that work.
+        # PlatformIO requires the cpptools extension. Its IntelliSense engine is disabled;
+        # clangd provides C/C++ language support.
         ms-vscode.cpptools
         # Go — brings its own debug adapter, driving delve.
         golang.go
@@ -127,12 +95,9 @@ in
         # TypeScript server, the same way it bundles JSON support.
         dbaeumer.vscode-eslint
         esbenp.prettier-vscode
-        # Tauri. Rust support comes from rust-analyzer above; this adds the
-        # tauri.conf.json schema, the CLI commands and the config completions.
+        # Tauri schemas and project commands.
         tauri-apps.tauri-vscode
-        # Python. basedpyright, not Pylance — Pylance is proprietary and refuses
-        # to run here. ms-python.python is still needed: it owns interpreter
-        # selection and the test/debug UI that the others plug into.
+        # Python supplies environment selection and test/debug UI; basedpyright supplies analysis.
         ms-python.python
         ms-python.debugpy
         detachhead.basedpyright
@@ -145,18 +110,16 @@ in
         # YAML / TOML
         redhat.vscode-yaml
         tamasfe.even-better-toml
-        # Docker. Dockerfiles are linted by hadolint, which has no extension in
-        # nixpkgs — exiasr.hadolint is on Open VSX if you want it; the hadolint
-        # binary itself is already on PATH from ./toolchain.nix.
+        # Docker UI; hadolint is available through the shared toolchain.
         ms-azuretools.vscode-docker
         # Shell
         timonwong.shellcheck
         foxundermoon.shell-format
 
-        # ── Embedded ─────────────────────────────────────────────────────
+        # Embedded
         platformio.platformio-vscode-ide
 
-        # ── Tooling and UI ───────────────────────────────────────────────
+        # Tooling and UI
         eamodio.gitlens
         mhutchie.git-graph
         mkhl.direnv
@@ -167,9 +130,16 @@ in
         pkief.material-icon-theme
       ];
 
+      keybindings = [
+        {
+          key = "ctrl+alt+o";
+          command = "workbench.action.terminal.newWithProfile";
+          args.profileName = "OpenCode";
+        }
+      ];
+
       userSettings = {
-        # ── Editor ───────────────────────────────────────────────────────
-        # Same three deltas as nvim/lua/config/options.lua in ./lazyvim.nix.
+        # Editor
         "editor.lineNumbers" = "relative";
         "editor.cursorSurroundingLines" = 8;
         "editor.renderWhitespace" = "boundary";
@@ -177,10 +147,19 @@ in
         "editor.formatOnSave" = true;
         "files.trimTrailingWhitespace" = true;
         "files.insertFinalNewline" = true;
+        "files.watcherExclude" = lib.genAttrs toolchain.watcherExcludes (_: true);
+        "editor.stickyScroll.enabled" = true;
+        "editor.guides.bracketPairs" = "active";
+        "editor.linkedEditing" = true;
+        "editor.minimap.enabled" = false;
+        "explorer.confirmDragAndDrop" = true;
+        "terminal.integrated.scrollback" = 10000;
+        "terminal.integrated.profiles.linux".OpenCode = {
+          path = bin pkgs.opencode "opencode";
+          icon = "sparkle";
+        };
 
-        # "JetBrainsMono Nerd Font", never "JetBrains Mono" — the nerd-fonts
-        # package publishes only the patched name. Installed by the system
-        # greeter configuration and ../desktop.nix.
+        # Use the family name provided by the installed Nerd Font.
         "editor.fontFamily" = "'JetBrainsMono Nerd Font', monospace";
         "editor.fontLigatures" = true;
         "editor.fontSize" = 14;
@@ -195,15 +174,14 @@ in
         "workbench.preferredLightColorTheme" = "NoctaliaLight";
         "workbench.iconTheme" = "material-icon-theme";
 
-        # Nothing here can update itself — the whole install is a store path,
-        # and an extension that "updated" would be reverted on next rebuild.
+        # Nix manages editor and extension updates.
         "extensions.autoUpdate" = false;
         "extensions.autoCheckUpdates" = false;
         "update.mode" = "none";
 
         "telemetry.telemetryLevel" = "off";
 
-        # ── Nix ──────────────────────────────────────────────────────────
+        # Nix
         # nix-ide defaults to no server at all; both halves must be named.
         "nix.enableLanguageServer" = true;
         "nix.serverPath" = bin pkgs.nixd "nixd";
@@ -211,22 +189,15 @@ in
         # The same flake-aware options completion ./lazyvim.nix gives nixd.
         "nix.serverSettings".nixd = toolchain.nixdSettings { inherit profile isNixOS; };
 
-        # ── Lua ──────────────────────────────────────────────────────────
+        # Lua
         "Lua.misc.executablePath" = bin pkgs.lua-language-server "lua-language-server";
 
-        # ── C/C++ ────────────────────────────────────────────────────────
+        # C/C++
         "clangd.path" = bin pkgs.clang-tools "clangd";
-        # --query-driver, so clangd can ask PlatformIO's cross-compilers where
-        # their own system headers are. Shared with Neovim; see
-        # ./toolchain.nix. The flag removals that go with it are in
-        # ./default.nix, which every editor picks up from clangd itself.
+        # Share cross-compiler arguments with Neovim; common flag removals are in default.nix.
         "clangd.arguments" = toolchain.clangdArgs config.home.homeDirectory;
         "cmake.cmakePath" = bin pkgs.cmake "cmake";
-        # cpptools is installed only to satisfy PlatformIO — see the extension
-        # list. Its native server is the part Microsoft gates in forks, so the
-        # engine is switched off and it is never started; leaving it on would
-        # mean a licence popup on every C/C++ file and two servers publishing
-        # competing diagnostics.
+        # Keep the dependency installed without starting a second C/C++ language server.
         "C_Cpp.intelliSenseEngine" = "disabled";
         "C_Cpp.autocomplete" = "disabled";
         "C_Cpp.errorSquiggles" = "disabled";
@@ -239,7 +210,7 @@ in
         "platformio-ide.useBuiltinPython" = false;
         "platformio-ide.customPATH" = "${pkgs.platformio-core}/bin";
 
-        # ── Go ───────────────────────────────────────────────────────────
+        # Go
         # The Go extension would otherwise offer to install these into GOPATH.
         "go.toolsManagement.autoUpdate" = false;
         "go.alternateTools" = {
@@ -251,36 +222,47 @@ in
         };
         "go.formatTool" = "gofumpt";
         "go.lintTool" = "golangci-lint-v2";
+        "go.lintOnSave" = "off";
+        "gopls" = toolchain.goplsSettings;
 
-        # ── Rust ─────────────────────────────────────────────────────────
-        # Carried over from the old ~/.config/Code/User/settings.json.
-        "rust-analyzer.check.command" = "clippy";
+        # Rust
+        "rust-analyzer.check.command" = toolchain.rustAnalyzerSettings.check.command;
         "rust-analyzer.numThreads" = toolchain.rustAnalyzerSettings.numThreads;
         "rust-analyzer.cachePriming.numThreads" = toolchain.rustAnalyzerSettings.cachePriming.numThreads;
+        "rust-analyzer.cargo.allFeatures" = toolchain.rustAnalyzerSettings.cargo.allFeatures;
         "rust-analyzer.cargo.extraEnv" = toolchain.rustAnalyzerSettings.cargo.extraEnv;
+        "rust-analyzer.checkOnSave" = true;
         "rust-analyzer.server.path" = bin pkgs.rust-analyzer "rust-analyzer";
 
-        # ── Python ───────────────────────────────────────────────────────
-        # The pinned extension and pkgs.basedpyright both ship 1.39.3. Use the
-        # bundled server for parity without requiring it in every project env;
-        # this extension has no supported external server-path setting.
+        # Python
+        # Use the bundled basedpyright server independently of project Python environments.
         "basedpyright.importStrategy" = "useBundled";
         "ruff.importStrategy" = "fromEnvironment";
         "ruff.path" = [ (bin pkgs.ruff "ruff") ];
-        "python.defaultInterpreterPath" = bin toolchain.jupyterPython "python3";
-        # ms-python ships its own Pylance-flavoured analysis; basedpyright is
-        # the language server here, so turn the built-in one off to stop the
-        # two of them publishing duplicate diagnostics.
+        "python.defaultInterpreterPath" = "\${workspaceFolder}/.venv";
+        "python.terminal.activateEnvironment" = true;
+        "python.testing.pytestEnabled" = true;
+        "python.testing.unittestEnabled" = false;
+        "python.testing.autoTestDiscoverOnSaveEnabled" = false;
+        "basedpyright.analysis.typeCheckingMode" = toolchain.pythonAnalysis.typeCheckingMode;
+        "basedpyright.analysis.diagnosticMode" = toolchain.pythonAnalysis.diagnosticMode;
+        # basedpyright owns Python diagnostics.
         "python.languageServer" = "None";
 
-        # ── Shell ────────────────────────────────────────────────────────
+        # Shell
         "shellcheck.executablePath" = bin pkgs.shellcheck "shellcheck";
         "shellformat.path" = bin pkgs.shfmt "shfmt";
 
-        # ── Formatters, per language ─────────────────────────────────────
+        # Formatters, per language
         # Mirrors conform.nvim's formatters_by_ft in ./lazyvim.nix.
         "[nix]".editor.defaultFormatter = "jnoortheen.nix-ide";
-        "[python]".editor.defaultFormatter = "charliermarsh.ruff";
+        "[python]" = {
+          "editor.defaultFormatter" = "charliermarsh.ruff";
+          "editor.codeActionsOnSave" = {
+            "source.fixAll.ruff" = "explicit";
+            "source.organizeImports.ruff" = "explicit";
+          };
+        };
         "[go]".editor.defaultFormatter = "golang.go";
         "[rust]".editor.defaultFormatter = "rust-lang.rust-analyzer";
         "[shellscript]".editor.defaultFormatter = "foxundermoon.shell-format";
@@ -290,6 +272,10 @@ in
         "[javascript]".editor.defaultFormatter = "esbenp.prettier-vscode";
         "[typescript]".editor.defaultFormatter = "esbenp.prettier-vscode";
         "[typescriptreact]".editor.defaultFormatter = "esbenp.prettier-vscode";
+        "[javascriptreact]".editor.defaultFormatter = "esbenp.prettier-vscode";
+        "[html]".editor.defaultFormatter = "esbenp.prettier-vscode";
+        "[css]".editor.defaultFormatter = "esbenp.prettier-vscode";
+        "[scss]".editor.defaultFormatter = "esbenp.prettier-vscode";
         "[json]".editor.defaultFormatter = "esbenp.prettier-vscode";
         "[jsonc]".editor.defaultFormatter = "esbenp.prettier-vscode";
         "[yaml]".editor.defaultFormatter = "esbenp.prettier-vscode";
@@ -297,7 +283,43 @@ in
         "[toml]".editor.defaultFormatter = "tamasfe.even-better-toml";
         "prettier.prettierPath" = "${pkgs.prettier}/lib/node_modules/prettier/index.cjs";
 
-        # ── Agent ────────────────────────────────────────────────────────
+        "eslint.format.enable" = false;
+        "eslint.run" = "onSave";
+        "[javascript][javascriptreact][typescript][typescriptreact]"."editor.codeActionsOnSave" = {
+          "source.fixAll.eslint" = "explicit";
+          "source.organizeImports" = "explicit";
+        };
+        "errorLens.enabledDiagnosticLevels" = [
+          "error"
+          "warning"
+        ];
+        "gitlens.codeLens.enabled" = false;
+
+        # F5 works in a newly opened project; workspace launch.json can override.
+        "launch" = {
+          version = "0.2.0";
+          configurations = [
+            {
+              name = "Python: current file";
+              type = "debugpy";
+              request = "launch";
+              program = "\${file}";
+              cwd = "\${workspaceFolder}";
+              console = "integratedTerminal";
+              justMyCode = true;
+            }
+            {
+              name = "Go: current package";
+              type = "go";
+              request = "launch";
+              mode = "auto";
+              program = "\${fileDirname}";
+              cwd = "\${workspaceFolder}";
+            }
+          ];
+        };
+
+        # Agent
         "claudeCode.preferredLocation" = "panel";
 
         # Keep language-server semantic tokens enabled with Noctalia's theme.

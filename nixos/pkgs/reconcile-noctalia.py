@@ -21,7 +21,7 @@ def equal(left, right):
     return left == right
 
 
-def reconcile(state, desired, *, apply=False, resets=()):
+def reconcile(state, desired, *, apply=False, resets=(), managed=False):
     state = Path(state)
     reset_paths = {tuple(path.split(".")) for path in resets}
     if any(not all(path) for path in reset_paths):
@@ -46,7 +46,8 @@ def reconcile(state, desired, *, apply=False, resets=()):
             value = table[key]
             if key == "config_version":
                 continue
-            if path in reset_paths:
+            if path in reset_paths or (managed and key in target and not (
+                    isinstance(value, Mapping) and isinstance(target[key], Mapping))):
                 del table[key]
                 removed.append(".".join(path))
             elif isinstance(value, Mapping):
@@ -75,10 +76,12 @@ def main():
     parser.add_argument("state", type=Path)
     parser.add_argument("desired", type=Path)
     parser.add_argument("--apply", action="store_true", help="write changes (default: dry run)")
+    parser.add_argument("--managed", action="store_true",
+                        help="remove overrides for every field declared in the desired configuration")
     parser.add_argument("--reset", action="append", default=[], metavar="DOTTED.PATH")
     args = parser.parse_args()
     try:
-        removed, backup = reconcile(args.state, args.desired, apply=args.apply, resets=args.reset)
+        removed, backup = reconcile(args.state, args.desired, apply=args.apply, resets=args.reset, managed=args.managed)
     except (OSError, ValueError, tomlkit.exceptions.ParseError):
         parser.exit(1, "Reconciliation failed; inspect state and any retained backup.\n")
     print("Removed keys:" if args.apply else "Would remove keys:")

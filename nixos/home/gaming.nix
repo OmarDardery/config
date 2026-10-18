@@ -16,7 +16,7 @@ let
     colorsFile = "${config.xdg.stateHome}/noctalia/theme/steam.css";
   };
   # NixOS's Steam module injected these into the FHS runtime. Keep that driver
-  # and font integration even though Home Manager now owns the application.
+  # and font integration for the Home Manager-owned application.
   steam =
     if isNixOS then
       steamPackages.steam.override (previous: {

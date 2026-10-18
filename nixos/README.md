@@ -18,7 +18,9 @@ installation. `profile.nix` contains identity and deployment paths;
 | `home/apps.nix` | Browser, chat, office, media viewers, image editors and scanner UI |
 | `home/files.nix` | Thunar/plugins, archives, removable drives, user folders and file associations |
 | `home/engineering.nix` | Blender, FreeCAD, Logisim, WinBoat and webOS tools |
-| `home/terminal.nix` | Kitty migration and command-line utilities/diagnostics |
+| `home/kitty.nix` | Declarative terminal settings, shortcuts and migration |
+| `home/terminal.nix` | Command-line utilities/diagnostics |
+| `home/noctalia-settings.nix` | Shell preferences and bar layout |
 | `home/desktop.nix` | GTK/Qt, fonts/icons, KDE Connect and Bluetooth media integration |
 | `home/capture.nix` | Screenshot, recording, OCR and annotation dependencies |
 | `home/displays.nix` | Display controls and laptop mirroring |
@@ -26,11 +28,17 @@ installation. `profile.nix` contains identity and deployment paths;
 | `home/gaming.nix` | Steam/Millennium, game launchers and GameMode user daemon |
 | `home/linux.nix` | Standalone Linux portals and graphics integration |
 | `pkgs/` | Package fixes and scripts that genuinely require wrappers or migrations |
+| `assets/` | Wallpapers/avatar, palette template, browser CSS and tablet profile seed |
 
 Import lists are explicit. Modules use ordinary Nix attributes, lists and
 conditionals; there is no auto-import framework, custom option tree or overlay
 layer. Add applications to their functional module and let native services
 remain in `system/`. Hardware pins and state versions stay unchanged.
+
+Home Manager declares how assets are installed or rendered. The tablet JSON
+seeds calibration on first use; later activations update its auxiliary bindings
+while preserving calibration and unrelated profiles. Palette and CSS files stay
+in their native formats. No parallel `dotfiles/` configuration tree is used.
 
 ## Desktop coverage
 
@@ -81,8 +89,9 @@ bash nixos/bootstrap.sh --repo-dir "$PWD" --activate
 ```
 
 Review `profile.nix` and hardware before deploying to another machine. A
-`path:` reference includes new files before Git tracks them. Existing mutable
-GUI settings and migration backups retain their existing handling.
+`path:` reference includes new files before Git tracks them. Declared Noctalia
+preferences take precedence at activation; migration backups retain the previous
+settings. Wallpaper/theme mode remain runtime state.
 
 Update inputs deliberately and build before activating:
 
@@ -130,3 +139,58 @@ its explicit Electron exception. The temporary Toolbox and version-specific
 Zen download fixes are isolated in `pkgs/`; remove them when their locked
 upstream packages no longer need them. Driver, suspend, monitor and printer
 behavior still requires testing on actual hardware.
+
+## Editor workflows
+
+Both editors use the same pinned language tools and the repository's
+`.editorconfig`. Python defaults to a project's `.venv`; create/sync it with uv
+and include pytest in the project's development dependencies. The separate
+**Python (Nix notebooks)** Jupyter kernel is registered declaratively.
+
+- LazyVim: `<leader>db` sets a breakpoint, `<leader>dc` starts/continues,
+  `<leader>du` opens the debugger, and `<leader>dr` lists Rust debuggables in a
+  Rust buffer. `<leader>tr` runs the nearest test, `<leader>tt` the file,
+  `<leader>tT` all test files, and `<leader>ts` opens the test summary. Python,
+  Go and Rust adapters are enabled. `<leader>cv` selects a Python environment.
+- VSCodium: F5 uses a Python-file or Go-package preset, or a project's
+  `.vscode/launch.json`; the Testing view runs pytest; Go/Rust code lenses run
+  their project tests.
+  CodeLLDB supplies C/C++ and Rust debugging. `Ctrl+Alt+O` opens an OpenCode
+  terminal at the workspace; LazyVim uses `<leader>ao`.
+- Python formatting uses Ruff; Go uses gofumpt/Staticcheck; Rust uses
+  rust-analyzer/Clippy. Golangci-lint remains an explicit project command rather
+  than another save-time diagnostic worker. ESLint and Prettier use project
+  configuration. Language-specific workspace settings can override defaults.
+- Dependency/output trees are excluded from VSCodium file watching. Python
+  reports diagnostics for open files; test discovery on every save is disabled.
+  Debug/test plugins load on demand and Nix owns every plugin and adapter.
+
+The built-in debugger understands standard Python/LLDB entries in workspace
+`launch.json`. VS Code extension-specific launch features can still require the
+extension's own UI. Notebook remote-plugin registration remains the explicit
+Molten setup described in the root README.
+
+## Declarative desktop and shortcuts
+
+Use `home/kitty.nix` for terminal behavior, `home/noctalia-settings.nix` for shell
+preferences, and `home/umbriel.nix` for window rules and desktop bindings.
+Noctalia keeps the palette, last wallpaper and theme mode as runtime data;
+declared preferences win on rebuild with backups of prior overrides.
+
+The bar places launcher/workspaces on the left, clock in the center and status
+controls on the right. It reserves space instead of covering tiled windows.
+Disabled, connector-specific desktop/lockscreen widget layouts are omitted.
+Umbriel starts in dwindle; its cycle contains only dwindle and scrolling.
+Scrolling centers when adjacent windows cannot fit; manual dwindle splits stay
+stable. Kitty opacity is configured once, rather than multiplied by a second
+compositor opacity rule.
+
+[SHORTCUTS.md](SHORTCUTS.md) lists daily controls. `Mod+S` opens Screen Toolkit;
+`Mod+Shift+S` enters capture shortcuts; `Mod+Ctrl+S` opens settings;
+`Mod+Shift+Escape` shows Umbriel's actual live bindings.
+
+The next useful upgrades are encrypted backups of home data, project-specific
+`.envrc`/development shells using the existing direnv integration, and CI checks
+for configuration/input updates. Measure boot/session performance before changing
+drivers or schedulers. Nix recreates software; it does not back up
+personal documents, browser profiles or credentials.

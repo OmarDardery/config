@@ -5,7 +5,7 @@
   ...
 }:
 {
-  # ── Boot ───────────────────────────────────────────────────────────────
+  # Boot
   boot.loader.systemd-boot.enable = true;
   boot.loader.timeout = 2;
   boot.loader.efi.canTouchEfiVariables = true;
@@ -13,7 +13,7 @@
   boot.loader.systemd-boot.configurationLimit = 10;
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
-  # ── Users ──────────────────────────────────────────────────────────────
+  # Users
   users.users.${profile.username} = {
     isNormalUser = true;
     home = profile.homeDirectory;
@@ -48,7 +48,7 @@
     users.${profile.username} = ../home;
   };
 
-  # ── Locale ─────────────────────────────────────────────────────────────
+  # Locale
   # Location and locale are independent: keep Cairo's clock and timezone,
   # while applications consistently use English text, digits, and formats.
   time.timeZone = "Africa/Cairo";
