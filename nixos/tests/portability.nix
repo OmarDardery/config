@@ -97,7 +97,7 @@ let
     umbrielLayout =
       home.programs.umbriel.settings.layout.mode == "dwindle"
       && system.home-manager.users.${profile.username}.programs.umbriel.settings.layout.mode == "dwindle"
-      && home.programs.umbriel.settings.layout.gap == 6
+      && home.programs.umbriel.settings.layout.gap == 8
       && home.programs.umbriel.settings.layout.tabs.default_display == "tabbed"
       && home.programs.umbriel.settings.workspaces.back_and_forth
       && home.programs.umbriel.settings.workspaces.empty_above;

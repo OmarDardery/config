@@ -4,6 +4,10 @@
 bindings inherited from upstream. The same physical shortcuts work with English
 or Arabic input. Power actions are available from the session menu.
 
+The bottom bar and right-hand dock hide on occupied workspaces and reveal at the
+screen edge without reserving window space. Hover Screen Toolkit in the bar to
+expand clipboard, phone and Pomodoro; their shortcuts work while collapsed.
+
 ## Apps and shell
 
 | Shortcut | Action |

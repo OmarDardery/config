@@ -8,11 +8,11 @@ warning = "#{{colors.tertiary.default.hex_stripped}}FF"
 error = "#{{colors.error.default.hex_stripped}}FF"
 insert_hint = "#{{colors.tertiary.default.hex_stripped}}80"
 backdrop = "#{{colors.surface_variant.default.hex_stripped}}FF"
-shadow = "#{{colors.shadow.default.hex_stripped}}70"
+shadow = "#{{colors.shadow.default.hex_stripped}}50"
 
 [colors.border]
 focused = "#{{colors.primary.default.hex_stripped}}FF"
-unfocused = "#{{colors.surface_variant.default.hex_stripped}}FF"
+unfocused = "#{{colors.outline_variant.default.hex_stripped}}FF"
 outer = "#{{colors.terminal_background.default.hex_stripped}}00"
 
 [colors.overview]
