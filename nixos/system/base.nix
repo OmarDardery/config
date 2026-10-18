@@ -36,7 +36,7 @@
   programs.zsh.enableGlobalCompInit = false;
 
   home-manager = {
-    useGlobalPkgs = false;
+    useGlobalPkgs = true;
     useUserPackages = true;
     extraSpecialArgs = {
       inherit inputs profile;
@@ -44,8 +44,7 @@
       isLaptop = true;
     };
     backupFileExtension = "bak";
-    sharedModules = [ { nixpkgs.config = import ../package-policy.nix; } ];
-    users.${profile.username} = ../home;
+    users.${profile.username} = ../home/nixos.nix;
   };
 
   # Locale

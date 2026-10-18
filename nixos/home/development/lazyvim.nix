@@ -277,7 +277,9 @@ in
         -- Keep lazy.nvim's default rtp reset so the HM-installed loader is discoverable.
 
         spec = {
-          { "LazyVim/LazyVim", import = "lazyvim.plugins" },
+          { "LazyVim/LazyVim", import = "lazyvim.plugins", opts = { colorscheme = "habamax" } },
+          { "folke/tokyonight.nvim", enabled = false },
+          { "catppuccin/nvim", name = "catppuccin", enabled = false },
 
           -- Enable extras declaratively; add their dependencies to the package lists.
           { import = "lazyvim.plugins.extras.dap.core" },
@@ -410,6 +412,7 @@ in
     })
   '';
 
+  xdg.configFile."nvim/lua/plugins/noctalia.lua".enable = isNixOS;
   xdg.configFile."nvim/lua/plugins/noctalia.lua".text = ''
     local path = ${lib.generators.toLua { } "${config.xdg.stateHome}/noctalia/theme/nvim.lua"}
     local last_stamp
@@ -451,8 +454,6 @@ in
     end
 
     return {
-      { "folke/tokyonight.nvim", enabled = false },
-      { "catppuccin/nvim", name = "catppuccin", enabled = false },
       { "RRethy/base16-nvim", lazy = false, priority = 1000 },
       {
         "LazyVim/LazyVim",

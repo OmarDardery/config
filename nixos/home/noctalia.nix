@@ -4,7 +4,6 @@
   pkgs,
   lib,
   config,
-  isNixOS,
   ...
 }:
 let
@@ -52,70 +51,55 @@ in
   programs.noctalia = {
     enable = true;
 
-    # Keep preferences in Nix; adapt backend-specific fields here.
+    # Keep preferences in Nix and application palettes in writable state files.
     # Upstream checks this config during builds; warnings need review too.
     checkConfig = true;
-    settings =
-      lib.recursiveUpdate
-        (
-          settings
-          // lib.optionalAttrs (!isNixOS) {
-            widget = builtins.removeAttrs settings.widget [ "nix-monitor" ];
-            plugin_settings = builtins.removeAttrs settings.plugin_settings [
-              "avivbintangaringga/nix-monitor"
-            ];
-          }
-        )
-        {
-          shell.polkit_agent = isNixOS;
-          plugins.enabled =
-            builtins.filter (id: isNixOS || id != "avivbintangaringga/nix-monitor") settings.plugins.enabled
-            ++ lib.optional isNixOS "davemhammer/tailscale";
-          bar.default.start = builtins.filter (id: isNixOS || id != "nix-monitor") settings.bar.default.start;
-          plugin_settings = lib.optionalAttrs isNixOS {
-            "avivbintangaringga/nix-monitor" = {
-              update_command = config.home.shellAliases.update;
-              hide_clean_button = false;
-              hide_optimize_button = false;
-            };
-          };
-          theme.templates.user = {
-            kitty = (render "${builtin}/kitty/kitty.conf" "${themeDir}/kitty.conf") // {
-              post_hook = "${pkgs.procps}/bin/pkill -USR1 -x kitty || true";
-            };
-            umbriel = render ../assets/umbriel.toml "${themeDir}/umbriel.toml";
-            vscode = render "${community}/vscode/vscode.json" "${themeDir}/vscode.json";
-            steam = render "${community}/steam/steam.css" "${themeDir}/steam.css";
-            zen_chrome =
-              (render "${community}/zen-browser/zen-userChrome.css" "${config.xdg.cacheHome}/noctalia/zen-browser/zen-userChrome.css")
-              // {
-                post_hook = "${zenApply}/bin/noctalia-zen-apply";
-                hook_async = false;
-              };
-            zen_content =
-              (render "${community}/zen-browser/zen-userContent.css" "${config.xdg.cacheHome}/noctalia/zen-browser/zen-userContent.css")
-              // {
-                post_hook = "${zenApply}/bin/noctalia-zen-apply";
-                hook_async = false;
-              };
-            fzf = render "${community}/fzf/fzf.sh" "${themeDir}/fzf.sh";
-            lazygit = render "${community}/lazygit/lazygit.yml" "${themeDir}/lazygit.yml";
-            nvim = render "${community}/neovim/matugen-template.lua" "${themeDir}/nvim.lua";
-            bat =
-              (render "${community}/bat/bat.tmTheme" "${config.xdg.configHome}/bat/themes/noctalia.tmTheme")
-              // {
-                post_hook = "${pkgs.bat}/bin/bat cache --build";
-                hook_async = false;
-              };
-            btop =
-              (render "${builtin}/btop/btop.theme" "${config.xdg.configHome}/btop/themes/noctalia.theme")
-              // {
-                post_hook = "${pkgs.procps}/bin/pkill -USR2 -x btop || true";
-              };
-            yazi = render "${community}/yazi/yazi.toml" "${config.xdg.configHome}/yazi/flavors/noctalia.yazi/flavor.toml";
-            yazi_syntax = render "${community}/yazi/yazi.tmTheme" "${config.xdg.configHome}/yazi/flavors/noctalia.yazi/tmtheme.xml";
-          };
+    settings = lib.recursiveUpdate settings {
+      plugins.enabled = settings.plugins.enabled ++ [ "davemhammer/tailscale" ];
+      plugin_settings = {
+        "avivbintangaringga/nix-monitor" = {
+          update_command = config.home.shellAliases.update;
+          hide_clean_button = false;
+          hide_optimize_button = false;
         };
+      };
+      theme.templates.user = {
+        kitty = (render "${builtin}/kitty/kitty.conf" "${themeDir}/kitty.conf") // {
+          post_hook = "${pkgs.procps}/bin/pkill -USR1 -x kitty || true";
+        };
+        umbriel = render ../assets/umbriel.toml "${themeDir}/umbriel.toml";
+        vscode = render "${community}/vscode/vscode.json" "${themeDir}/vscode.json";
+        steam = render "${community}/steam/steam.css" "${themeDir}/steam.css";
+        zen_chrome =
+          (render "${community}/zen-browser/zen-userChrome.css" "${config.xdg.cacheHome}/noctalia/zen-browser/zen-userChrome.css")
+          // {
+            post_hook = "${zenApply}/bin/noctalia-zen-apply";
+            hook_async = false;
+          };
+        zen_content =
+          (render "${community}/zen-browser/zen-userContent.css" "${config.xdg.cacheHome}/noctalia/zen-browser/zen-userContent.css")
+          // {
+            post_hook = "${zenApply}/bin/noctalia-zen-apply";
+            hook_async = false;
+          };
+        fzf = render "${community}/fzf/fzf.sh" "${themeDir}/fzf.sh";
+        lazygit = render "${community}/lazygit/lazygit.yml" "${themeDir}/lazygit.yml";
+        nvim = render "${community}/neovim/matugen-template.lua" "${themeDir}/nvim.lua";
+        bat =
+          (render "${community}/bat/bat.tmTheme" "${config.xdg.configHome}/bat/themes/noctalia.tmTheme")
+          // {
+            post_hook = "${pkgs.bat}/bin/bat cache --build";
+            hook_async = false;
+          };
+        btop =
+          (render "${builtin}/btop/btop.theme" "${config.xdg.configHome}/btop/themes/noctalia.theme")
+          // {
+            post_hook = "${pkgs.procps}/bin/pkill -USR2 -x btop || true";
+          };
+        yazi = render "${community}/yazi/yazi.toml" "${config.xdg.configHome}/yazi/flavors/noctalia.yazi/flavor.toml";
+        yazi_syntax = render "${community}/yazi/yazi.tmTheme" "${config.xdg.configHome}/yazi/flavors/noctalia.yazi/tmtheme.xml";
+      };
+    };
 
     # Umbriel starts the shell; no global service inside GNOME.
     systemd.enable = false;

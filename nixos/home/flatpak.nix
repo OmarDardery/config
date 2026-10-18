@@ -1,7 +1,6 @@
 {
   inputs,
   lib,
-  pkgs,
   config,
   isNixOS,
   osConfig ? { },
@@ -9,9 +8,7 @@
 }:
 {
   imports = [ inputs.nix-flatpak.homeManagerModules.nix-flatpak ];
-  home.packages = [ pkgs.flatpak ];
-  # User applications/remotes are Home Manager-owned. Keep older system exports
-  # discoverable without enabling or managing the privileged system helper.
+  # NixOS owns Flatpak and its helper; Home Manager owns user apps/remotes.
   xdg.systemDirs.data = [
     "${config.xdg.dataHome}/flatpak/exports/share"
     "/var/lib/flatpak/exports/share"

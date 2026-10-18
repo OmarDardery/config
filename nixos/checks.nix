@@ -6,10 +6,10 @@
 let
   inherit (pkgs) lib;
   profile = flake.lib.deployment;
-  home = flake.homeConfigurations.${profile.profileName}.config;
+  home = system.home-manager.users.${profile.username};
   thunar = lib.findFirst (
     package: lib.getName package == "thunar-with-plugins"
-  ) null home.home.packages;
+  ) null system.environment.systemPackages;
   papers = lib.findFirst (package: lib.getName package == "papers") null home.home.packages;
   portability = import ./tests/portability.nix { inherit flake; };
   python = pkgs.python3.withPackages (ps: [ ps.tomlkit ]);
@@ -106,9 +106,7 @@ let
     }
   );
   system = flake.nixosConfigurations.${profile.hostName}.config;
-  gamemodePolicy = lib.findFirst (
-    package: lib.getName package == "gamemode-polkit-policy"
-  ) null system.environment.systemPackages;
+  gamemodePolicy = pkgs.gamemode;
   steamPackages = import ./pkgs/steam.nix {
     inherit pkgs;
     millenniumInput = inputs.millennium;
@@ -124,11 +122,19 @@ let
     }
   );
   batHome =
-    (flake.homeConfigurations.${profile.profileName}.extendModules {
-      specialArgs.profile = profile // {
-        homeDirectory = "/fixture home \"quoted\"";
+    (inputs.home-manager.lib.homeManagerConfiguration {
+      inherit pkgs;
+      extraSpecialArgs = {
+        inherit inputs;
+        osConfig = system;
+        profile = profile // {
+          homeDirectory = "/fixture home \"quoted\"";
+        };
+        isNixOS = true;
+        isLaptop = false;
       };
       modules = [
+        ./home/nixos.nix
         {
           xdg.configHome = "/fixture home \"quoted\"/config \"custom\"";
           xdg.cacheHome = "/fixture home \"quoted\"/cache \"custom\"";
@@ -175,23 +181,29 @@ let
       target = "${launcherMocks}/bin/test-target";
     }
   );
-  editorConfig = pkgs.linkFarm "nvim-test-config" (
-    lib.mapAttrsToList (name: file: {
-      name = lib.removePrefix "nvim/" name;
-      path = file.source;
-    }) (lib.filterAttrs (name: _: lib.hasPrefix "nvim/" name) home.xdg.configFile)
-  );
-  editorData = pkgs.linkFarm "nvim-test-data" (
-    lib.mapAttrsToList (name: file: {
-      name = lib.removePrefix "nvim/" name;
-      path = file.source;
-    }) (lib.filterAttrs (name: _: lib.hasPrefix "nvim/" name) home.xdg.dataFile)
-  );
+  editorConfig =
+    editorHome:
+    pkgs.linkFarm "nvim-test-config" (
+      lib.mapAttrsToList
+        (name: file: {
+          name = lib.removePrefix "nvim/" name;
+          path = file.source;
+        })
+        (lib.filterAttrs (name: file: file.enable && lib.hasPrefix "nvim/" name) editorHome.xdg.configFile)
+    );
+  editorData =
+    editorHome:
+    pkgs.linkFarm "nvim-test-data" (
+      lib.mapAttrsToList (name: file: {
+        name = lib.removePrefix "nvim/" name;
+        path = file.source;
+      }) (lib.filterAttrs (name: file: file.enable && lib.hasPrefix "nvim/" name) editorHome.xdg.dataFile)
+    );
   editorCheck =
-    executeNotebook:
-    pkgs.runCommand (if executeNotebook then "editor-notebook-checks" else "editor-integration-checks")
+    name: executeNotebook: editorHome:
+    pkgs.runCommand name
       {
-        nativeBuildInputs = [ home.programs.neovim.finalPackage ];
+        nativeBuildInputs = [ editorHome.programs.neovim.finalPackage ];
         NOTEBOOK_EXECUTION_TEST = if executeNotebook then "1" else "0";
       }
       ''
@@ -200,23 +212,29 @@ let
         export XDG_DATA_HOME="$HOME/data"
         export XDG_STATE_HOME="$HOME/state"
         export XDG_CACHE_HOME="$HOME/cache"
+        export EDITOR_CHECK_DONE="$TMPDIR/editor-check.done"
         mkdir -p "$XDG_CONFIG_HOME/nvim" "$XDG_DATA_HOME/nvim" "$XDG_STATE_HOME" "$XDG_CACHE_HOME"
-        cp -rs ${editorConfig}/. "$XDG_CONFIG_HOME/nvim"
-        cp -rs ${editorData}/. "$XDG_DATA_HOME/nvim"
+        cp -rs ${editorConfig editorHome}/. "$XDG_CONFIG_HOME/nvim"
+        cp -rs ${editorData editorHome}/. "$XDG_DATA_HOME/nvim"
         mkdir -p "$XDG_DATA_HOME/jupyter/kernels/nix-python"
-        cp ${home.xdg.dataFile."jupyter/kernels/nix-python/kernel.json".source} \
+        cp ${editorHome.xdg.dataFile."jupyter/kernels/nix-python/kernel.json".source} \
           "$XDG_DATA_HOME/jupyter/kernels/nix-python/kernel.json"
         # Trigger the UI event that starts LazyVim's deferred configuration.
         timeout 120s nvim --headless \
-          -c "autocmd User VeryLazy ++once lua vim.schedule(function() local ok, err = xpcall(function() dofile('${./tests/editor-integration.lua}') end, debug.traceback); if not ok then io.stderr:write(err, string.char(10)); vim.cmd('cquit') end end)" \
-          -c 'doautocmd UIEnter'
+          --cmd "autocmd User VeryLazy ++once lua vim.schedule(function() local ok, err = xpcall(function() dofile('${./tests/editor-integration.lua}') end, debug.traceback); if not ok then io.stderr:write(err, string.char(10)); vim.cmd('cquit') end end)" \
+          -c 'doautocmd UIEnter' \
+          -c 'lua vim.wait(110000, function() return false end)'
+        test -f "$EDITOR_CHECK_DONE"
         touch "$out"
       '';
   fixtureJson = pkgs.writeText "kitty-linking-fixtures.json" (builtins.toJSON fixtures);
 in
 {
-  editor-integration = editorCheck false;
-  editor-notebooks = editorCheck true;
+  editor-integration = editorCheck "editor-integration-checks" false home;
+  editor-notebooks = editorCheck "editor-notebook-checks" true home;
+  portable-editor =
+    editorCheck "portable-editor-checks" false
+      flake.homeConfigurations.${profile.profileName}.config;
   desktop-integration =
     pkgs.runCommand "desktop-integration-checks"
       {
@@ -237,8 +255,8 @@ in
   desktop-migrations = scriptCheck "desktop-migration-checks" "python ${tests}/desktop-migrations.py";
   config-update = scriptCheck "configuration-update-checks" "python ${tests}/config-update.py";
   reconciliation = scriptCheck "noctalia-reconciliation-checks" "python ${tests}/reconcile-noctalia.py";
+  office-convert = scriptCheck "office-conversion-checks" "python ${tests}/office-convert.py";
   bootstrap = scriptCheck "bootstrap-checks" "bash ${tests}/bootstrap.sh";
-  host-setup = scriptCheck "host-setup-checks" "bash ${tests}/host-setup.sh";
   kitty-linking = scriptCheck "kitty-home-manager-linking-checks" "python ${tests}/kitty-linking.py ${fixtureJson}";
   steam-setup = scriptCheck "steam-setup-checks" "python ${tests}/steam-setup.py ${steamFixture}";
   bat-first-run = scriptCheck "bat-first-run-checks" "python ${tests}/bat-first-run.py ${batFixture}";

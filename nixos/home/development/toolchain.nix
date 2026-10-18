@@ -46,8 +46,11 @@
       }";
     in
     {
-      # Applications use Home Manager's policy-scoped set, even on NixOS.
-      nixpkgs.expr = "(builtins.getFlake ${quote "path:${profile.configRepo}"}).homeConfigurations.${quote profile.profileName}.pkgs";
+      nixpkgs.expr =
+        if isNixOS then
+          "${flakeConfig}.pkgs"
+        else
+          "(builtins.getFlake ${quote "path:${profile.configRepo}"}).homeConfigurations.${quote profile.profileName}.pkgs";
       formatting.command = [ "${pkgs.nixfmt}/bin/nixfmt" ];
       options = {
         home_manager.expr =

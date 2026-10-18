@@ -5,7 +5,6 @@
   pkgs,
   inputs,
   profile,
-  modulesPath,
   ...
 }:
 let
@@ -13,22 +12,13 @@ let
 in
 {
   imports = [
-    (import "${modulesPath}/programs/wayland/wayland-session.nix" {
-      inherit lib pkgs;
-      enableXWayland = false;
-      enableWlrPortal = false;
-    })
+    inputs.umbriel.nixosModules.default
   ];
-  services.displayManager.sessionPackages = [
-    home.programs.umbriel.package
-  ];
+  programs.umbriel.enable = true;
   # Native GNOME supplies the shared portal frontend. Its system-level lookup
   # directory must include the Umbriel backend for the registered login session.
   xdg.portal = {
     enable = true;
-    extraPortals = [
-      inputs.umbriel.inputs.xdg-desktop-portal-umbriel.packages.${pkgs.stdenv.hostPlatform.system}.default
-    ];
     config.umbriel.default = [
       "umbriel"
       "gtk"
@@ -110,10 +100,16 @@ in
   # SDDM inherits the keyring PAM integration through login.
   services.gnome.gnome-keyring.enable = true;
 
-  # GVfs is a user service; UDisks2 and MTP device rules require host privileges.
-  services.gvfs.enable = lib.mkForce false;
-  services.udisks2.enable = true;
-  programs.xfconf.enable = true;
+  services.gvfs.enable = true;
+  services.tumbler.enable = true;
+  services.flatpak.enable = true;
+  programs.thunar = {
+    enable = true;
+    plugins = with pkgs; [
+      thunar-archive-plugin
+      thunar-volman
+    ];
+  };
 
   # Home Manager owns KDE Connect. Its ports are opened only on Tailscale
   # above; the NixOS module would open them globally.

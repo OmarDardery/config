@@ -58,25 +58,15 @@
         flake = inputs.self;
       };
       devShells.${system} = import ./dev-shells.nix { inherit pkgs; };
-      # Expose the same rule sources used by NixOS to the Debian installer.
-      packages.${system}.deviceRules = pkgs.symlinkJoin {
-        name = "configs-device-rules";
-        paths = [
-          pkgs.opentabletdriver
-          pkgs.platformio-core.udev
-        ];
-      };
-      # x86_64 Linux with Nix; native services/drivers remain the host's job.
+      # Portable tools only; Debian/Fedora keep their native desktop stack.
       homeConfigurations.${profile.profileName} = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
         extraSpecialArgs = {
           inherit inputs profile;
           isNixOS = false;
-          # The standalone profile is deployed to the same laptop on Debian.
-          isLaptop = true;
+          isLaptop = false;
         };
         modules = [
-          ./home
           ./home/linux.nix
         ];
       };

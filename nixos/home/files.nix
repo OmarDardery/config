@@ -1,17 +1,9 @@
 {
   pkgs,
-  config,
   ...
 }:
 let
-  thunar = pkgs.thunar.override {
-    thunarPlugins = [
-      pkgs.thunar-archive-plugin
-      pkgs.thunar-volman
-    ];
-  };
   desktopApps = with pkgs; [
-    thunar
     (papers.override { supportNautilus = false; })
     file-roller
     gnome-calculator
@@ -19,28 +11,14 @@ let
     gnome-control-center
     seahorse
   ];
-  desktopServices =
-    desktopApps
-    ++ (with pkgs; [
-      gvfs
-      tumbler
-      xfconf
-    ]);
 in
 {
-  home.packages = desktopServices ++ [
+  home.packages = desktopApps ++ [
     pkgs.sshfs
     pkgs.xdg-utils
     pkgs.zenity
     pkgs.system-config-printer
   ];
-  dbus.packages = desktopServices;
-  systemd.user.packages = desktopServices;
-  home.sessionSearchVariables.GIO_EXTRA_MODULES = [ "${pkgs.gvfs}/lib/gio/modules" ];
-  home.sessionSearchVariables.XDG_DATA_DIRS = [
-    "${config.home.profileDirectory}/share"
-  ]
-  ++ map (package: "${package}/share/gsettings-schemas/${package.name}") desktopApps;
   home.sessionVariables.SSH_ASKPASS = "${pkgs.seahorse}/libexec/seahorse/ssh-askpass";
 
   programs.bash.enableVteIntegration = true;

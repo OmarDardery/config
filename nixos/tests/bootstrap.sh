@@ -158,6 +158,7 @@ cp "$tmp/checkout/nixos/local.nix" "$tmp/untracked.before"
 cp "$tmp/checkout/nixos/flake.lock" "$tmp/lock.before"
 
 reset_case() {
+  repo_args=(--repo-dir "$tmp/checkout")
   os=linux uid=1000 user=fixture uuid=root-uuid device_uuid=root-uuid
   arch=x86_64 system=x86_64-linux root_type=xfs boot_type=vfat hm_entry=present
   configured_flake="$tmp/checkout/nixos"
@@ -182,7 +183,7 @@ run_case() {
     MOCK_BUILD="$build" MOCK_OUTPUT="$output" MOCK_STORE="$tmp/store" \
     MOCK_FLAKE="path:$tmp/checkout/nixos" MOCK_LOG="$tmp/log" \
     "$bash_bin" --noprofile --norc "$tmp/bootstrap.sh" \
-    --repo-dir "$tmp/checkout" "$@" > "$tmp/stdout" 2> "$tmp/stderr" || status=$?
+    "${repo_args[@]}" "$@" > "$tmp/stdout" 2> "$tmp/stderr" || status=$?
   if [[ "$expected" == pass ]]; then
     [[ "$status" == 0 ]] || fail "$label: unexpected exit $status: $(<"$tmp/stderr")"
   else
@@ -230,6 +231,11 @@ for os_case in nixos linux; do
   run_case pass "$os explicit selectors skip defaults" --profile "$selected_profile" --host "$selected_host"
   [[ "$(<"$tmp/log")" != *'#lib.deployment.'* ]] || fail 'explicit selectors queried defaults'
 done
+reset_case
+ln -s "$tmp/checkout" "$tmp/home/config"
+repo_args=()
+run_case pass 'default checkout is ~/config' --build-only
+
 reset_case; default_profile='invalid/default'; selected_profile=chosen-user
 run_case pass 'explicit profile skips only profile default' --profile "$selected_profile"
 log=$(<"$tmp/log")
@@ -258,7 +264,7 @@ for os_case in nixos linux; do
   run_case 'Unsupported profile architecture' "$os architecture refusal"; no_build
   reset_case; os=$os_case; system=aarch64-linux
   run_case 'requires aarch64-linux' "$os evaluated architecture refusal"; no_build
-  reset_case; os=$os_case; configured_flake=/home/oad/configs/nixos
+  reset_case; os=$os_case; configured_flake=/home/oad/config/nixos
   run_case pass "$os custom repository only warns"
   [[ "$(<"$tmp/stderr")" == *'Edit profile.configRepo in '*'/profile.nix'* ]] || fail 'missing follow-up repository warning'
 done
@@ -273,8 +279,8 @@ run_case 'Filesystem type mismatch for /boot:' 'boot filesystem mismatch'; no_bu
 reset_case; os=nixos; root_type=''
 run_case 'mounted unknown' 'empty filesystem type'; no_build
 reset_case
-run_case pass 'native service warnings do not prevent building'
-[[ "$(<"$tmp/stderr")" == *'Flatpak CLI/user installations'* && "$(<"$tmp/stderr")" == *'systemd user manager'* ]] || fail 'missing native service warnings'
+run_case pass 'portable tools build without desktop services'
+[[ "$(<"$tmp/stdout")" == *'the distribution owns GUI applications and desktop services'* ]] || fail 'missing portable profile description'
 reset_case; os=nixos; uuid=''
 run_case 'Missing or invalid UUID' 'empty UUID refusal'; no_build
 reset_case; os=nixos; device_uuid=other-uuid
