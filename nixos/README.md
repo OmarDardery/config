@@ -68,7 +68,9 @@ in their native formats. No parallel `dotfiles/` configuration tree is used.
 ProtonPlus is the one installed Proton-version manager. Swappy is the one
 installed screenshot annotation editor. Rnote, protonup-ng and Satty are absent.
 The two recording backends remain because Screen Toolkit actively supports
-fallback between them. GNOME remains an alternative login session.
+fallback between them. Umbriel is the only desktop session; the GNOME shell,
+settings app, file indexer and calendar/online-account services are omitted.
+Keyring, SSH agent, accessibility, disk mounting and XWayland remain native.
 
 On NixOS, CUPS, IPP-over-USB, SANE/airscan and mDNS discovery provide print/scan
 support. CUPS sharing stays disabled; mDNS discovery uses its standard UDP port.
@@ -87,8 +89,8 @@ can stop its Umbriel session. Then log out completely and log back in.
 Home Manager removes its previous
 managed desktop files and services; a fresh login clears the old session's
 Qt/GIO/graphics environment. Runtime wallpaper/palette data and personal files
-are retained. For the first NixOS ownership migration, use the GNOME fallback
-or a TTY and start Umbriel again afterward. Inspect Home Manager's activation
+are retained. For the first NixOS ownership migration, use a TTY and start
+Umbriel again afterward. Inspect Home Manager's activation
 output if a local edit or
 conflicting file prevents cleanup.
 

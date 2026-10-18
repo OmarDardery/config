@@ -8,7 +8,6 @@ let
     file-roller
     gnome-calculator
     gnome-disk-utility
-    gnome-control-center
     seahorse
   ];
 in
@@ -38,17 +37,6 @@ in
     };
   };
 
-  # Index documents without traversing generated build and dependency trees.
-  dconf.settings."org/freedesktop/tracker/miner/files".ignored-directories = [
-    "po"
-    "CVS"
-    "core-dumps"
-    "lost+found"
-    "node_modules"
-    "target"
-    "build"
-    "dist"
-  ];
   xdg.mimeApps = {
     enable = true;
     defaultApplications = {
