@@ -24,6 +24,7 @@ expand clipboard, phone and Pomodoro; their shortcuts work while collapsed.
 | Mod+Shift+N / Mod+Ctrl+N | Toggle Do Not Disturb / dismiss active notifications |
 | Mod+Alt+L / Mod+Shift+Q | Lock / session and power menu |
 | Mod+Alt+W / Mod+Alt+D | Wallpaper chooser / light-dark theme |
+| Mod+Ctrl+Alt+W | Theme settings: wallpaper palette algorithm |
 | Mod+Alt+C / Mod+Alt+N | Caffeine / force night light |
 | Mod+Alt+P | Cycle power profile |
 | Mod+Alt+V | Tailscale peers, VPN and exit-node manager |

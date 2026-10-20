@@ -116,6 +116,15 @@ class ReconciliationTests(unittest.TestCase):
         self.assertEqual(self.run_helper(apply=True, resets=['config_version']), ([], None))
         self.assertEqual(self.state.read_bytes(), original)
 
+    def test_wallpaper_and_algorithm_choices_survive_rebuilds(self):
+        self.files('[theme]\nwallpaper_scheme = "vibrant"\nmode = "light"\n'
+                   '[wallpaper.default]\npath = "/home/user/personal image.png"\n',
+                   '[theme]\nsource = "wallpaper"\n[wallpaper]\ntransition_on_startup = true\n')
+        original = self.state.read_bytes()
+        for _ in range(2):
+            self.assertEqual(self.run_helper(apply=True, managed=True), ([], None))
+            self.assertEqual(self.state.read_bytes(), original)
+
     def test_dry_run_creates_nothing(self):
         original = self.files('[a]\nx = 1\n', '[a]\nx = 1\n')
         before = self.state.stat()

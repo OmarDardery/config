@@ -77,7 +77,7 @@
 
   # Fixes this laptop's stripe corruption. Changes require a fresh login.
   # Historical graphics findings remain in the README.
-  # Keep this global: SDDM also renders on AMD; greeter dependence is untested.
+  # Keep this global for the AMD-rendered desktop and login greeter.
   environment.sessionVariables.AMD_DEBUG = "nodcc";
 
   fileSystems."/mnt/storage" = {

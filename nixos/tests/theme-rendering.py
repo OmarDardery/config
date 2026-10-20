@@ -64,7 +64,7 @@ def main():
                 "theme",
                 str(args.wallpaper),
                 "--scheme",
-                settings["theme"]["wallpaper_scheme"],
+                settings["theme"].get("wallpaper_scheme", "m3-tonal-spot"),
                 "--both",
                 "--default-mode",
                 mode,

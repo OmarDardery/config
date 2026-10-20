@@ -290,6 +290,11 @@ let
       && !(home.programs.noctalia.settings.theme.templates.user ? niri);
     defaultDesktop =
       system.services.displayManager.defaultSession == "umbriel"
+      && system.services.displayManager.gdm.enable
+      && !system.services.displayManager.sddm.enable
+      && !(flake.inputs ? pixie-sddm)
+      && system.security.pam.services.login.enableGnomeKeyring
+      && system.security.pam.services.gdm-password.rules.auth.login.modulePath == "login"
       && !system.services.desktopManager.gnome.enable
       && system.programs.xwayland.enable
       && system.services.udisks2.enable
@@ -364,6 +369,11 @@ let
     batSeedOrdering =
       builtins.elem "linkGeneration" home.home.activation.initializeNoctaliaTemplates.before
       && builtins.elem "writeBoundary" home.home.activation.initializeNoctaliaTemplates.after;
+    dynamicWallpaper =
+      !(home.programs.noctalia.settings.theme ? wallpaper_scheme)
+      && !(home.programs.noctalia.settings.wallpaper ? default)
+      && !(home.home.file ? "Pictures/Wallpapers")
+      && builtins.elem "linkGeneration" home.home.activation.noctaliaWallpaperSamples.after;
     portableDesktopBoundary =
       !tools.xdg.portal.enable
       && !tools.gtk.enable

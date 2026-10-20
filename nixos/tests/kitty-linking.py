@@ -35,7 +35,7 @@ def activate(root, home, name, old=None, *, backup=False, dry=False, success=Tru
     script += 'newGenPath=' + shell_quote(str(new)) + '\n'
     if old:
         script += 'oldGenPath=' + shell_quote(str(root / ("generation-" + old))) + '\n'
-    for stage in ("checkLinkTargets", "kittyDeclarativeConfig", "linkGeneration"):
+    for stage in ("checkLinkTargets", "kittyDeclarativeConfig", "linkGeneration", "noctaliaWallpaperSamples"):
         script += fixture["activation"][stage].replace(fixture["homeDirectory"], str(home)) + '\n'
     result = subprocess.run(["bash", "-c", script], env=environment, capture_output=True, text=True)
     assert (result.returncode == 0) == success, (name, old, result.stdout, result.stderr)
@@ -148,11 +148,17 @@ with tempfile.TemporaryDirectory() as directory:
         activate(case, legacy, "legacy")
         legacy_kitty = kitty_path(legacy)
         assert legacy_kitty.is_symlink()
+        assert (legacy / 'Pictures/Wallpapers').is_symlink()
         original = (legacy_kitty / "kitty.conf").read_bytes()
         before = tree_snapshot(legacy)
         activate(case, legacy, "current", "legacy", backup=backup, dry=True)
         assert tree_snapshot(legacy) == before
         activate(case, legacy, "current", "legacy", backup=backup)
+        wallpapers = legacy / 'Pictures/Wallpapers'
+        assert wallpapers.is_dir() and not wallpapers.is_symlink()
+        assert (wallpapers / 'dark-mountain.jpg').is_file()
+        personal = wallpapers / 'my-wallpaper.png'
+        personal.write_bytes(b'personal wallpaper')
         assert not legacy_kitty.is_symlink()
         assert (legacy_kitty / "kitty.conf").is_file()
         assert (legacy_kitty / "kitty.conf").is_symlink()
@@ -165,6 +171,7 @@ with tempfile.TemporaryDirectory() as directory:
             assert (legacy_kitty / name).read_bytes() == (backups[0] / name).read_bytes()
             assert not (legacy_kitty / name).is_symlink()
         activate(case, legacy, "current", "current", backup=backup)
+        assert personal.read_bytes() == b'personal wallpaper'
         assert "font_size 14" in (legacy_kitty / "kitty.conf").read_text()
         assert len(list(legacy_kitty.parent.glob("kitty.backup-*"))) == 1
         assert not list(legacy_kitty.parent.glob(".kitty.migration-*"))

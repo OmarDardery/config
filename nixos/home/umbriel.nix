@@ -204,6 +204,7 @@ in
         "Mod+Shift+N" = once "spawn:noctalia msg notification-dnd-toggle";
         "Mod+Ctrl+N" = once "spawn:noctalia msg notification-clear-active";
         "Mod+Alt+W" = once "spawn:noctalia msg panel-toggle wallpaper";
+        "Mod+Ctrl+Alt+W" = once "spawn:noctalia msg settings-open theme";
         "Mod+Alt+Right" = "column-focus-tab-next";
         "Mod+Alt+Left" = "column-focus-tab-previous";
         "Mod+Alt+C" = once "spawn:noctalia msg caffeine-toggle";
