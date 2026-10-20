@@ -7,9 +7,6 @@
   profile,
   ...
 }:
-let
-  home = config.home-manager.users.${profile.username};
-in
 {
   imports = [
     inputs.umbriel.nixosModules.default
@@ -25,34 +22,8 @@ in
     config.umbriel."org.freedesktop.impl.portal.Secret" = "gnome-keyring";
   };
 
-  services.displayManager.sddm = {
-    enable = true;
-    wayland.enable = true;
-    wayland.compositor = "kwin";
-
-    theme = "pixie";
-
-    settings.Theme = {
-      CursorTheme = home.home.pointerCursor.name;
-      CursorSize = home.home.pointerCursor.size;
-    };
-
-  };
-
+  services.displayManager.gdm.enable = true;
   services.displayManager.defaultSession = "umbriel";
-  # SDDM runs before the user profile exists, so its cursor must be system-wide.
-  xdg.icons.fallbackCursorThemes = [ home.home.pointerCursor.name ];
-
-  environment.systemPackages = [
-    home.home.pointerCursor.package
-    (inputs.pixie-sddm.packages.${pkgs.stdenv.hostPlatform.system}.pixie-sddm.override {
-      background = ../assets/wallpapers/dark-mountain.jpg;
-      avatar = ../assets/avatar.jpg;
-      autoColor = true;
-      # The nerd-fonts package provides this name, never "JetBrains Mono".
-      fontFamily = "JetBrainsMono Nerd Font";
-    })
-  ];
 
   # One desktop session; retain native integration without a second shell.
   programs.xwayland.enable = true;
@@ -83,7 +54,7 @@ in
   };
 
   security.polkit.enable = true;
-  # SDDM inherits the keyring PAM integration through login.
+  # GDM unlocks the user keyring through its native PAM integration.
   services.gnome.gnome-keyring.enable = true;
 
   services.gvfs.enable = true;
@@ -111,11 +82,11 @@ in
     HandlePowerKeyLongPress = "ignore";
   };
 
-  # The greeter needs its font before a user profile is available.
+  # Make the terminal font available system-wide and discoverable by Flatpaks.
   fonts.packages = [ pkgs.nerd-fonts.jetbrains-mono ];
-  fonts.fontDir.enable = true; # preserve native/Flatpak discovery of host greeter fonts
+  fonts.fontDir.enable = true;
 
-  # One audio stack for both login sessions, including legacy PulseAudio clients.
+  # One audio stack for the greeter and desktop, including PulseAudio clients.
   security.rtkit.enable = true;
   services.pulseaudio.enable = false;
   services.pipewire = {

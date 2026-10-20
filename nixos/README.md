@@ -34,7 +34,7 @@ desktop. `profile.nix` contains identity and deployment paths;
 | `home/gaming.nix` | Millennium setup/theme and game launchers |
 | `home/linux.nix` | Portable tools; no desktop, portals, GPU overrides or GUI services |
 | `pkgs/` | Package fixes and scripts that genuinely require wrappers or migrations |
-| `assets/` | Wallpapers/avatar, browser CSS and tablet profile seed |
+| `assets/` | Wallpapers, browser CSS and tablet profile seed |
 
 Import lists are explicit. Modules use ordinary Nix attributes, lists and
 conditionals; there is no auto-import framework, custom option tree or overlay
@@ -68,8 +68,10 @@ in their native formats. No parallel `dotfiles/` configuration tree is used.
 ProtonPlus is the one installed Proton-version manager. Swappy is the one
 installed screenshot annotation editor. Rnote, protonup-ng and Satty are absent.
 The two recording backends remain because Screen Toolkit actively supports
-fallback between them. Umbriel is the only desktop session; the GNOME shell,
-settings app, file indexer and calendar/online-account services are omitted.
+fallback between them. GDM provides the login screen, with Umbriel as the default
+and only desktop session. GDM brings its required GNOME greeter components; the
+full GNOME desktop, user settings app, file indexer and calendar/online-account
+services remain disabled.
 Keyring, SSH agent, accessibility, disk mounting and XWayland remain native.
 
 On NixOS, CUPS, IPP-over-USB, SANE/airscan and mDNS discovery provide print/scan

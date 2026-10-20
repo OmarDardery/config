@@ -29,10 +29,6 @@
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    pixie-sddm = {
-      url = "github:xCaptaiN09/pixie-sddm";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     webos-dev-manager.url = "github:OmarDardery/dev-manager-desktop/b7afa5dc41b46d057db751dcbc32e70ef3d57d60";
   };
   outputs =

@@ -24,7 +24,7 @@ Home Manager removes its former whole-directory link during the first migration.
 Initial missing app palettes use a saved image/algorithm when available, otherwise
 the first available personal/sample image and Noctalia's own algorithm default.
 This bootstrap does not save or change the selected wallpaper. Existing palettes
-are never overwritten by activation. SDDM's login-screen image remains declarative.
+are never overwritten by activation. GDM uses its standard GNOME greeter independently of the desktop palette.
 
 The [43PR setup linked from the video](https://github.com/43PR/dotfiles) inspired
 the slimmer floating top bar and integrated wallpaper/color workflow. Its Arch
