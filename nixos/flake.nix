@@ -9,6 +9,10 @@
     # Keep the cache branch and independent nixpkgs pin to match cached builds.
     # Cache settings live in system/nix.nix.
     noctalia.url = "github:noctalia-dev/noctalia/cachix";
+    noctalia-greeter = {
+      url = "github:noctalia-dev/noctalia-greeter/v1.7.0";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     noctalia-templates = {
       url = "github:noctalia-dev/community-templates/2f2ada3f10a66f9dbeb2136e4d70271ac6072aaf";
       flake = false;

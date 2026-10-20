@@ -24,7 +24,7 @@ Home Manager removes its former whole-directory link during the first migration.
 Initial missing app palettes use a saved image/algorithm when available, otherwise
 the first available personal/sample image and Noctalia's own algorithm default.
 This bootstrap does not save or change the selected wallpaper. Existing palettes
-are never overwritten by activation. GDM uses its standard GNOME greeter independently of the desktop palette.
+are never overwritten by activation. Noctalia Greeter can sync the desktop appearance without rebuilding.
 
 The [43PR setup linked from the video](https://github.com/43PR/dotfiles) inspired
 the slimmer floating top bar and integrated wallpaper/color workflow. Its Arch
@@ -88,3 +88,31 @@ Natural sorting and directories-first ordering use upstream Yazi settings.
 | Mod+T | Kitty with Zsh |
 | Mod+Shift+E | Yazi directly in Kitty |
 | Mod+E | Thunar |
+
+## Login screen
+
+Noctalia Greeter v1.7.0 uses the official project flake/module, sharing the system
+Nixpkgs input. It replaces GDM; greetd launches the packaged session wrapper and
+retains native keyring PAM integration. The greeter's default user, Umbriel session
+and US/Arabic keyboard layouts are declarative. Wallpaper, palette and theme mode
+are omitted so synced appearance remains writable state.
+
+In Noctalia, open Settings → Security → Noctalia Greeter → Sync Now. Enable
+Auto-Sync Greeter there to follow later wallpaper/palette/font changes. The module
+allows only the configured local user's active session to invoke the constrained
+appearance-sync action without a password; general administrative and legacy
+helper actions still require authentication. No custom sync script or Polkit rule
+is maintained in this repository.
+
+The upstream module owns `/var/lib/noctalia-greeter/greeter.toml`; GUI/synced values
+live in `sync.toml` and survive rebuilds. No home-directory access is granted to the
+greeter. Sync copies the chosen wallpaper into its own state directory.
+
+Build the system first. For the first display-manager replacement, activate from
+a TTY or use `sudo nixos-rebuild boot --flake ~/config/nixos#nixos` and reboot;
+restarting the login service can end a graphical session. After boot, verify
+`systemctl status greetd`, logging into Umbriel, keyring unlocking, logout and
+appearance sync. Review failures with `journalctl -b -u greetd`.
+
+References: [official NixOS setup](https://docs.noctalia.dev/greeter/installation/),
+[appearance sync](https://docs.noctalia.dev/greeter/sync/).

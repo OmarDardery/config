@@ -290,11 +290,16 @@ let
       && !(home.programs.noctalia.settings.theme.templates.user ? niri);
     defaultDesktop =
       system.services.displayManager.defaultSession == "umbriel"
-      && system.services.displayManager.gdm.enable
+      && !system.services.displayManager.gdm.enable
+      && system.services.displayManager.noctalia-greeter.enable
+      && system.services.greetd.enable
+      && system.services.accounts-daemon.enable
       && !system.services.displayManager.sddm.enable
       && !(flake.inputs ? pixie-sddm)
       && system.security.pam.services.login.enableGnomeKeyring
-      && system.security.pam.services.gdm-password.rules.auth.login.modulePath == "login"
+      && system.security.pam.services.greetd.enableGnomeKeyring
+      && system.services.displayManager.noctalia-greeter.settings.session.default == "umbriel"
+      && lib.hasInfix "/bin/noctalia-greeter-session" system.services.greetd.settings.default_session.command
       && !system.services.desktopManager.gnome.enable
       && system.programs.xwayland.enable
       && system.services.udisks2.enable
