@@ -68,10 +68,11 @@ in their native formats. No parallel `dotfiles/` configuration tree is used.
 ProtonPlus is the one installed Proton-version manager. Swappy is the one
 installed screenshot annotation editor. Rnote, protonup-ng and Satty are absent.
 The two recording backends remain because Screen Toolkit actively supports
-fallback between them. GDM provides the login screen, with Umbriel as the default
-and only desktop session. GDM brings its required GNOME greeter components; the
-full GNOME desktop, user settings app, file indexer and calendar/online-account
-services remain disabled.
+fallback between them. Noctalia Greeter provides the login screen through greetd,
+with Umbriel as the default and only desktop session. The official project module
+owns the greeter service, state directory, AccountsService and Polkit integration.
+GDM and SDDM are disabled; the full GNOME desktop, user settings app, file indexer
+and calendar/online-account services remain disabled.
 Keyring, SSH agent, accessibility, disk mounting and XWayland remain native.
 
 On NixOS, CUPS, IPP-over-USB, SANE/airscan and mDNS discovery provide print/scan
