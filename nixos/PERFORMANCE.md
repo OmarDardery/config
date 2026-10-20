@@ -6,7 +6,9 @@ These are NixOS policies; portable Home Manager installs no kernel or scheduler.
 
 ## Current configuration
 
-- Keep the locked Nixpkgs `linuxPackages_latest` kernel and existing NVIDIA pin.
+- Keep Nixpkgs' `linuxPackages_latest` kernel (Linux 7.3 on the current channel)
+  with NVIDIA 615.78.08 open modules. The driver version and hashes match official
+  Nixpkgs' new-feature package; no local kernel compatibility patch is used.
 - Run upstream `scx_lavd` through NixOS's `services.scx`, using the smaller
   `pkgs.scx.rustscheds` package instead of the full Rust/C scheduler bundle.
 - Use `--autopower`: LAVD reads power-profiles-daemon's active profile over D-Bus,
@@ -26,6 +28,33 @@ measured FPS or battery-life improvement. Nice values are useful hints; resource
 control semantics depend on the active scheduler. I/O priorities also depend on
 the device's scheduler. Existing GPU workarounds, suspend policy, displays,
 filesystem settings and the kernel/driver pair stay unchanged.
+
+## NVIDIA and Linux 7.3 compatibility
+
+The former NVIDIA 610.57.04 pin calls the older
+`dmem_cgroup_register_region(size, name)` interface. Linux 7.3 changed its first
+argument to a `dmem_cgroup_init` pointer, causing compilation to fail. NVIDIA
+615.78.08 detects and handles that interface. Its version and all five hashes
+come from [official Nixpkgs](https://github.com/NixOS/nixpkgs/blob/a73abadb83fd64aee8abce72cc56811a178c1905/pkgs/os-specific/linux/nvidia-x11/default.nix).
+The [upstream driver code](https://github.com/NVIDIA/open-gpu-kernel-modules/blob/615.78.08/kernel-open/nvidia/os-interface.c)
+contains the conditional compatibility implementation.
+
+Kernel selection, open modules, PRIME offload, suspend policy and flake inputs
+are unchanged. A channel upgrade alone cannot fix an explicit old driver pin.
+
+The `nvidia-open` flake check builds the actual kernel module: evaluation alone
+cannot catch C compilation failures. Before activating, build it and the system:
+
+```sh
+cd ~/config/nixos
+nix build '.#checks.x86_64-linux.nvidia-open' --no-link
+nix build '.#nixosConfigurations.nixos.config.system.build.toplevel' --no-link
+nh os switch
+```
+
+Reboot after activation to load matching kernel and driver modules, then check
+`uname -r`, `nvidia-smi` and `systemctl status scx.service`. No lockfile update
+is needed for this fix.
 
 ## Kernel/flake audit — 2026-10-18
 
