@@ -269,6 +269,8 @@ in
         touch "$out"
       '';
   performance-launchers = scriptCheck "performance-launcher-checks" "python ${tests}/performance-launchers.py ${launcherFixture}";
+  # Evaluation alone cannot detect kernel API incompatibilities in the driver.
+  nvidia-open = flake.nixosConfigurations.${profile.hostName}.config.hardware.nvidia.package.open;
   portability = pkgs.writeText "portability-checks.json" (builtins.toJSON portability.checks);
   desktop-migrations = scriptCheck "desktop-migration-checks" "python ${tests}/desktop-migrations.py";
   config-update = scriptCheck "configuration-update-checks" "python ${tests}/config-update.py";
