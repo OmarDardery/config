@@ -293,10 +293,10 @@ sources, first-run behavior and the Yazi workflow.
 
 On NixOS, use `home/kitty.nix` for terminal behavior, `home/noctalia-settings.nix` for shell
 preferences, and `home/umbriel.nix` for window rules and desktop bindings.
-Noctalia keeps the palette, last wallpaper and theme mode as runtime data;
+Noctalia keeps the palette, selected wallpaper, generator and theme mode as runtime data;
 declared preferences win on rebuild with backups of prior overrides.
 
-The floating bottom bar places launcher/workspaces on the left, date/time in the
+The slim floating top bar places launcher/workspaces on the left, date/time in the
 center and status controls on the right. The bar and right-hand dock reserve no
 space and hide on occupied workspaces; reveal them at their screen edges.
 Screen Toolkit leads a tools group that expands on hover to show clipboard,

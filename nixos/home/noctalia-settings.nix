@@ -39,12 +39,12 @@
       ];
       margin_edge = 8;
       margin_ends = 12;
-      padding = 10;
+      padding = 8;
       widget_spacing = 4;
-      position = "bottom";
+      position = "top";
       radius = 12;
       shadow = true;
-      thickness = 34;
+      thickness = 32;
       reserve_space = false;
       smart_auto_hide = true;
       start = [
@@ -227,7 +227,6 @@
   };
   theme = {
     source = "wallpaper";
-    wallpaper_scheme = "m3-tonal-spot";
     templates = {
       builtin_ids = [
         "gtk3"
@@ -240,9 +239,7 @@
   };
   wallpaper = {
     transition_on_startup = true;
-    default = {
-      path = "~/Pictures/Wallpapers/wp9432445-4k-mountains-desktop-wallpapers.jpg";
-    };
+    directory = "~/Pictures/Wallpapers";
   };
   widget = {
     clock = {

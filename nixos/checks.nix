@@ -71,13 +71,17 @@ let
         }
         (
           if legacy then
-            { xdg.configFile.kitty.source = legacyKitty; }
+            {
+              xdg.configFile.kitty.source = legacyKitty;
+              home.file."Pictures/Wallpapers".source = ./assets/wallpapers;
+            }
           else
             {
               imports = [
                 ./home/kitty.nix
                 ./home/desktop.nix
               ];
+              xdg.dataFile."noctalia/wallpaper-samples".source = ./assets/wallpapers;
             }
         )
       ];
@@ -99,10 +103,19 @@ let
       stateHome = configuration.xdg.stateHome;
       init = configuration.lib.bash.initHomeManagerLib;
       files = configuration.home-files;
-      activation = lib.genAttrs stages (
-        stage:
-        if configuration.home.activation ? ${stage} then configuration.home.activation.${stage}.data else ""
-      );
+      activation =
+        (lib.genAttrs stages (
+          stage:
+          if configuration.home.activation ? ${stage} then configuration.home.activation.${stage}.data else ""
+        ))
+        // {
+          noctaliaWallpaperSamples =
+            if name == "legacy" then
+              ""
+            else
+              lib.replaceStrings [ batHome.home.homeDirectory ] [ configuration.home.homeDirectory ]
+                batHome.home.activation.noctaliaWallpaperSamples.data;
+        };
     }
   );
   system = flake.nixosConfigurations.${profile.hostName}.config;
@@ -151,6 +164,10 @@ let
       cache = batHome.home.activation.batCache.data;
       bat = batHome.programs.bat.package;
       opencodeTui = batHome.xdg.configFile."opencode/tui.json".source;
+      noctaliaConfig = batHome.xdg.configFile."noctalia/config.toml".source;
+      noctalia = batHome.programs.noctalia.package;
+      samples = ./assets/wallpapers;
+      wallpaperSeed = batHome.home.activation.noctaliaWallpaperSamples.data;
     }
   );
   launcherMocks = pkgs.runCommand "performance-launcher-mocks" { } ''

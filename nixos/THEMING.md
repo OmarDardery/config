@@ -8,6 +8,36 @@ keeps generated colors writable without asking apply scripts to modify Nix store
 symlinks. GTK/Qt/Starship use Noctalia's built-in integrations. Umbriel now uses
 Noctalia's shipped palette template rather than a separately maintained copy.
 
+## Live wallpaper and palette choices
+
+Open the wallpaper picker with **Mod+Alt+W**. Open theme settings directly with
+**Mod+Ctrl+Alt+W** and choose the wallpaper-generation algorithm there (Material
+3 variants, Faithful, Vibrant, Soft, Muted, and others supplied by Noctalia).
+**Mod+Alt+D** toggles light/dark mode. These choices are saved in Noctalia's
+writable state and survive rebuilds; Nix declares no selected desktop wallpaper
+or generator. Wallpaper-derived colors update the shell and enabled app templates.
+Some applications require reopening to display their new colors.
+
+`~/Pictures/Wallpapers` is a writable directory. Add personal images normally;
+bundled samples are individual links and existing personal files are preserved.
+Home Manager removes its former whole-directory link during the first migration.
+Initial missing app palettes use a saved image/algorithm when available, otherwise
+the first available personal/sample image and Noctalia's own algorithm default.
+This bootstrap does not save or change the selected wallpaper. Existing palettes
+are never overwritten by activation. SDDM's login-screen image remains declarative.
+
+The [43PR setup linked from the video](https://github.com/43PR/dotfiles) inspired
+the slimmer floating top bar and integrated wallpaper/color workflow. Its Arch
+installer, extra shell and Hyprland-specific configuration are not imported.
+
+[Stylix was reviewed](https://nix-community.github.io/stylix/configuration.html).
+Its normal image-derived palette is generated during a Nix build; it is useful
+for a fixed declarative Base16 theme. Here Noctalia remains the single live color
+owner, avoiding overlapping GTK, Kitty and editor configuration. No additional
+theming daemon or rebuild-on-wallpaper-change mechanism is installed.
+
+## Application support
+
 | Apps | Source | Integration |
 | --- | --- | --- |
 | Thunar, Papers, File Roller, Proton VPN, GTK utilities | Noctalia GTK 3/4 | Generated CSS imports |

@@ -364,6 +364,11 @@ let
     batSeedOrdering =
       builtins.elem "linkGeneration" home.home.activation.initializeNoctaliaTemplates.before
       && builtins.elem "writeBoundary" home.home.activation.initializeNoctaliaTemplates.after;
+    dynamicWallpaper =
+      !(home.programs.noctalia.settings.theme ? wallpaper_scheme)
+      && !(home.programs.noctalia.settings.wallpaper ? default)
+      && !(home.home.file ? "Pictures/Wallpapers")
+      && builtins.elem "linkGeneration" home.home.activation.noctaliaWallpaperSamples.after;
     portableDesktopBoundary =
       !tools.xdg.portal.enable
       && !tools.gtk.enable

@@ -12,7 +12,6 @@ let
   };
   settings = import ./noctalia-settings.nix;
   reconcilePython = pkgs.python3.withPackages (ps: [ ps.tomlkit ]);
-  themeDir = "${config.xdg.stateHome}/noctalia/theme";
   community = inputs.noctalia-templates;
   appThemes = import ../pkgs/noctalia-app-themes.nix {
     inherit pkgs lib config;
@@ -85,29 +84,16 @@ in
     systemd.enable = false;
   };
 
-  # Seed missing generated palettes before applications observe new HM links.
-  # Explicit --render performs no apply hooks or application preference changes.
+  # Only seed missing palettes, using saved runtime choices where available.
   home.activation.initializeNoctaliaTemplates =
     lib.hm.dag.entryBetween [ "linkGeneration" ] [ "writeBoundary" ]
       ''
-        noctalia_renders=()
-        ${lib.concatMapStringsSep "\n" (
-          name:
-          let
-            template = config.programs.noctalia.settings.theme.templates.user.${name};
-          in
-          ''
-            if [[ ! -e ${lib.escapeShellArg template.output_path} && ! -L ${lib.escapeShellArg template.output_path} ]]; then
-              run mkdir -p ${lib.escapeShellArg (builtins.dirOf template.output_path)}
-              noctalia_renders+=(--render ${lib.escapeShellArg "${template.input_path}:${template.output_path}"})
-            fi
-          ''
-        ) (builtins.attrNames config.programs.noctalia.settings.theme.templates.user)}
-        if (( ''${#noctalia_renders[@]} > 0 )); then
-          run ${config.programs.noctalia.package}/bin/noctalia theme ${../assets/wallpapers/dark-mountain.jpg} \
-            --scheme ${lib.escapeShellArg config.programs.noctalia.settings.theme.wallpaper_scheme} \
-            "''${noctalia_renders[@]}" -o /dev/null
-        fi
+        run ${pkgs.python3}/bin/python3 ${../pkgs}/seed-noctalia.py \
+          ${config.programs.noctalia.package}/bin/noctalia \
+          ${config.xdg.configFile."noctalia/config.toml".source} \
+          ${lib.escapeShellArg "${config.xdg.stateHome}/noctalia/settings.toml"} \
+          ${lib.escapeShellArg "${config.home.homeDirectory}/Pictures/Wallpapers"} \
+          ${../assets/wallpapers}
       '';
 
   # GUI edits preview a setting until the next rebuild. Keep runtime-only keys
@@ -120,7 +106,21 @@ in
     fi
   '';
 
-  # Paths stay portable through the shell's ~ expansion. Add wallpapers here
-  # and rebuild; the selected wallpaper and generated palettes remain writable.
-  home.file."Pictures/Wallpapers".source = ../assets/wallpapers;
+  # Remove the former managed directory link, then keep a writable folder.
+  # Bundled samples are individual links; personal files are never replaced.
+  xdg.dataFile."noctalia/wallpaper-samples".source = ../assets/wallpapers;
+  home.activation.noctaliaWallpaperSamples = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
+    run mkdir -p ${lib.escapeShellArg "${config.home.homeDirectory}/Pictures/Wallpapers"}
+    ${lib.concatMapStringsSep "\n" (
+      name:
+      let
+        target = "${config.home.homeDirectory}/Pictures/Wallpapers/${name}";
+      in
+      ''
+        if [[ ! -e ${lib.escapeShellArg target} && ! -L ${lib.escapeShellArg target} ]]; then
+          run ln -s ${lib.escapeShellArg "${config.xdg.dataHome}/noctalia/wallpaper-samples/${name}"} ${lib.escapeShellArg target}
+        fi
+      ''
+    ) (builtins.attrNames (builtins.readDir ../assets/wallpapers))}
+  '';
 }
