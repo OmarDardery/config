@@ -124,7 +124,7 @@
   };
 
   pythonAnalysis = {
-    typeCheckingMode = "standard";
+    typeCheckingMode = "basic";
     diagnosticMode = "openFilesOnly";
   };
 

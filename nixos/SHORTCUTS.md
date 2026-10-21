@@ -112,3 +112,8 @@ Kitty uses Ctrl+Shift, keeping terminal commands separate from desktop controls.
 
 Kitty's command palette exposes remaining built-in actions. Settings and
 shortcuts belong in `home/kitty.nix`; colours come from Noctalia's generated palette.
+
+Project notebooks: `<leader>mp` registers and starts the nearest project `.venv`;
+`notebook-kernel` registers the same environment for VSCodium/Jupyter. The project
+must contain `ipykernel`. Diagnostics: `<leader>cd` opens details, `<leader>xx` opens
+the diagnostic list, and `<leader>uv` toggles inline text.

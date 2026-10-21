@@ -35,6 +35,12 @@ in
       ++ toolchain.runtimes
       ++ (with pkgs; [
         platformio-core
+        (writeShellApplication {
+          name = "notebook-kernel";
+          text = ''
+            exec ${python3}/bin/python3 ${../../pkgs/notebook-kernel.py} "$@"
+          '';
+        })
         (callPackage ../../pkgs/antigravity-cli.nix { })
       ]);
 

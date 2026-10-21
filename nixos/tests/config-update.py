@@ -55,7 +55,7 @@ class UpdateTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.commands(), [
             ["nix", "flake", "update", "--flake", "path:/checkout with spaces"],
-            ["nh", "os", "switch", "--hostname", "host", "path:/checkout with spaces"],
+            ["nh", "os", "switch", "--show-activation-logs", "--hostname", "host", "path:/checkout with spaces"],
             ["flatpak", "update", "--noninteractive", "--assumeyes"],
         ])
         self.assertIn("completed", result.stdout)
@@ -64,7 +64,7 @@ class UpdateTests(unittest.TestCase):
         result = self.run_update(["path:/checkout 'quoted'", "home", "user@host"])
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.commands()[1], [
-            "nh", "home", "switch", "--configuration", "user@host", "path:/checkout 'quoted'"
+            "nh", "home", "switch", "--show-activation-logs", "--configuration", "user@host", "path:/checkout 'quoted'"
         ])
         self.assertNotIn("path:path:", self.log.read_text())
 

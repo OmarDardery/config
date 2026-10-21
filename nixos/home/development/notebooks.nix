@@ -89,6 +89,21 @@ in
         keys = {
           { "<leader>mi", "<cmd>MoltenInit nix-python<cr>", desc = "Notebook: start Nix Python kernel" },
           { "<leader>mI", "<cmd>MoltenInit<cr>", desc = "Notebook: choose kernel" },
+          { "<leader>mp", function()
+            local buf = vim.api.nvim_get_current_buf()
+            vim.system({ "notebook-kernel", LazyVim.root() }, { text = true }, function(result)
+              vim.schedule(function()
+                if result.code ~= 0 then
+                  vim.notify(result.stderr, vim.log.levels.ERROR, { title = "Project notebook kernel" })
+                  return
+                end
+                local name = vim.trim(result.stdout)
+                if vim.api.nvim_buf_is_valid(buf) then
+                  vim.api.nvim_buf_call(buf, function() vim.cmd.MoltenInit(name) end)
+                end
+              end)
+            end)
+          end, desc = "Notebook: register/start project .venv" },
           { "<leader>me", "<cmd>MoltenEvaluateOperator<cr>", desc = "Notebook: evaluate operator" },
           { "<leader>ml", "<cmd>MoltenEvaluateLine<cr>", desc = "Notebook: evaluate line" },
           { "<leader>mr", "<cmd>MoltenReevaluateCell<cr>", desc = "Notebook: re-evaluate cell" },

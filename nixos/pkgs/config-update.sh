@@ -32,9 +32,9 @@ nix flake update --flake "$repository"
 # nh builds before switching and shows the generation diff. Build failures stop here.
 printf '%s\n' 'Building and activating the updated configuration...'
 if [[ "$backend" == os ]]; then
-  nh os switch --hostname "$configuration" "$repository"
+  nh os switch --show-activation-logs --hostname "$configuration" "$repository"
 else
-  nh home switch --configuration "$configuration" "$repository"
+  nh home switch --show-activation-logs --configuration "$configuration" "$repository"
 fi
 
 if command -v flatpak >/dev/null 2>&1; then

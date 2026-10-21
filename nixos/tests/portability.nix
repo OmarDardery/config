@@ -261,16 +261,19 @@ let
     ) (builtins.attrValues home.programs.umbriel.settings.keybinds);
     editorWorkflow =
       home.programs.vscodium.profiles.default.userSettings."python.defaultInterpreterPath"
-      == "\${workspaceFolder}/.venv"
+      == "\${workspaceFolder}/.venv/bin/python"
       &&
         home.programs.vscodium.profiles.default.userSettings."basedpyright.analysis.typeCheckingMode"
-        == "standard"
+        == "basic"
       && home.programs.vscodium.profiles.default.userSettings."go.lintOnSave" == "off"
       &&
         home.programs.vscodium.profiles.default.userSettings."basedpyright.importStrategy"
         == "fromEnvironment"
       && home.programs.vscodium.profiles.default.userSettings."ruff.importStrategy" == "fromEnvironment"
       && home.programs.vscodium.profiles.default.userSettings."basedpyright.disableOrganizeImports"
+      && home.programs.vscodium.profiles.default.userSettings."python.useEnvironmentsExtension"
+      && builtins.elem base.pkgs.vscode-extensions.ms-python.vscode-python-envs home.programs.vscodium.profiles.default.extensions
+      && !(builtins.elem base.pkgs.vscode-extensions.usernamehw.errorlens home.programs.vscodium.profiles.default.extensions)
       && !(home.programs.vscodium.profiles.default.userSettings ? "ruff.path")
       && !(home.programs.vscodium.profiles.default.userSettings ? "prettier.prettierPath")
       && home.xdg.dataFile ? "jupyter/kernels/nix-python/kernel.json";
@@ -421,7 +424,9 @@ let
       && builtins.elem "${home.xdg.dataHome}/flatpak/exports/share" home.xdg.systemDirs.data
       && home.services.flatpak.update.auto.enable
       && !home.services.flatpak.uninstallUnmanaged
-      && !home.services.flatpak.uninstallUnused;
+      && !home.services.flatpak.uninstallUnused
+      && home.systemd.user.services.flatpak-managed-install.Service.Type == "exec"
+      && home.systemd.user.services.flatpak-managed-install-timer.Service.Type == "exec";
     userApplications =
       !system.services.gnome.core-apps.enable
       && !system.programs.wireshark.enable
@@ -534,9 +539,6 @@ let
       map (p: p.appId) home.services.flatpak.packages == [
         "com.orcaslicer.OrcaSlicer"
         "com.vysp3r.ProtonPlus"
-        "org.freedesktop.Platform.GL.nvidia-${
-          lib.replaceStrings [ "." ] [ "-" ] system.hardware.nvidia.package.version
-        }"
       ];
     hardwarePolicy = system.hardware.nvidia.open && system.hardware.nvidia.prime.offload.enable;
     localsendAbsent = !system.programs.localsend.enable;

@@ -202,6 +202,61 @@ On standalone Linux it updates Home Manager and uses the native Flatpak command
 if installed; native host packages remain the distribution's responsibility. `up`/`rebuild` apply the current
 lockfile, while `nupdate` only refreshes inputs.
 
+## Project notebooks and quieter diagnostics
+
+Open the project root folder in VSCodium, rather than a notebook by itself or a
+parent containing multiple unrelated projects. The Python Environments extension
+searches `.venv` and immediate child-project environments; the initial interpreter
+hint points at `.venv/bin/python`. Existing saved interpreter selections take
+precedence: use **Python: Select Interpreter** and enter that path if the old
+selection persists. Refresh environments after creating a new `.venv`.
+
+Jupyter has separate kernel discovery from Python's environment-management UI.
+For a dependable named kernel shared by VSCodium and LazyVim, run in the project:
+
+```sh
+uv add --dev ipykernel
+notebook-kernel
+```
+
+For a project without `pyproject.toml`, create `.venv` with `uv venv` and run
+`uv pip install --python .venv/bin/python ipykernel` instead. The registration
+command validates the interpreter, installs only a user kernelspec, and never
+adds dependencies itself. It accepts an optional project path or works from a
+nested directory. Select **Python (project-name .venv)** under **Select Another
+Kernel → Jupyter Kernels** in VSCodium, then verify `import sys; sys.executable`.
+The original **Python (Nix notebooks)** kernel remains a separate fallback; it
+does not inherit project dependencies. A moved/deleted project can leave a stale
+user kernelspec; remove it with `jupyter kernelspec uninstall NAME`.
+
+In LazyVim, `<leader>mp` registers and starts the project kernel. `<leader>mI`
+chooses an existing kernel; `<leader>mi` starts the shared Nix kernel. Python uses
+basic type checking in both editors, while Ruff keeps linting/formatting and
+projects can opt into stricter checks in `pyproject.toml`. VSCodium uses native
+squiggles/Problems instead of Error Lens's full-line messages. LazyVim keeps
+signs and underlines, with full diagnostics on `<leader>cd` or `<leader>xx`;
+`<leader>uv` can toggle virtual text when wanted.
+
+## Flatpak activation
+
+The declarative Flatpak installer runs as a supervised background `Type=exec`
+user service. Home Manager waits for it to launch, not for network downloads to
+finish, so a slow Flathub transaction cannot exhaust Home Manager's activation
+timeout. The weekly timer and failure retries are retained. Check completion with
+`systemctl --user status flatpak-managed-install.service` and logs with
+`journalctl --user -u flatpak-managed-install.service`.
+
+Only applications are declared. Flatpak selects graphics extensions for the
+loaded driver; a new Nix driver must be booted before a subsequent `flatpak update`
+selects its matching extension. Previously installed runtimes are not deleted.
+The `update` command still updates Flatpaks explicitly after switching Nix and
+may wait on an existing Flatpak transaction; this is outside system activation.
+It now requests nh's activation logs instead of hiding that stage.
+
+For tablet handwriting, use the already-installed **Xournal++**: pressure-sensitive
+notes, PDF annotation and PDF export without another application or service.
+Keep source `.xopp` notes alongside exported PDFs and include them in backups.
+
 ## Resource policy and package fixes
 
 Nix runs at most two local builds with four cores per build. Weekly collection

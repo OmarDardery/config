@@ -99,6 +99,7 @@ in
         tauri-apps.tauri-vscode
         # Python supplies environment selection and test/debug UI; basedpyright supplies analysis.
         ms-python.python
+        ms-python.vscode-python-envs
         ms-python.debugpy
         detachhead.basedpyright
         charliermarsh.ruff
@@ -126,7 +127,6 @@ in
         mhutchie.git-graph
         mkhl.direnv
         editorconfig.editorconfig
-        usernamehw.errorlens
         gruntfuggly.todo-tree
         github.vscode-pull-request-github
         anthropic.claude-code
@@ -251,7 +251,8 @@ in
         "basedpyright.importStrategy" = "fromEnvironment";
         "basedpyright.disableOrganizeImports" = true;
         "ruff.importStrategy" = "fromEnvironment";
-        "python.defaultInterpreterPath" = "\${workspaceFolder}/.venv";
+        "python.defaultInterpreterPath" = "\${workspaceFolder}/.venv/bin/python";
+        "python.useEnvironmentsExtension" = true;
         "python.terminal.activateEnvironment" = true;
         "python.testing.pytestEnabled" = true;
         "python.testing.unittestEnabled" = false;

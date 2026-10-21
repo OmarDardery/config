@@ -2,8 +2,6 @@
   inputs,
   lib,
   config,
-  isNixOS,
-  osConfig ? { },
   ...
 }:
 {
@@ -13,17 +11,16 @@
     "${config.xdg.dataHome}/flatpak/exports/share"
     "/var/lib/flatpak/exports/share"
   ];
+  # Network installs must not hold Home Manager's reloadSystemd stage open.
+  # systemd still tracks failures and retries the upstream installer normally.
+  systemd.user.services.flatpak-managed-install.Service.Type = lib.mkForce "exec";
+  systemd.user.services.flatpak-managed-install-timer.Service.Type = lib.mkForce "exec";
+
   services.flatpak = {
     enable = true;
     packages = [
       "com.orcaslicer.OrcaSlicer"
       "com.vysp3r.ProtonPlus"
-    ]
-    ++ lib.optionals (isNixOS && builtins.elem "nvidia" osConfig.services.xserver.videoDrivers) [
-      # Prepare the configured driver before reboot, not just the loaded one.
-      "org.freedesktop.Platform.GL.nvidia-${
-        lib.replaceStrings [ "." ] [ "-" ] osConfig.hardware.nvidia.package.version
-      }"
     ];
     uninstallUnmanaged = false;
     uninstallUnused = false;

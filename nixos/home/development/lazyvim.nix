@@ -476,7 +476,19 @@ in
     return {
       {
         "neovim/nvim-lspconfig",
+        keys = {
+          { "<leader>uv", function()
+            vim.diagnostic.config({ virtual_text = not vim.diagnostic.config().virtual_text })
+          end, desc = "Toggle inline diagnostics" },
+        },
         opts = {
+          -- Keep signs/underlines; show full messages with <leader>cd or <leader>xx.
+          diagnostics = {
+            virtual_text = false,
+            virtual_lines = false,
+            update_in_insert = false,
+            float = { border = "rounded", source = "if_many" },
+          },
           setup = {
             -- Skip the legacy semantic-token workaround; current gopls advertises support.
             gopls = function() end,
