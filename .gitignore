@@ -4,3 +4,6 @@ result
 # Python helpers and tests generate these locally.
 __pycache__/
 *.pyc
+
+# Generated locally from /etc/nixos during deployment.
+/nixos/hardware-configuration.nix

@@ -1,4 +1,7 @@
 { isNixOS, ... }:
+let
+  cursor = if isNixOS then "Bibata-Modern-Classic" else "Adwaita";
+in
 {
   xdg.configFile."autostart/org.kde.kdeconnect.daemon.desktop".enable = isNixOS;
   xdg.configFile."autostart/org.kde.kdeconnect.daemon.desktop".text = ''
@@ -18,18 +21,18 @@
   xdg.configFile."gtk-4.0/gtk.css".text = ''@import url("noctalia.css");'';
   xdg.configFile."gtk-3.0/settings.ini".text = ''
     [Settings]
-    gtk-cursor-theme-name=Bibata-Modern-Classic
+    gtk-cursor-theme-name=${cursor}
     gtk-cursor-theme-size=24
     gtk-icon-theme-name=Adwaita
   '';
   xdg.configFile."gtk-4.0/settings.ini".text = ''
     [Settings]
-    gtk-cursor-theme-name=Bibata-Modern-Classic
+    gtk-cursor-theme-name=${cursor}
     gtk-cursor-theme-size=24
     gtk-icon-theme-name=Adwaita
   '';
   home.file.".icons/default/index.theme".text = ''
     [Icon Theme]
-    Inherits=Bibata-Modern-Classic
+    Inherits=${cursor}
   '';
 }

@@ -19,6 +19,10 @@ let
   }";
 in
 {
+  xdg.configFile."nix/nix.conf" = {
+    enable = !isNixOS;
+    text = "experimental-features = nix-command flakes\n";
+  };
   home.file.".local/bin/config-update" = {
     executable = true;
     text = "#!/usr/bin/env bash\n" + builtins.readFile ../pkgs/config-update.sh;

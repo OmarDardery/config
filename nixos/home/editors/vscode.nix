@@ -195,10 +195,10 @@ in
         "todo-tree.filtering.excludeGlobs" = toolchain.watcherExcludes;
 
         # Use the family name provided by the installed Nerd Font.
-        "editor.fontFamily" = "'JetBrainsMono Nerd Font', monospace";
+        "editor.fontFamily" = "'JetBrainsMono Nerd Font', 'JetBrains Mono', monospace";
         "editor.fontLigatures" = true;
         "editor.fontSize" = 14;
-        "terminal.integrated.fontFamily" = "JetBrainsMono Nerd Font";
+        "terminal.integrated.fontFamily" = "'JetBrainsMono Nerd Font', 'JetBrains Mono', monospace";
 
         "workbench.colorTheme" = if desktopEnabled then "NoctaliaTheme" else "Default Dark Modern";
         # Keep the editor titlebar usable while hiding its window buttons.

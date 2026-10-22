@@ -1,5 +1,6 @@
 {
   config,
+  isNixOS,
   lib,
   desktopEnabled ? false,
   ...
@@ -40,7 +41,17 @@ let
   '';
 in
 {
-  home.sessionPath = [ "${config.home.homeDirectory}/.local/bin" ];
+  home.sessionPath = [
+    "${config.home.homeDirectory}/.local/bin"
+  ]
+  ++ lib.optional (!isNixOS) "${config.home.profileDirectory}/bin";
+  home.sessionSearchVariables = lib.optionalAttrs (!isNixOS) {
+    XDG_DATA_DIRS = [
+      "${config.home.profileDirectory}/share"
+      "/usr/local/share"
+      "/usr/share"
+    ];
+  };
   home.shellAliases = {
     lt = "eza --tree --level=2";
     edit = "sudo -e";

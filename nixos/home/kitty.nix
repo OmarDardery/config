@@ -3,6 +3,7 @@
   pkgs,
   lib,
   config,
+  isNixOS,
   profile,
   ...
 }:
@@ -11,7 +12,7 @@
     enable = true;
     package = null;
     font = {
-      name = "JetBrainsMono Nerd Font";
+      name = if isNixOS then "JetBrainsMono Nerd Font" else "JetBrains Mono";
       size = 14;
     };
     settings = {

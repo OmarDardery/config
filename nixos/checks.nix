@@ -306,6 +306,7 @@ in
   '';
   reconciliation = scriptCheck "noctalia-reconciliation-checks" "python ${tests}/reconcile-noctalia.py";
   office-convert = scriptCheck "office-conversion-checks" "python ${tests}/office-convert.py";
+  native-setup = scriptCheck "native-setup-checks" "python ${tests}/native-setup.py";
   bootstrap = scriptCheck "bootstrap-checks" "bash ${tests}/bootstrap.sh";
   kitty-linking = scriptCheck "kitty-home-manager-linking-checks" "python ${tests}/kitty-linking.py ${fixtureJson}";
   steam-setup = scriptCheck "steam-setup-checks" "python ${tests}/steam-setup.py ${steamFixture}";

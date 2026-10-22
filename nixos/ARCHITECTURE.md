@@ -27,8 +27,8 @@ another distribution's desktop through Home Manager.
    and native command-line tools remain independent.
 4. Desktop setup must not block a dotfile rebuild or assume a compositor exists.
    Keep palette initialization in the explicit `desktop-apply` command. NixOS runs
-   it from a native user unit at graphical login; other distributions run it after
-   installing the native desktop.
+   it from a native user unit at graphical login; Debian/Fedora installers provide
+   an equivalent native unit after installing the desktop.
 5. Keep feature composition explicit through flake-parts' typed `flake.modules`.
    Leaf implementations stay in `home/` and `system/`; package helpers, assets and
    tests are ordinary files rather than auto-imported modules. Adding a helper
@@ -43,6 +43,12 @@ another distribution's desktop through Home Manager.
   through the native package manager first.
 - `nixosConfigurations.nixos`: native NixOS system/application/service modules
   plus Home Manager dotfiles and editors.
+
+The root `nixos-setup.sh`, `debian-setup.sh` and `fedora-setup.sh` are entry points.
+Native package lists live in `native/debian.sh` and `native/fedora.sh`, with shared
+service setup in `native/common.sh` and TOML merging in `native/configure.py`.
+NixOS copies its generated hardware file before evaluation; Git ignores that
+file. Use `path:` flake references so local hardware participates in rebuilds.
 
 Names and identity come from `profile.nix`. `stateVersion` remains unchanged.
 Editor libraries, plugins, tools and Home Manager's internal activation utilities

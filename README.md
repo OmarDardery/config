@@ -16,18 +16,28 @@ Editor dependencies remain in Nix and are available inside the editors.
 ## Deploy
 
 Edit [nixos/profile.nix](nixos/profile.nix) for your account and checkout path.
-The defaults are `oad`, `/home/oad/config/nixos`, host `nixos`. Hardware files
-are specific to the laptop and need review on another NixOS machine.
+The defaults are `oad`, `/home/oad/config/nixos`, host `nixos`.
 
 ```sh
-bash nixos/bootstrap.sh --repo-dir "$PWD" --build-only
-bash nixos/bootstrap.sh --repo-dir "$PWD" --activate
+cd ~/config
+bash nixos-setup.sh   # Full NixOS system
+# OR, on another distribution:
+bash debian-setup.sh  # Debian Trixie/Sid desktop + dotfiles/editors
+bash fedora-setup.sh  # Conventional Fedora 44+ desktop + dotfiles/editors
 ```
 
-Other distributions build `oad` by default. Install native desktop applications
-separately using [the native setup guide](nixos/native/README.md), then select
-`--profile oad-desktop` if you want their dotfiles as well. Use
-`--backup-extension bak` when migrating conflicting unmanaged files.
+On NixOS the installer copies `/etc/nixos/hardware-configuration.nix`, replaces
+its local repository counterpart (backing up changes), and applies the full
+configuration through `sudo nixos-rebuild switch --flake path:…/nixos#nixos`.
+The generated hardware file is ignored by Git and is no longer tracked.
+Review `nixos/hardware.nix` separately on different hardware: it still contains
+this laptop's NVIDIA/PRIME and extra-storage policy.
+
+Debian/Fedora install the browser, desktop and greeter through APT/DNF, then
+apply their shared dotfiles and Nix editors. Reboot to enter the new greeter.
+See [native setup details and upstream repositories](nixos/native/README.md).
+For only portable dotfiles/editors, or a build preview, use
+`nixos/bootstrap.sh --help`.
 
 Log out and back in after migration to clear old shell/environment settings.
 On NixOS, Flatpaks move from the user installation to a system-managed

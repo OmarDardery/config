@@ -111,6 +111,15 @@ let
       && lib.hasInfix (lib.escapeShellArg "path:${alternate.configRepo}#${alternate.profileName}") tools.home.shellAliases.up
       && tools.home.shellAliases.up == tools.home.shellAliases.rebuild
       && tools.home.sessionVariables.NH_FLAKE == "path:${alternate.configRepo}";
+    nativeBrowser =
+      nativeDesktop.xdg.mimeApps.defaultApplications."x-scheme-handler/https"
+      == [ "config-browser.desktop" ]
+      && nativeDesktop.home.file.".local/bin/desktop-browser".executable
+      && nativeDesktop.programs.umbriel.settings.keybinds."Mod+B".action == "spawn:desktop-browser"
+      && integrated.xdg.mimeApps.defaultApplications."x-scheme-handler/https" == [ "zen.desktop" ];
+    nativeEditorDiscovery =
+      builtins.elem "${tools.home.profileDirectory}/bin" tools.home.sessionPath
+      && builtins.elem "${tools.home.profileDirectory}/share" tools.home.sessionSearchVariables.XDG_DATA_DIRS;
     nativeShell =
       lib.hasInfix "command -v starship" tools.home.file.".zshrc".text
       && lib.hasInfix "fzf --zsh" tools.home.file.".zshrc".text

@@ -2,6 +2,7 @@
   config,
   lib,
   isLaptop,
+  isNixOS,
   profile,
   ...
 }:
@@ -100,7 +101,7 @@ in
           follows_mouse_max_scroll = 0.0;
         };
         cursor = {
-          theme = "Bibata-Modern-Classic";
+          theme = if isNixOS then "Bibata-Modern-Classic" else "Adwaita";
           size = 24;
           hide_when_typing = true;
         };
@@ -167,7 +168,7 @@ in
       environment = {
         ELECTRON_OZONE_PLATFORM_HINT = "wayland";
         QT_QPA_PLATFORM = "wayland";
-        QT_QPA_PLATFORMTHEME = "kde";
+        QT_QPA_PLATFORMTHEME = if isNixOS then "kde" else "qt6ct";
         QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
         _JAVA_AWT_WM_NONREPARENTING = "1";
       };
@@ -177,7 +178,7 @@ in
         "Mod+T" = once "spawn:kitty";
         "Mod+Space" = once "spawn:noctalia msg panel-toggle launcher";
         "Alt+Tab" = once "spawn:noctalia msg window-switcher hold";
-        "Mod+B" = once "spawn:zen";
+        "Mod+B" = once "spawn:${if isNixOS then "zen" else "desktop-browser"}";
         "Mod+Alt+L" = once "spawn:noctalia msg session lock";
         "Mod+Shift+Q" = once "spawn:noctalia msg panel-toggle session";
         "XF86PowerOff" = (locked "session lock") // {

@@ -1,85 +1,71 @@
-# Native applications on other distributions
+# Debian and Fedora desktop installation
 
-Home Manager installs LazyVim and VSCodium and writes dotfiles. Install everything
-else with the host distribution. The Nix editor closures contain their language
-servers, runtimes, extensions and plugin dependencies; these are private to the
-editors rather than added to the global application profile.
-
-## Desktop
-
-Use the upstream installation guides:
-
-- [Noctalia](https://docs.noctalia.dev/noctalia/getting-started/installation/)
-- [Umbriel](https://github.com/noctalia-dev/umbriel/blob/main/docs/user/installation.md)
-- [Noctalia Greeter](https://docs.noctalia.dev/greeter/installation/)
-
-These projects distinguish official distribution packages from the
-community-maintained repositories they document. A repository linked by upstream
-is not necessarily maintained by the distribution itself.
-
-On Debian Trixie, Sid or Ubuntu 26.04, first configure the matching Noctalia APT
-repository using those instructions and refresh APT metadata. Then review the
-separate installation command:
+Run the installer from a checkout as your normal user. First edit
+`nixos/profile.nix` for your username, home directory and checkout path. The
+shipped profile is `oad`, `/home/oad/config/nixos`, `x86_64-linux`.
 
 ```sh
-bash ~/config/nixos/native/desktop.sh --print
-bash ~/config/nixos/native/desktop.sh --install
+cd ~/config
+bash debian-setup.sh  # Debian 13 Trixie or Sid
+# OR
+bash fedora-setup.sh  # Conventional Fedora 44+, not Atomic/rpm-ostree
 ```
 
-The script only invokes package installation. It does not add repositories or
-call service-management commands. Packages can perform their normal maintainer
-actions; Debian/Ubuntu greeter packages configure greetd during installation. For Fedora, Arch and
-openSUSE use the native package instructions in the linked guides; package names
-and repository requirements differ, so this script does not guess them.
+The distribution scripts in this directory perform the following steps:
 
-The desktop preferences assume the configured native applications (including
-Kitty, Thunar and its archive/volume plugins). Install those applications or
-adapt `home/files.nix` before applying their MIME defaults.
+1. Add the matching upstream-documented desktop repository and install native
+   Noctalia, Umbriel, Umbriel's portal and Noctalia Greeter.
+2. Install Firefox/Firefox ESR, Kitty, Thunar and its plugins, media/document/office
+   tools, capture utilities, fonts, shell basics and the distribution's multi-user
+   Nix packages. Fedora also installs native Yazi and Starship from Terra.
+3. Build and activate `<profileName>-desktop` through Home Manager, backing up
+   conflicting unmanaged files with a timestamped suffix. Home Manager installs
+   only LazyVim/VSCodium and their private dependencies, and writes dotfiles.
+4. Run `desktop-apply` and install a native user unit to repeat it at graphical
+   login. Enable flakes in the managed user Nix configuration. Debian's `batcat`
+   and `fdfind` receive user-local `bat` and `fd` links when those names are free.
+5. Merge greetd and greeter TOML, select Umbriel, initialize packaged greeter state
+   and grant only this active local account the upstream appearance-sync action.
+   Existing custom settings/comments are retained; old greetd autologin is removed
+   so it cannot bypass the greeter. Changed system files receive `.before-config`
+   backups, with numbered backups on subsequent runs.
+6. Disable the previous display manager's boot enablement and enable greetd for
+   the next boot, after editor/dotfile activation succeeds. The script does not
+   explicitly stop the running display manager or start greetd in the active
+   session. Package maintainer scripts may perform their normal service actions.
+   Reboot after setup and select Umbriel.
 
-Install Umbriel's portal alongside the compositor. Follow the greeter guide for
-its session wrapper, greetd configuration, AccountsService, Polkit, state setup
-and display-manager handoff. Keep GPU drivers, PipeWire, printing and system
-services owned by the distribution. A Home Manager switch cannot configure these
-system integrations on a non-NixOS machine.
+Both installers use the packaged `noctalia-greeter-session` wrapper and preserve
+packaged PAM configuration. They do not alter Fedora Authselect or SELinux, change
+GPU drivers, replace network configuration, remove other desktop environments or
+uninstall applications. Existing drivers must support the native Wayland stack.
+A failed package download/build stops setup; rerun after resolving the failure.
+Native package versions follow their repositories; they are not pinned by the Nix
+lock file. A fresh real-machine login remains necessary to verify graphics/PAM.
 
-After installing the native desktop, opt into its dotfiles:
+## Sources and updates
 
-```sh
-bash ~/config/nixos/bootstrap.sh --profile oad-desktop --activate --backup-extension bak
-desktop-apply
-```
+- [Noctalia installation](https://docs.noctalia.dev/noctalia/getting-started/installation/)
+- [Umbriel installation](https://docs.noctalia.dev/umbriel/installation/)
+- [Greeter installation](https://docs.noctalia.dev/greeter/installation/)
+- [Terra repository configuration](https://github.com/terrapkg/subatomic-repos/blob/main/terra.repo)
+- [Debian Nix setup](https://packages.debian.org/trixie/nix-setup-systemd)
+- [Fedora Nix daemon](https://packages.fedoraproject.org/pkgs/nix/nix-daemon/)
 
-Edit `profile.nix` for another account first. The default `oad` profile leaves
-Noctalia/Umbriel, GTK and MIME settings alone. The `oad-desktop` profile writes
-them and enables dynamic editor themes, but installs no desktop applications or
-services. Run `desktop-apply` again after changing managed desktop preferences;
-it initializes missing app palettes and removes conflicting managed state
-preferences while preserving runtime wallpaper, algorithm and mode choices.
+Debian uses NickH's Noctalia APT repository; Fedora uses the official Fedora
+Noctalia package plus Terra's Umbriel/portal nightly and greeter packages. These
+third-party repositories are documented by upstream; they are not all maintained
+by Debian/Fedora or the Noctalia team. Package/metadata signature checks stay
+on. No remote shell installer is piped into a shell.
 
-## Tools used by the dotfiles
+`update` switches the selected Nix profile and updates Flatpaks. Upgrade native
+applications and the host through APT/DNF. Other optional CLI tools can be
+installed through the host package manager; shell integrations check for their
+commands before starting. Debian does not add an extra repository solely for
+Yazi or Starship. `nixos/native/desktop.sh` delegates to the matching full installer
+for compatibility; it is no longer a package-command printer.
 
-Install the tools you use through the distribution's packages. Shell hooks check
-for their commands before enabling integrations, so missing optional tools do not
-break shell startup.
-
-| Purpose | Commands |
-| --- | --- |
-| Shell and prompt | `bash`, `zsh`, `starship`, `zoxide`, `fzf`, `direnv` |
-| Files and diagnostics | `eza`, `bat`, `btop`, `fastfetch`, `yazi`, `rg`, `fd` |
-| Git | `git`, Git LFS, `delta`, `gh`, `lazygit` |
-| Helper scripts | Python 3.11+, Bash, coreutils, `flock` |
-| Office conversions | `libreoffice` / `soffice`, Python 3 |
-| Capture and plugins | `grim`, `slurp`, `wl-copy`, `jq`, `swappy`, `tesseract`, `ffmpeg`, `pactl` |
-| Themes | Bibata Modern Classic cursor, JetBrainsMono Nerd Font, GTK/Qt themes |
-
-Some distributions call Bat `batcat` and fd `fdfind`; supply the standard command
-names if you use these workflows. Package names are distribution-specific.
-Nix itself must already be installed with flakes enabled. `up` uses this flake's
-pinned Home Manager CLI through `nix run`, so no global `nh` or Home Manager
-installation is necessary. `update` updates this flake and switches only Home
-Manager, then updates native Flatpaks when Flatpak is installed. Host OS updates
-remain the native package manager's responsibility.
-
-`notebook-kernel` uses the project's `.venv/bin/python`. Install `ipykernel` in
-that environment first. The helper itself needs native Python 3; both editors
-also include a Nix-packaged copy in their private tool paths.
+After changing desktop preferences, run `desktop-apply` or log in again. Runtime
+wallpaper, palette algorithm and dark/light mode remain writable. Noctalia's
+**Security → Noctalia Greeter → Auto-Sync / Sync Now** copies appearance to the
+login screen; no personal home directory is exposed to the greeter.

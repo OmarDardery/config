@@ -1,5 +1,32 @@
-{ ... }:
+{ isNixOS, ... }:
+let
+  browser = if isNixOS then "zen.desktop" else "config-browser.desktop";
+in
 {
+  home.file.".local/bin/desktop-browser" = {
+    enable = !isNixOS;
+    executable = true;
+    text = ''
+      #!/usr/bin/env bash
+      set -euo pipefail
+      if command -v firefox-esr >/dev/null; then
+        exec firefox-esr "$@"
+      fi
+      exec firefox "$@"
+    '';
+  };
+  xdg.dataFile."applications/config-browser.desktop" = {
+    enable = !isNixOS;
+    text = ''
+      [Desktop Entry]
+      Type=Application
+      Name=Firefox
+      Exec=desktop-browser %u
+      Terminal=false
+      NoDisplay=true
+      MimeType=text/html;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
+    '';
+  };
   xdg.userDirs = {
     enable = true;
     package = null;
@@ -9,10 +36,10 @@
     enable = true;
     defaultApplications = {
       "inode/directory" = [ "thunar.desktop" ];
-      "text/html" = [ "zen.desktop" ];
-      "application/xhtml+xml" = [ "zen.desktop" ];
-      "x-scheme-handler/http" = [ "zen.desktop" ];
-      "x-scheme-handler/https" = [ "zen.desktop" ];
+      "text/html" = [ browser ];
+      "application/xhtml+xml" = [ browser ];
+      "x-scheme-handler/http" = [ browser ];
+      "x-scheme-handler/https" = [ browser ];
       "application/pdf" = [ "org.gnome.Papers.desktop" ];
       "application/zip" = [ "org.gnome.FileRoller.desktop" ];
       "application/x-7z-compressed" = [ "org.gnome.FileRoller.desktop" ];
