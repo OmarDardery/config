@@ -1,7 +1,5 @@
 # Nix tooling and deployment aliases for both backends.
 {
-  pkgs,
-  inputs,
   profile,
   isNixOS,
   isLaptop,
@@ -15,42 +13,25 @@ let
     if isNixOS then
       "nh os switch --hostname ${lib.escapeShellArg profile.hostName}"
     else
-      "nh home switch -c ${lib.escapeShellArg profile.profileName}";
-  updater = pkgs.callPackage ../pkgs/config-update.nix { inherit isNixOS; };
-  updateCommand = "${updater}/bin/config-update ${directory} ${if isNixOS then "os" else "home"} ${
+      "nix run ${repository}#home-manager -- switch --flake ${lib.escapeShellArg "path:${profile.configRepo}#${profile.profileName}"}";
+  updateCommand = "config-update ${directory} ${if isNixOS then "os" else "home"} ${
     lib.escapeShellArg (if isNixOS then profile.hostName else profile.profileName)
   }";
 in
 {
-  imports = [ inputs.nix-index-database.homeModules.nix-index ];
-
-  # Wrapper around nixos-rebuild: progress output instead of a wall of text,
-  # and it prints the package diff against the previous generation.
-  programs.nh.enable = true;
-
-  # Provides `nix-locate`, the "which package contains this binary" lookup.
-  # It also wires up zsh's command-not-found handler. The imported module uses
-  # a prebuilt database; no indexing is needed at activation or after updates.
-  programs.nix-index.enable = true;
-  # `, cowsay hi` runs a package once, using the same prebuilt database.
-  programs.nix-index-database.comma.enable = true;
-
-  # Per-project toolchains. With Rust, Go, bun and uv all in use side by side,
-  # this keeps project-specific versions out of the global profile.
-  programs.direnv = {
-    enable = true;
-    nix-direnv.enable = true;
+  home.file.".local/bin/config-update" = {
+    executable = true;
+    text = "#!/usr/bin/env bash\n" + builtins.readFile ../pkgs/config-update.sh;
   };
-
-  home.packages = with pkgs; [
-    nix-output-monitor
-    nvd
-    nix-tree
-    updater
-  ];
-
-  programs.nh.flake = "path:${profile.configRepo}";
-
+  home.file.".local/bin/office-convert" = {
+    executable = true;
+    text = "#!/usr/bin/env python3\n" + builtins.readFile ../pkgs/office-convert.py;
+  };
+  home.file.".local/bin/notebook-kernel" = {
+    executable = true;
+    text = "#!/usr/bin/env python3\n" + builtins.readFile ../pkgs/notebook-kernel.py;
+  };
+  home.sessionVariables.NH_FLAKE = "path:${profile.configRepo}";
   home.shellAliases = {
     update = updateCommand;
     up = switchCommand;
@@ -59,7 +40,7 @@ in
       if isNixOS then
         "nh os build --hostname ${lib.escapeShellArg profile.hostName}"
       else
-        "nh home build -c ${lib.escapeShellArg profile.profileName}";
+        "nix build ${lib.escapeShellArg "path:${profile.configRepo}#homeConfigurations.${profile.profileName}.activationPackage"}";
     neval = "nix flake check ${repository} --no-build --no-write-lock-file";
     ncheck = "nix flake check ${repository} --no-write-lock-file";
     nupdate = "nix flake update --flake ${repository}";

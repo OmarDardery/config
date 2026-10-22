@@ -64,7 +64,7 @@ class UpdateTests(unittest.TestCase):
         result = self.run_update(["path:/checkout 'quoted'", "home", "user@host"])
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.commands()[1], [
-            "nh", "home", "switch", "--show-activation-logs", "--configuration", "user@host", "path:/checkout 'quoted'"
+            "nix", "run", "path:/checkout 'quoted'#home-manager", "--", "switch", "--flake", "path:/checkout 'quoted'#user@host"
         ])
         self.assertNotIn("path:path:", self.log.read_text())
 
@@ -74,7 +74,7 @@ class UpdateTests(unittest.TestCase):
             (self.bin / name).symlink_to(shutil.which(name))
         result = self.run_update(["/checkout", "home", "user"], path=str(self.bin))
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertEqual([entry[0] for entry in self.commands()], ["nix", "nh"])
+        self.assertEqual([entry[0] for entry in self.commands()], ["nix", "nix"])
         self.assertIn("Flatpak is not installed; skipping", result.stdout)
 
     def test_nix_failures_stop_later_stages(self):

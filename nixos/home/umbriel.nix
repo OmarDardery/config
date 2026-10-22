@@ -1,11 +1,8 @@
 {
-  inputs,
-  pkgs,
   config,
   lib,
   isLaptop,
   profile,
-  osConfig,
   ...
 }:
 let
@@ -22,13 +19,11 @@ let
     submap = "reset";
     repeat = false;
   };
-  rowNavigation = pkgs.writeShellApplication {
-    name = "umbriel-row-action";
-    runtimeInputs = [
-      config.programs.umbriel.package
-      pkgs.jq
-    ];
+  rowNavigation = {
+    executable = true;
     text = ''
+      #!/usr/bin/env bash
+      set -euo pipefail
       case "''${1:-}" in
         focus-up) tab_action=column-focus-tab-previous ;;
         focus-down) tab_action=column-focus-tab-next ;;
@@ -47,16 +42,14 @@ let
       fi
     '';
   };
-  rowAction = action: "spawn:${rowNavigation}/bin/umbriel-row-action ${action}";
-  screenshotWindow = pkgs.writeShellApplication {
-    name = "screenshot-window-umbriel";
-    runtimeInputs = [
-      config.programs.umbriel.package
-      pkgs.jq
-      pkgs.grim
-      pkgs.wl-clipboard
-    ];
+  rowAction =
+    action:
+    "spawn:${lib.escapeShellArg "${config.home.homeDirectory}/.local/bin/umbriel-row-action"} ${action}";
+  screenshotWindow = {
+    executable = true;
     text = ''
+      #!/usr/bin/env bash
+      set -euo pipefail
       identifier=$(umbriel windows --json | jq -er '
         [.[] | select(.active)]
         | if length == 1 then .[0].id else error("Expected one active window") end
@@ -71,16 +64,17 @@ let
   };
 in
 {
-  imports = [ inputs.umbriel.homeModules.default ];
+  home.file.".local/bin/umbriel-row-action" = rowNavigation;
+  home.file.".local/bin/screenshot-window-umbriel" = screenshotWindow;
   programs.umbriel = {
     enable = true;
-    package = osConfig.programs.umbriel.package;
+    package = null;
     settings = {
       # No independent palette: Noctalia owns colors; native defaults before rendering.
       include.optional.files = [ "${config.xdg.stateHome}/noctalia/theme/umbriel.toml" ];
       general = {
         autostart = [
-          "${config.programs.noctalia.package}/bin/noctalia"
+          "noctalia"
         ];
         mod_key = "Super";
         show_cheatsheet = false;
@@ -106,8 +100,8 @@ in
           follows_mouse_max_scroll = 0.0;
         };
         cursor = {
-          theme = config.home.pointerCursor.name;
-          size = config.home.pointerCursor.size;
+          theme = "Bibata-Modern-Classic";
+          size = 24;
           hide_when_typing = true;
         };
       };
@@ -180,7 +174,7 @@ in
       # Explicit navigation takes precedence over Umbriel's built-in bindings.
       keybinds = {
         "Mod+Shift+Escape" = once "cheatsheet-open";
-        "Mod+T" = once "spawn:${pkgs.kitty}/bin/kitty";
+        "Mod+T" = once "spawn:kitty";
         "Mod+Space" = once "spawn:noctalia msg panel-toggle launcher";
         "Alt+Tab" = once "spawn:noctalia msg window-switcher hold";
         "Mod+B" = once "spawn:zen";
@@ -190,11 +184,11 @@ in
           repeat = false;
           allow_when_inhibited = true;
         };
-        "Mod+Shift+F23" = once "spawn:${pkgs.kitty}/bin/kitty";
+        "Mod+Shift+F23" = once "spawn:kitty";
         "Mod+E" = once "spawn:thunar";
-        "Mod+Shift+E" = once "spawn:${pkgs.kitty}/bin/kitty yazi";
+        "Mod+Shift+E" = once "spawn:kitty yazi";
         "Mod+I" = once "spawn:codium";
-        "Mod+Ctrl+E" = once "spawn:${pkgs.kitty}/bin/kitty nvim ${lib.escapeShellArg profile.configRepo}";
+        "Mod+Ctrl+E" = once "spawn:kitty nvim ${lib.escapeShellArg profile.configRepo}";
         "Mod+Shift+D" = once "spawn:nwg-displays";
         "Mod+A" = once "spawn:noctalia msg panel-toggle control-center";
         "Mod+S" = once "spawn:noctalia msg plugin alexander/screen-toolkit:service all toggle";
@@ -217,7 +211,8 @@ in
         "Mod+Ctrl+Shift+R" = once "config-reload";
         "Print" = once "spawn:noctalia msg screenshot-region";
         "Shift+Print" = once "spawn:noctalia msg screenshot-fullscreen";
-        "Ctrl+Print" = once "spawn:${screenshotWindow}/bin/screenshot-window-umbriel";
+        "Ctrl+Print" =
+          once "spawn:${lib.escapeShellArg "${config.home.homeDirectory}/.local/bin/screenshot-window-umbriel"}";
         "Mod+P" = once "window-toggle-pinned";
         "Alt+Print" = once "spawn:noctalia msg screenshot-annotate";
         "Mod+Alt+G" = once "spawn:noctalia msg panel-toggle alexander/game-launcher:browser";
@@ -346,7 +341,8 @@ in
         "Mod+D" = once "workspace-set-layout:toggle:dwindle,scrolling";
         "F6" = once "spawn:noctalia msg screenshot-region";
         "Ctrl+Shift+2" = once "spawn:noctalia msg screenshot-fullscreen";
-        "Ctrl+Shift+3" = once "spawn:${screenshotWindow}/bin/screenshot-window-umbriel";
+        "Ctrl+Shift+3" =
+          once "spawn:${lib.escapeShellArg "${config.home.homeDirectory}/.local/bin/screenshot-window-umbriel"}";
         "Mod+Escape" = (once "shortcuts-inhibit-toggle") // {
           allow_when_inhibited = true;
         };

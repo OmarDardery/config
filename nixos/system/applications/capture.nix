@@ -1,7 +1,7 @@
 # Dependencies used by Noctalia's Screen Toolkit and editor image previews.
 { pkgs, ... }:
 {
-  home.packages = with pkgs; [
+  environment.systemPackages = with pkgs; [
     slurp
     grim
     hyprpicker

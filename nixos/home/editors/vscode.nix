@@ -6,10 +6,11 @@
   config,
   profile,
   isNixOS,
+  desktopEnabled ? false,
   ...
 }:
 let
-  toolchain = import ./toolchain.nix { inherit pkgs; };
+  toolchain = import ../../lib/toolchain.nix { inherit pkgs; };
 
   # clang-tools, vscode-langservers-extracted etc. are multi-binary packages, so
   # name the binary explicitly rather than relying on meta.mainProgram.
@@ -71,68 +72,90 @@ in
     enable = true;
 
     # PlatformIO downloads foreign toolchain binaries; use the FHS wrapper.
-    package = pkgs.vscodium.fhs;
+    package = pkgs.symlinkJoin {
+      name = "vscodium-with-tools";
+      inherit (pkgs.vscodium) version;
+      paths = [ (if isNixOS then pkgs.vscodium.fhs else pkgs.vscodium) ];
+      nativeBuildInputs = [ pkgs.makeWrapper ];
+      postBuild = ''
+        wrapProgram "$out/bin/codium" --prefix PATH : ${
+          lib.makeBinPath (
+            toolchain.runtimes
+            ++ [
+              pkgs.platformio-core
+              pkgs.opencode
+              (import ../../pkgs/editor-tools.nix { inherit pkgs; }).notebookKernel
+            ]
+          )
+        }
+      '';
+      meta.mainProgram = "codium";
+    };
+    # Expose tools to the editor and its terminals without installing a global toolchain.
+    # wrapProgram is applied to both the regular and FHS launcher.
 
     profiles.default = {
-      extensions = with pkgs.vscode-extensions; [
-        # Languages
-        # Nix. nix-ide is the extension; nixd and nixfmt below do the work.
-        jnoortheen.nix-ide
-        # Lua
-        sumneko.lua
-        # C/C++. clangd is the language server here; CodeLLDB handles debugging.
-        llvm-vs-code-extensions.vscode-clangd
-        vadimcn.vscode-lldb
-        ms-vscode.cmake-tools
-        # PlatformIO requires the cpptools extension. Its IntelliSense engine is disabled;
-        # clangd provides C/C++ language support.
-        ms-vscode.cpptools
-        # Go — brings its own debug adapter, driving delve.
-        golang.go
-        # Rust. rust-analyzer's own extension; CodeLLDB above debugs it.
-        rust-lang.rust-analyzer
-        # TypeScript / JavaScript. No language extension: VSCodium bundles the
-        # TypeScript server, the same way it bundles JSON support.
-        dbaeumer.vscode-eslint
-        esbenp.prettier-vscode
-        # Tauri schemas and project commands.
-        tauri-apps.tauri-vscode
-        # Python supplies environment selection and test/debug UI; basedpyright supplies analysis.
-        ms-python.python
-        ms-python.vscode-python-envs
-        ms-python.debugpy
-        detachhead.basedpyright
-        charliermarsh.ruff
-        # Notebook integration uses the configured Python kernel.
-        ms-toolsai.jupyter
-        ms-toolsai.jupyter-renderers
-        ms-toolsai.jupyter-keymap
-        # Markdown
-        yzhang.markdown-all-in-one
-        davidanson.vscode-markdownlint
-        # YAML / TOML
-        redhat.vscode-yaml
-        tamasfe.even-better-toml
-        # Docker UI; hadolint is available through the shared toolchain.
-        ms-azuretools.vscode-docker
-        # Shell
-        timonwong.shellcheck
-        foxundermoon.shell-format
+      extensions =
+        with pkgs.vscode-extensions;
+        [
+          # Languages
+          # Nix. nix-ide is the extension; nixd and nixfmt below do the work.
+          jnoortheen.nix-ide
+          # Lua
+          sumneko.lua
+          # C/C++. clangd is the language server here; CodeLLDB handles debugging.
+          llvm-vs-code-extensions.vscode-clangd
+          vadimcn.vscode-lldb
+          ms-vscode.cmake-tools
+          # PlatformIO requires the cpptools extension. Its IntelliSense engine is disabled;
+          # clangd provides C/C++ language support.
+          ms-vscode.cpptools
+          # Go — brings its own debug adapter, driving delve.
+          golang.go
+          # Rust. rust-analyzer's own extension; CodeLLDB above debugs it.
+          rust-lang.rust-analyzer
+          # TypeScript / JavaScript. No language extension: VSCodium bundles the
+          # TypeScript server, the same way it bundles JSON support.
+          dbaeumer.vscode-eslint
+          esbenp.prettier-vscode
+          # Tauri schemas and project commands.
+          tauri-apps.tauri-vscode
+          # Python supplies environment selection and test/debug UI; basedpyright supplies analysis.
+          ms-python.python
+          ms-python.vscode-python-envs
+          ms-python.debugpy
+          detachhead.basedpyright
+          charliermarsh.ruff
+          # Notebook integration uses the configured Python kernel.
+          ms-toolsai.jupyter
+          ms-toolsai.jupyter-renderers
+          ms-toolsai.jupyter-keymap
+          # Markdown
+          yzhang.markdown-all-in-one
+          davidanson.vscode-markdownlint
+          # YAML / TOML
+          redhat.vscode-yaml
+          tamasfe.even-better-toml
+          # Docker UI; hadolint is available through the shared toolchain.
+          ms-azuretools.vscode-docker
+          # Shell
+          timonwong.shellcheck
+          foxundermoon.shell-format
 
-        # Embedded
-        platformio.platformio-vscode-ide
+          # Embedded
+          platformio.platformio-vscode-ide
 
-        # Tooling and UI
-        eamodio.gitlens
-        mhutchie.git-graph
-        mkhl.direnv
-        editorconfig.editorconfig
-        gruntfuggly.todo-tree
-        github.vscode-pull-request-github
-        anthropic.claude-code
-        noctaliaTheme
-        pkief.material-icon-theme
-      ];
+          # Tooling and UI
+          eamodio.gitlens
+          mhutchie.git-graph
+          mkhl.direnv
+          editorconfig.editorconfig
+          gruntfuggly.todo-tree
+          github.vscode-pull-request-github
+          anthropic.claude-code
+          pkief.material-icon-theme
+        ]
+        ++ lib.optional desktopEnabled noctaliaTheme;
 
       keybindings = [
         {
@@ -177,13 +200,15 @@ in
         "editor.fontSize" = 14;
         "terminal.integrated.fontFamily" = "JetBrainsMono Nerd Font";
 
-        "workbench.colorTheme" = "NoctaliaTheme";
+        "workbench.colorTheme" = if desktopEnabled then "NoctaliaTheme" else "Default Dark Modern";
         # Keep the editor titlebar usable while hiding its window buttons.
         "window.titleBarStyle" = "custom";
         "window.controlsStyle" = "hidden";
         "window.autoDetectColorScheme" = true;
-        "workbench.preferredDarkColorTheme" = "NoctaliaTheme";
-        "workbench.preferredLightColorTheme" = "NoctaliaLight";
+        "workbench.preferredDarkColorTheme" =
+          if desktopEnabled then "NoctaliaTheme" else "Default Dark Modern";
+        "workbench.preferredLightColorTheme" =
+          if desktopEnabled then "NoctaliaLight" else "Default Light Modern";
         "workbench.iconTheme" = "material-icon-theme";
 
         # Nix manages editor and extension updates.

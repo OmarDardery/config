@@ -2,6 +2,15 @@
 # Imported by development modules and project shells.
 { pkgs }:
 {
+  platformioCompiledb = pkgs.writeText "pio-compiledb.py" ''
+    Import("env")
+    from SCons.Script import COMMAND_LINE_TARGETS, Default
+    if "compiledb" not in COMMAND_LINE_TARGETS:
+        env.Tool("compilation_db")
+        db = env.CompilationDatabase("$COMPILATIONDB_PATH")
+        env.AlwaysBuild(db)
+        Default(db)
+  '';
   # Shared by GUI editors and the general development shells.
   runtimes = with pkgs; [
     go

@@ -1,8 +1,8 @@
 { pkgs, ... }:
 {
+  environment.sessionVariables.XKB_CONFIG_ROOT = "${pkgs.xkeyboard-config}/share/X11/xkb";
   programs.nix-ld.enable = true; # provides /lib64/ld-linux for foreign binaries
-  programs.nix-ld.libraries =
-    (import ../home/development/toolchain.nix { inherit pkgs; }).pythonNativeLibraries;
+  programs.nix-ld.libraries = (import ../lib/toolchain.nix { inherit pkgs; }).pythonNativeLibraries;
   services.udev.packages = [
     pkgs.platformio-core.udev
   ];

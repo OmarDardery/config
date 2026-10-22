@@ -1,9 +1,14 @@
 # Everything bound to this specific laptop: GPUs, peripherals, extra disks.
 {
   config,
+  pkgs,
   ...
 }:
 {
+  environment.systemPackages = [
+    config.hardware.nvidia.package.settings
+    (import ./pkgs/nvidia-offload.nix { inherit pkgs; })
+  ];
   boot.kernelModules = [ "uinput" ];
 
   hardware = {
@@ -22,7 +27,7 @@
       enable32Bit = true;
     };
 
-    # Device access only; the GUI and user daemon are in home/hardware-user.nix.
+    # Native driver and daemon; the tablet preference seed is in home/hardware-user.nix.
     uinput.enable = true;
 
     # NVIDIA driver and PRIME offload policy.
@@ -43,7 +48,7 @@
       # Use open kernel modules for this Ada GPU.
       open = true;
 
-      nvidiaSettings = false; # matching driver settings GUI is home-owned
+      nvidiaSettings = false; # matching settings GUI is installed above
 
       # Saves all of VRAM on suspend instead of the bare essentials. Fixes
       # corruption/crashes after resume on some machines, but is itself known

@@ -34,7 +34,7 @@ printf '%s\n' 'Building and activating the updated configuration...'
 if [[ "$backend" == os ]]; then
   nh os switch --show-activation-logs --hostname "$configuration" "$repository"
 else
-  nh home switch --show-activation-logs --configuration "$configuration" "$repository"
+  nix run "$repository#home-manager" -- switch --flake "$repository#$configuration"
 fi
 
 if command -v flatpak >/dev/null 2>&1; then

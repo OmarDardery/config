@@ -10,7 +10,9 @@ let
   thunar = lib.findFirst (
     package: lib.getName package == "thunar-with-plugins"
   ) null system.environment.systemPackages;
-  papers = lib.findFirst (package: lib.getName package == "papers") null home.home.packages;
+  papers = lib.findFirst (
+    package: lib.getName package == "papers"
+  ) null system.environment.systemPackages;
   portability = import ./tests/portability.nix { inherit flake; };
   python = pkgs.python3.withPackages (ps: [ ps.tomlkit ]);
   source = lib.cleanSourceWith {
@@ -45,6 +47,8 @@ let
         ${command}
         touch "$out"
       '';
+  # Parsing generated text does not require realizing the store paths it mentions.
+  syntaxFile = name: text: pkgs.writeText name (builtins.unsafeDiscardStringContext text);
   # Legacy configurations belong in disposable test fixtures.
   legacyKitty = pkgs.runCommand "legacy-kitty-fixture" { } ''
     mkdir -p "$out"
@@ -98,7 +102,7 @@ let
     in
     {
       homeDirectory = configuration.home.homeDirectory;
-      kitty = lib.getExe configuration.programs.kitty.package;
+      kitty = lib.getExe pkgs.kitty;
       configHome = configuration.xdg.configHome;
       stateHome = configuration.xdg.stateHome;
       init = configuration.lib.bash.initHomeManagerLib;
@@ -144,10 +148,11 @@ let
           homeDirectory = "/fixture home \"quoted\"";
         };
         isNixOS = true;
+        desktopEnabled = true;
         isLaptop = false;
       };
       modules = [
-        ./home/nixos.nix
+        inputs.self.modules.homeManager.desktop
         {
           xdg.configHome = "/fixture home \"quoted\"/config \"custom\"";
           xdg.cacheHome = "/fixture home \"quoted\"/cache \"custom\"";
@@ -160,12 +165,12 @@ let
       configHome = batHome.xdg.configHome;
       cacheHome = batHome.xdg.cacheHome;
       init = batHome.lib.bash.initHomeManagerLib;
-      seed = batHome.home.activation.initializeNoctaliaTemplates.data;
-      cache = batHome.home.activation.batCache.data;
-      bat = batHome.programs.bat.package;
+      seed = batHome.home.file.".local/bin/desktop-apply".text;
+      cache = "";
+      bat = pkgs.bat;
       opencodeTui = batHome.xdg.configFile."opencode/tui.json".source;
       noctaliaConfig = batHome.xdg.configFile."noctalia/config.toml".source;
-      noctalia = batHome.programs.noctalia.package;
+      noctalia = inputs.noctalia.packages.${profile.system}.default;
       samples = ./assets/wallpapers;
       wallpaperSeed = batHome.home.activation.noctaliaWallpaperSamples.data;
     }
@@ -248,6 +253,26 @@ let
   fixtureJson = pkgs.writeText "kitty-linking-fixtures.json" (builtins.toJSON fixtures);
 in
 {
+  dotfile-syntax = scriptCheck "generated-dotfile-syntax-checks" ''
+    bash -n ${home.home.file.".bashrc".source}
+    ${pkgs.zsh}/bin/zsh -n ${syntaxFile "zshrc" home.home.file.".zshrc".text}
+    ${pkgs.zsh}/bin/zsh -n ${syntaxFile "zshenv" home.home.file.".zshenv".text}
+    bash -n ${syntaxFile "desktop-apply" home.home.file.".local/bin/desktop-apply".text}
+    bash -n ${syntaxFile "umbriel-row-action" home.home.file.".local/bin/umbriel-row-action".text}
+    bash -n ${syntaxFile "screenshot-window" home.home.file.".local/bin/screenshot-window-umbriel".text}
+    ${pkgs.lua5_1}/bin/luac -p ${syntaxFile "init.lua" home.programs.neovim.initLua}
+    ${lib.concatMapStringsSep "\n"
+      (file: "${pkgs.lua5_1}/bin/luac -p ${syntaxFile "plugin.lua" file.text}")
+      (
+        builtins.attrValues (
+          lib.filterAttrs (
+            name: file:
+            file.enable && file.text != null && lib.hasPrefix "nvim/" name && lib.hasSuffix ".lua" name
+          ) home.xdg.configFile
+        )
+      )
+    }
+  '';
   editor-integration = editorCheck "editor-integration-checks" false home;
   editor-notebooks = editorCheck "editor-notebook-checks" true home;
   portable-editor =
@@ -284,7 +309,7 @@ in
   bootstrap = scriptCheck "bootstrap-checks" "bash ${tests}/bootstrap.sh";
   kitty-linking = scriptCheck "kitty-home-manager-linking-checks" "python ${tests}/kitty-linking.py ${fixtureJson}";
   steam-setup = scriptCheck "steam-setup-checks" "python ${tests}/steam-setup.py ${steamFixture}";
-  bat-first-run = scriptCheck "bat-first-run-checks" "python ${tests}/bat-first-run.py ${batFixture}";
+  desktop-first-run = scriptCheck "desktop-first-run-checks" "python ${tests}/desktop-first-run.py ${batFixture}";
   zen-window-controls = scriptCheck "zen-window-controls-checks" ''
     bash ${tests}/zen-window-controls.sh ${./pkgs/zen-apply.sh} ${inputs.noctalia-templates}/zen-browser/apply.sh ${./assets/zen-window-controls.css}
   '';
@@ -330,8 +355,8 @@ in
       {
         nativeBuildInputs = [
           python
-          home.programs.noctalia.package
-          home.programs.umbriel.package
+          inputs.noctalia.packages.${profile.system}.default
+          system.programs.umbriel.package
         ];
         exportReferencesGraph = [
           "config-closure"

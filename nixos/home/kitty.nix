@@ -9,12 +9,13 @@
 {
   programs.kitty = {
     enable = true;
+    package = null;
     font = {
       name = "JetBrainsMono Nerd Font";
       size = 14;
     };
     settings = {
-      shell = lib.getExe pkgs.zsh;
+      shell = "zsh";
       bold_font = "auto";
       italic_font = "auto";
       bold_italic_font = "auto";

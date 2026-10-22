@@ -6,10 +6,11 @@
   config,
   profile,
   isNixOS,
+  desktopEnabled ? false,
   ...
 }:
 let
-  toolchain = import ./toolchain.nix { inherit pkgs; };
+  toolchain = import ../../lib/toolchain.nix { inherit pkgs; };
   # Use the pinned npm distribution of the Copilot language server.
   copilotLanguageServer = pkgs.copilot-language-server.overrideAttrs (_: {
     version = "1.495.0";
@@ -217,7 +218,9 @@ in
     # Nix provides the shared toolchain and Neovim-specific runtime dependencies.
     extraPackages =
       toolchain.languageServers
+      ++ toolchain.runtimes
       ++ [
+        (import ../../pkgs/editor-tools.nix { inherit pkgs; }).notebookKernel
         toolchain.debugAdapters.python
         toolchain.debugAdapters.lldb
       ]
@@ -412,7 +415,7 @@ in
     })
   '';
 
-  xdg.configFile."nvim/lua/plugins/noctalia.lua".enable = isNixOS;
+  xdg.configFile."nvim/lua/plugins/noctalia.lua".enable = desktopEnabled;
   xdg.configFile."nvim/lua/plugins/noctalia.lua".text = ''
     local path = ${lib.generators.toLua { } "${config.xdg.stateHome}/noctalia/theme/nvim.lua"}
     local last_stamp

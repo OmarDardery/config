@@ -1,19 +1,5 @@
+{ ... }:
 {
-  pkgs,
-  isNixOS,
-  ...
-}:
-let
-  converter = pkgs.writeShellApplication {
-    name = "office-convert";
-    runtimeInputs = [ pkgs.python3 ] ++ pkgs.lib.optional isNixOS pkgs.libreoffice;
-    text = ''
-      exec python3 ${../pkgs/office-convert.py} "$@"
-    '';
-  };
-in
-{
-  home.packages = [ converter ];
   home.shellAliases = {
     office2pdf = "office-convert pdf";
     ppt2pdf = "office-convert pdf";

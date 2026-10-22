@@ -2,11 +2,12 @@
   pkgs,
   lib,
   config,
+  profile,
   isLaptop,
   ...
 }:
 {
-  home.packages =
+  environment.systemPackages =
     with pkgs;
     [
       nwg-displays

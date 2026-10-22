@@ -4,7 +4,7 @@
   ...
 }:
 {
-  home.packages = with pkgs; [
+  environment.systemPackages = with pkgs; [
     freecad
     logisim-evolution
     winboat

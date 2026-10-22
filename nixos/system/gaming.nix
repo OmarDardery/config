@@ -1,5 +1,4 @@
 {
-  config,
   pkgs,
   inputs,
   profile,
@@ -12,9 +11,7 @@
       (import ../pkgs/steam.nix {
         inherit pkgs;
         millenniumInput = inputs.millennium;
-        colorsFile = "${
-          config.home-manager.users.${profile.username}.xdg.stateHome
-        }/noctalia/theme/steam.css";
+        colorsFile = "${profile.homeDirectory}/.local/state/noctalia/theme/steam.css";
       }).steam;
     remotePlay.openFirewall = false;
     localNetworkGameTransfers.openFirewall = false;

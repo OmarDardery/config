@@ -1,6 +1,6 @@
 { pkgs }:
 let
-  toolchain = import ./home/development/toolchain.nix { inherit pkgs; };
+  toolchain = import ./lib/toolchain.nix { inherit pkgs; };
   generalPackages = toolchain.runtimes;
   embeddedPackages = with pkgs; [
     platformio-core

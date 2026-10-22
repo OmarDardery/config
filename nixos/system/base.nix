@@ -28,10 +28,9 @@
     shell = pkgs.zsh;
   };
 
-  # Stub only — NixOS requires the shell to be enabled here for
-  # the configured login shell above. All zsh config lives in home/shell.nix.
+  # NixOS installs the login shell; Home Manager writes its dotfiles.
   programs.zsh.enable = true;
-  # Home Manager initializes completion after adding its own completion paths.
+  # The shared .zshrc initializes completion once.
   programs.zsh.enableGlobalCompInit = false;
 
   home-manager = {
@@ -40,10 +39,14 @@
     extraSpecialArgs = {
       inherit inputs profile;
       isNixOS = true;
+      desktopEnabled = true;
       isLaptop = true;
     };
     backupFileExtension = "bak";
-    users.${profile.username} = ../home/nixos.nix;
+    users.${profile.username}.imports = [
+      inputs.self.modules.homeManager.desktop
+      ../home/hardware-user.nix
+    ];
   };
 
   # Locale

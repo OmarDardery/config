@@ -1,42 +1,10 @@
+{ ... }:
 {
-  pkgs,
-  ...
-}:
-let
-  desktopApps = with pkgs; [
-    (papers.override { supportNautilus = false; })
-    file-roller
-    gnome-calculator
-    gnome-disk-utility
-    seahorse
-  ];
-in
-{
-  home.packages = desktopApps ++ [
-    pkgs.sshfs
-    pkgs.xdg-utils
-    pkgs.zenity
-    pkgs.system-config-printer
-  ];
-  home.sessionVariables.SSH_ASKPASS = "${pkgs.seahorse}/libexec/seahorse/ssh-askpass";
-
-  programs.bash.enableVteIntegration = true;
-  programs.zsh.enableVteIntegration = true;
   xdg.userDirs = {
     enable = true;
+    package = null;
     createDirectories = true;
   };
-  xfconf = {
-    settings = {
-      thunar.misc-volume-management = true;
-      thunar-volman = {
-        "automount-drives/enabled" = true;
-        "automount-media/enabled" = true;
-        "autobrowse/enabled" = true;
-      };
-    };
-  };
-
   xdg.mimeApps = {
     enable = true;
     defaultApplications = {

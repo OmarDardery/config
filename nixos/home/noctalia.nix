@@ -11,36 +11,22 @@ let
     src = inputs.noctalia-plugins;
   };
   settings = import ./noctalia-settings.nix;
-  reconcilePython = pkgs.python3.withPackages (ps: [ ps.tomlkit ]);
-  community = inputs.noctalia-templates;
   appThemes = import ../pkgs/noctalia-app-themes.nix {
-    inherit pkgs lib config;
-    templates = community;
+    inherit pkgs lib;
+    configHome = config.xdg.configHome;
+    cacheHome = config.xdg.cacheHome;
+    templates = inputs.noctalia-templates;
   };
+  reconcilePython = pkgs.python3.withPackages (ps: [ ps.tomlkit ]);
 
 in
 {
-  imports = [ inputs.noctalia.homeModules.default ];
-
-  # Manual reconciliation previews changes unless --apply is supplied.
-  home.packages = [
-    appThemes.libreoffice
-    (pkgs.writeShellApplication {
-      name = "noctalia-reconcile";
-      text = ''
-        exec ${reconcilePython}/bin/python3 ${../pkgs}/reconcile-noctalia.py \
-          ${lib.escapeShellArg "${config.xdg.stateHome}/noctalia/settings.toml"} \
-          ${lib.escapeShellArg "${config.xdg.configHome}/noctalia/config.toml"} "$@"
-      '';
-    })
-  ];
-
   programs.noctalia = {
     enable = true;
-
-    # Keep preferences in Nix and application palettes in writable state files.
-    # Upstream checks this config during builds; warnings need review too.
-    checkConfig = true;
+    package = null;
+    systemd.enable = false;
+    # The native executable validates generated files in the theme-rendering check.
+    checkConfig = false;
     settings = lib.recursiveUpdate settings {
       # Later sources win: keep the patched Nix plugins ahead of Git catalog copies.
       plugins.source = [
@@ -80,31 +66,43 @@ in
       };
     };
 
-    # Umbriel owns the shell lifecycle.
-    systemd.enable = false;
   };
 
-  # Only seed missing palettes, using saved runtime choices where available.
-  home.activation.initializeNoctaliaTemplates =
-    lib.hm.dag.entryBetween [ "linkGeneration" ] [ "writeBoundary" ]
-      ''
-        run ${pkgs.python3}/bin/python3 ${../pkgs}/seed-noctalia.py \
-          ${config.programs.noctalia.package}/bin/noctalia \
-          ${config.xdg.configFile."noctalia/config.toml".source} \
-          ${lib.escapeShellArg "${config.xdg.stateHome}/noctalia/settings.toml"} \
-          ${lib.escapeShellArg "${config.home.homeDirectory}/Pictures/Wallpapers"} \
-          ${../assets/wallpapers}
-      '';
-
-  # GUI edits preview a setting until the next rebuild. Keep runtime-only keys
-  # (e.g. theme mode/current wallpaper) and back up any overridden preferences.
-  home.activation.noctaliaDeclarativeSettings = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
-    state=${lib.escapeShellArg "${config.xdg.stateHome}/noctalia/settings.toml"}
-    if [[ -e "$state" || -L "$state" ]]; then
-      run ${reconcilePython}/bin/python3 ${../pkgs}/reconcile-noctalia.py \
-        "$state" ${config.xdg.configFile."noctalia/config.toml".source} --managed --apply
-    fi
-  '';
+  home.file.".local/bin/noctalia-apply-libreoffice-theme".source =
+    "${appThemes.libreoffice}/bin/noctalia-apply-libreoffice-theme";
+  home.file.".local/bin/noctalia-reconcile" = {
+    executable = true;
+    text = ''
+      #!/usr/bin/env bash
+      exec ${reconcilePython}/bin/python3 ${../pkgs}/reconcile-noctalia.py \
+        ${lib.escapeShellArg "${config.xdg.stateHome}/noctalia/settings.toml"} \
+        ${lib.escapeShellArg "${config.xdg.configHome}/noctalia/config.toml"} "$@"
+    '';
+  };
+  home.file.".local/bin/desktop-apply" = {
+    executable = true;
+    text = ''
+      #!/usr/bin/env bash
+      set -euo pipefail
+      command -v noctalia >/dev/null || { echo "Install Noctalia using the host distribution first." >&2; exit 1; }
+      ${pkgs.python3}/bin/python3 ${../pkgs/seed-noctalia.py} \
+        "$(command -v noctalia)" ${config.xdg.configFile."noctalia/config.toml".source} \
+        ${lib.escapeShellArg "${config.xdg.stateHome}/noctalia/settings.toml"} \
+        ${lib.escapeShellArg "${config.home.homeDirectory}/Pictures/Wallpapers"} ${../assets/wallpapers}
+      state=${lib.escapeShellArg "${config.xdg.stateHome}/noctalia/settings.toml"}
+      if [[ -f "$state" ]]; then
+        ${reconcilePython}/bin/python3 ${../pkgs}/reconcile-noctalia.py \
+          "$state" ${config.xdg.configFile."noctalia/config.toml".source} --managed --apply
+      fi
+      if command -v bat >/dev/null 2>&1; then bat cache --build; fi
+      if command -v xfconf-query >/dev/null 2>&1; then
+        xfconf-query -c thunar -p /misc-volume-management --create --type bool --set true
+        for property in automount-drives/enabled automount-media/enabled autobrowse/enabled; do
+          xfconf-query -c thunar-volman -p "/$property" --create --type bool --set true
+        done
+      fi
+    '';
+  };
 
   # Remove the former managed directory link, then keep a writable folder.
   # Bundled samples are individual links; personal files are never replaced.

@@ -1,4 +1,4 @@
-# Native login sessions and portals; user applications live in home/.
+# Native login sessions and portals; application packages live in system/applications/.
 {
   config,
   lib,
@@ -10,7 +10,6 @@
 {
   imports = [
     inputs.umbriel.nixosModules.default
-    inputs.noctalia-greeter.nixosModules.default
   ];
   programs.umbriel.enable = true;
   # The upstream Umbriel module supplies its portal and the GTK file chooser.
@@ -23,27 +22,13 @@
     config.umbriel."org.freedesktop.impl.portal.Secret" = "gnome-keyring";
   };
 
-  services.displayManager.noctalia-greeter = {
-    enable = true;
-    passwordless-sync-users = [ profile.username ];
-    settings = {
-      session.default = "umbriel";
-      user.default = profile.username;
-      keyboard = {
-        layout = "us,ara";
-        options = "grp:alt_shift_toggle";
-      };
-    };
-  };
-  services.displayManager.defaultSession = "umbriel";
-
   # One desktop session; retain native integration without a second shell.
   programs.xwayland.enable = true;
   services.udisks2.enable = true;
   services.gnome.at-spi2-core.enable = true;
   services.gnome.gcr-ssh-agent.enable = true;
 
-  # The recorder app is home-owned; only the privileged KMS helper is global.
+  # Limit the privileged KMS helper to the recording group.
   # KMS capture needs CAP_SYS_ADMIN; do not expose the helper to every user.
   users.groups.recording = { };
   security.wrappers.gsr-kms-server = {
@@ -79,7 +64,7 @@
     ];
   };
 
-  # Home Manager owns KDE Connect; networking.nix limits its ports to Tailscale.
+  # User units live in applications/services.nix; restrict ports to Tailscale.
   programs.kdeconnect = {
     enable = false;
     package = null;

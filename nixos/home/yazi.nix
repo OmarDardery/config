@@ -1,18 +1,19 @@
 {
   lib,
-  isNixOS,
+  desktopEnabled ? false,
   ...
 }:
 {
   programs.yazi = {
     enable = true;
+    package = null;
     shellWrapperName = "y";
     settings.mgr = {
       show_hidden = false;
       sort_by = "natural";
       sort_dir_first = true;
     };
-    theme.flavor = lib.mkIf isNixOS {
+    theme.flavor = lib.mkIf desktopEnabled {
       dark = "noctalia";
       light = "noctalia";
     };

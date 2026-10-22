@@ -181,15 +181,15 @@ else
   configured_home=$(nix "${nixflags[@]}" eval "${evalflags[@]}" --raw "$target.config.home.homeDirectory")
   [[ "$configured_user" == "$(id -un)" && "$configured_home" == "$HOME" ]] || die \
     "Profile $profile requires user $configured_user with HOME=$configured_home; current user is $(id -un) with HOME=$HOME. Edit the explicit deployment identity in $flake_dir/profile.nix, or select an existing named profile with --profile."
-  say 'Standalone profile: shell, Neovim and development tools; the distribution owns GUI applications and desktop services.'
+  say 'Standalone profile: dotfiles, LazyVim and VSCodium; applications and desktop services are installed separately.'
   warn 'Activation may change managed home files and run profile activation hooks; existing conflicting files are not force-overwritten by this script.'
   build_target="$target.activationPackage"
 fi
 
-configured_flake=$(nix "${nixflags[@]}" eval "${evalflags[@]}" --raw "$home_target.programs.nh.flake")
+configured_flake=$(nix "${nixflags[@]}" eval "${evalflags[@]}" --raw "$home_target.home.sessionVariables.NH_FLAKE")
 configured_flake=${configured_flake#path:}
 if [[ "$flake_dir" != "$configured_flake" ]]; then
-  warn "This checkout uses $flake_dir, but programs.nh.flake points to $configured_flake for follow-up commands. Edit profile.configRepo in $flake_dir/profile.nix to this checkout before using nh or configured update commands. This build still uses $flake_dir; no files or persistent environment settings were changed."
+  warn "This checkout uses $flake_dir, but home.sessionVariables.NH_FLAKE points to $configured_flake for follow-up commands. Edit profile.configRepo in $flake_dir/profile.nix to this checkout before using nh or configured update commands. This build still uses $flake_dir; no files or persistent environment settings were changed."
 fi
 
 say "Building $build_target (no activation yet)"

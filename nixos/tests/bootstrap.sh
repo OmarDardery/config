@@ -78,8 +78,8 @@ case "$name" in
           "$MOCK_FLAKE#nixosConfigurations.$MOCK_HOST.config.home-manager.users.\"$MOCK_USER\".home.username")
             [[ "$MOCK_HM_ENTRY" == present ]] || exit 90
             printf '%s\n' "$MOCK_PROFILE_USER" ;;
-          "$MOCK_FLAKE#nixosConfigurations.$MOCK_HOST.config.home-manager.users.\"$MOCK_USER\".programs.nh.flake"|\
-          "$MOCK_FLAKE#homeConfigurations.$MOCK_PROFILE.config.programs.nh.flake")
+          "$MOCK_FLAKE#nixosConfigurations.$MOCK_HOST.config.home-manager.users.\"$MOCK_USER\".home.sessionVariables.NH_FLAKE"|\
+          "$MOCK_FLAKE#homeConfigurations.$MOCK_PROFILE.config.home.sessionVariables.NH_FLAKE")
             printf '%s\n' "$MOCK_CONFIGURED_FLAKE" ;;
           "$MOCK_FLAKE#nixosConfigurations.$MOCK_HOST.config.fileSystems.\"/\".fsType")
             printf 'xfs\n' ;;
@@ -280,7 +280,7 @@ reset_case; os=nixos; root_type=''
 run_case 'mounted unknown' 'empty filesystem type'; no_build
 reset_case
 run_case pass 'portable tools build without desktop services'
-[[ "$(<"$tmp/stdout")" == *'the distribution owns GUI applications and desktop services'* ]] || fail 'missing portable profile description'
+[[ "$(<"$tmp/stdout")" == *'applications and desktop services are installed separately'* ]] || fail 'missing portable profile description'
 reset_case; os=nixos; uuid=''
 run_case 'Missing or invalid UUID' 'empty UUID refusal'; no_build
 reset_case; os=nixos; device_uuid=other-uuid

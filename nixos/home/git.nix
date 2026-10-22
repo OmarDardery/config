@@ -2,7 +2,11 @@
 {
   programs.git = {
     enable = true;
-    lfs.enable = true;
+    package = null;
+    lfs = {
+      enable = true;
+      package = null;
+    };
     settings = {
       init.defaultBranch = "main";
 
@@ -18,11 +22,11 @@
     };
   };
 
-  # Syntax-highlighted diffs with Git integration.
-  programs.delta = {
-    enable = true;
-    enableGitIntegration = true;
+  programs.git.settings = {
+    core.pager = "delta";
+    interactive.diffFilter = "delta --color-only";
+    delta.navigate = true;
+    merge.conflictStyle = "zdiff3";
   };
-
-  programs.gh.enable = true;
+  xdg.configFile."gh/config.yml".text = "git_protocol: ssh\nprompt: enabled\n";
 }

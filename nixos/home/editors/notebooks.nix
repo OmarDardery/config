@@ -32,7 +32,10 @@ in
     withPython3 = true;
     extraPython3Packages = pythonPackages;
     extraLuaPackages = ps: [ ps.magick ];
-    extraPackages = [ pkgs.python3Packages.jupytext ];
+    extraPackages = [
+      pkgs.python3Packages.jupytext
+      pkgs.imagemagick
+    ];
   };
 
   xdg.configFile."nvim/plugin/molten.vim".source = manifest;
@@ -91,7 +94,9 @@ in
           { "<leader>mI", "<cmd>MoltenInit<cr>", desc = "Notebook: choose kernel" },
           { "<leader>mp", function()
             local buf = vim.api.nvim_get_current_buf()
-            vim.system({ "notebook-kernel", LazyVim.root() }, { text = true }, function(result)
+            vim.system({ "${
+              (import ../../pkgs/editor-tools.nix { inherit pkgs; }).notebookKernel
+            }/bin/notebook-kernel", LazyVim.root() }, { text = true }, function(result)
               vim.schedule(function()
                 if result.code ~= 0 then
                   vim.notify(result.stderr, vim.log.levels.ERROR, { title = "Project notebook kernel" })
