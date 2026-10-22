@@ -1,50 +1,45 @@
-{
-  pkgs,
-  ...
-}:
+{ isNixOS, ... }:
 let
-  desktopApps = with pkgs; [
-    (papers.override { supportNautilus = false; })
-    file-roller
-    gnome-calculator
-    gnome-disk-utility
-    seahorse
-  ];
+  browser = if isNixOS then "zen.desktop" else "config-browser.desktop";
 in
 {
-  home.packages = desktopApps ++ [
-    pkgs.sshfs
-    pkgs.xdg-utils
-    pkgs.zenity
-    pkgs.system-config-printer
-  ];
-  home.sessionVariables.SSH_ASKPASS = "${pkgs.seahorse}/libexec/seahorse/ssh-askpass";
-
-  programs.bash.enableVteIntegration = true;
-  programs.zsh.enableVteIntegration = true;
+  home.file.".local/bin/desktop-browser" = {
+    enable = !isNixOS;
+    executable = true;
+    text = ''
+      #!/usr/bin/env bash
+      set -euo pipefail
+      if command -v firefox-esr >/dev/null; then
+        exec firefox-esr "$@"
+      fi
+      exec firefox "$@"
+    '';
+  };
+  xdg.dataFile."applications/config-browser.desktop" = {
+    enable = !isNixOS;
+    text = ''
+      [Desktop Entry]
+      Type=Application
+      Name=Firefox
+      Exec=desktop-browser %u
+      Terminal=false
+      NoDisplay=true
+      MimeType=text/html;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
+    '';
+  };
   xdg.userDirs = {
     enable = true;
+    package = null;
     createDirectories = true;
   };
-  xfconf = {
-    settings = {
-      thunar.misc-volume-management = true;
-      thunar-volman = {
-        "automount-drives/enabled" = true;
-        "automount-media/enabled" = true;
-        "autobrowse/enabled" = true;
-      };
-    };
-  };
-
   xdg.mimeApps = {
     enable = true;
     defaultApplications = {
       "inode/directory" = [ "thunar.desktop" ];
-      "text/html" = [ "zen.desktop" ];
-      "application/xhtml+xml" = [ "zen.desktop" ];
-      "x-scheme-handler/http" = [ "zen.desktop" ];
-      "x-scheme-handler/https" = [ "zen.desktop" ];
+      "text/html" = [ browser ];
+      "application/xhtml+xml" = [ browser ];
+      "x-scheme-handler/http" = [ browser ];
+      "x-scheme-handler/https" = [ browser ];
       "application/pdf" = [ "org.gnome.Papers.desktop" ];
       "application/zip" = [ "org.gnome.FileRoller.desktop" ];
       "application/x-7z-compressed" = [ "org.gnome.FileRoller.desktop" ];

@@ -3,18 +3,20 @@
   pkgs,
   lib,
   config,
+  isNixOS,
   profile,
   ...
 }:
 {
   programs.kitty = {
     enable = true;
+    package = null;
     font = {
-      name = "JetBrainsMono Nerd Font";
+      name = if isNixOS then "JetBrainsMono Nerd Font" else "JetBrains Mono";
       size = 14;
     };
     settings = {
-      shell = lib.getExe pkgs.zsh;
+      shell = "zsh";
       bold_font = "auto";
       italic_font = "auto";
       bold_italic_font = "auto";

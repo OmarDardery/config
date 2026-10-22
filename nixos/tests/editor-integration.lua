@@ -32,9 +32,11 @@ assert(vim.fn.executable(dap.adapters.codelldb.executable.command) == 1, "CodeLL
 assert(vim.g.rustaceanvim.dap.adapter, "Rust debugger was not configured")
 
 local lsp = LazyVim.opts("nvim-lspconfig")
+assert(lsp.diagnostics.virtual_text == false)
+assert(lsp.diagnostics.virtual_lines == false)
 assert(lsp.servers.basedpyright.enabled)
 assert(not lsp.servers.pyright.enabled)
-assert(lsp.servers.basedpyright.settings.basedpyright.analysis.typeCheckingMode == "standard")
+assert(lsp.servers.basedpyright.settings.basedpyright.analysis.typeCheckingMode == "basic")
 assert(lsp.servers.basedpyright.settings.basedpyright.disableOrganizeImports)
 assert(lsp.servers.ruff.cmd_env.RUFF_TRACE == "off")
 assert(not lsp.servers.rust_analyzer.enabled, "Rust has two language servers")

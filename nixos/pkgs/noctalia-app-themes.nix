@@ -1,11 +1,12 @@
 {
   pkgs,
   lib,
-  config,
+  configHome,
+  cacheHome,
   templates,
 }:
 let
-  cache = config.xdg.cacheHome;
+  cache = cacheHome;
 in
 {
   libreoffice = pkgs.writeShellApplication {
@@ -16,7 +17,6 @@ in
       procps
       python3
       zip
-      libreoffice
       util-linux
     ];
     text = ''
@@ -46,7 +46,7 @@ in
         --run ${lib.escapeShellArg ''
           exec ${pkgs.bash}/bin/bash ${./noctalia-fastfetch.sh} \
             ${pkgs.fastfetch}/bin/fastfetch ${templates}/fastfetch/apply.sh \
-            ${lib.escapeShellArg "${config.xdg.configHome}"} "$@"
+            ${lib.escapeShellArg "${configHome}"} "$@"
         ''}
     '';
   };

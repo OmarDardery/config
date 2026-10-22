@@ -1,5 +1,6 @@
 {
   inputs = {
+    flake-parts.url = "github:hercules-ci/flake-parts";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
     zen-browser = {
@@ -49,36 +50,72 @@
         config = import ./package-policy.nix;
       };
     in
-    {
-      # Bootstrap reads these defaults; runtime environment does not affect eval.
-      lib.deployment = profile;
-      formatter.${system} = pkgs.nixfmt-tree;
-      checks.${system} = import ./checks.nix {
-        inherit pkgs inputs;
-        flake = inputs.self;
-      };
-      devShells.${system} = import ./dev-shells.nix { inherit pkgs; };
-      # Portable tools only; Debian/Fedora keep their native desktop stack.
-      homeConfigurations.${profile.profileName} = home-manager.lib.homeManagerConfiguration {
-        inherit pkgs;
-        extraSpecialArgs = {
-          inherit inputs profile;
-          isNixOS = false;
-          isLaptop = false;
-        };
-        modules = [
-          ./home/linux.nix
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } (
+      { config, ... }: {
+        imports = [
+          inputs.flake-parts.flakeModules.modules
+          ./modules/editors.nix
+          ./modules/dotfiles.nix
+          ./modules/desktop.nix
+          ./modules/applications.nix
+          ./modules/greeter.nix
+          ./modules/profiles.nix
         ];
-      };
+        systems = [ system ];
+        flake = {
+          # Bootstrap reads these defaults; runtime environment does not affect eval.
+          lib.deployment = profile;
+          packages.${system}.home-manager = home-manager.packages.${system}.home-manager;
+          formatter.${system} = pkgs.nixfmt-tree;
+          checks.${system} = import ./checks.nix {
+            inherit pkgs inputs;
+            flake = inputs.self;
+          };
+          devShells.${system} = import ./dev-shells.nix { inherit pkgs; };
+          # Shared dotfiles and editors; other applications remain native.
+          homeConfigurations.${profile.profileName} = home-manager.lib.homeManagerConfiguration {
+            inherit pkgs;
+            extraSpecialArgs = {
+              inherit inputs profile;
+              isNixOS = false;
+              isLaptop = false;
+              desktopEnabled = false;
+            };
+            modules = [
+              config.flake.modules.homeManager.portable
+            ];
+          };
 
-      nixosConfigurations = {
-        ${profile.hostName} = nixpkgs.lib.nixosSystem {
-          specialArgs = { inherit inputs profile; };
-          modules = [
-            ./configuration.nix
-            home-manager.nixosModules.home-manager
-          ];
+          homeConfigurations."${profile.profileName}-desktop" = home-manager.lib.homeManagerConfiguration {
+            inherit pkgs;
+            extraSpecialArgs = {
+              inherit inputs;
+              profile = profile // {
+                profileName = "${profile.profileName}-desktop";
+              };
+              isNixOS = false;
+              isLaptop = false;
+              desktopEnabled = true;
+            };
+            modules = [
+              config.flake.modules.homeManager.portable
+              config.flake.modules.homeManager.desktop-dotfiles
+            ];
+          };
+
+          nixosConfigurations = {
+            ${profile.hostName} = nixpkgs.lib.nixosSystem {
+              specialArgs = {
+                inherit inputs profile;
+                isNixOS = true;
+                isLaptop = true;
+              };
+              modules = [
+                config.flake.modules.nixos.workstation
+              ];
+            };
+          };
         };
-      };
-    };
+      }
+    );
 }

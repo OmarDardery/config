@@ -1,6 +1,8 @@
 # Upstream theming and terminal tools
 
-Noctalia and Umbriel use their upstream Home Manager/NixOS modules. Template
+Home Manager generates Noctalia and Umbriel dotfiles without installing either
+application. NixOS installs them through native system/application modules; other
+distributions install their own packages. Template
 files come directly from the locked Noctalia and community-template inputs;
 `home/noctalia-templates.nix` contains their output paths and Nix integration.
 The official [user-template API](https://docs.noctalia.dev/noctalia/theming/app-theming/)
@@ -24,7 +26,7 @@ Home Manager removes its former whole-directory link during the first migration.
 Initial missing app palettes use a saved image/algorithm when available, otherwise
 the first available personal/sample image and Noctalia's own algorithm default.
 This bootstrap does not save or change the selected wallpaper. Existing palettes
-are never overwritten by activation. Noctalia Greeter can sync the desktop appearance without rebuilding.
+are never overwritten by desktop initialization. Noctalia Greeter can sync the desktop appearance without rebuilding.
 
 The [43PR setup linked from the video](https://github.com/43PR/dotfiles) inspired
 the slimmer floating top bar and integrated wallpaper/color workflow. Its Arch
@@ -46,7 +48,7 @@ theming daemon or rebuild-on-wallpaper-change mechanism is installed.
 | Starship | Built-in integration | Native prompt palette |
 | LazyVim, VSCodium, Yazi, Fzf, Lazygit | Community templates | Existing native theme loaders/watchers |
 | Zen, Steam/Millennium | Community templates | Existing profile-aware adapters |
-| OpenCode | Community templates | Native theme directories and Home Manager settings |
+| OpenCode | Community templates | Native theme directories and declarative preferences |
 | GIMP, Inkscape | Community CSS | Personal override CSS; GIMP path matches the pinned 3.0 series |
 | Fastfetch | Community colors/apply script | Disposable color processing plus native CLI overrides; user JSONC stays intact |
 | LibreOffice | Community ColorScheme extension | Apply script staged in writable cache; skips installation while Office is open |
@@ -57,8 +59,8 @@ injector or fork is installed. Apps without a matching template keep their nativ
 appearance and inherit GTK/Qt/terminal colors where supported. Rendering CSS does
 not guarantee every application widget honors it.
 
-Missing palette files are initialized in one render before Home Manager links the
-new configuration. Existing generated files are preserved. No application apply
+Run `desktop-apply` after installing the native desktop to initialize missing
+palette files in one render. NixOS runs it at graphical login. Existing generated files are preserved. No application apply
 hooks run during activation. Later Noctalia palette changes render the templates
 and run their configured hooks. Some applications need a restart to read colors.
 

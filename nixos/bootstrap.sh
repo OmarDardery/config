@@ -30,7 +30,7 @@ usage() {
     '  --profile NAME Standalone named profile (default: profile.nix profileName)' \
     '  --host NAME    NixOS flake host (default: profile.nix hostName)' \
     '  --build-only   Build without activation (default)' \
-    '  --activate     Build first, then activate; NixOS also asks for confirmation' \
+    '  --activate     Build first, then activate' \
     '  --backup-extension EXT  Back up conflicting files for standalone --activate' \
     '                          EXT uses only letters, digits, dots, underscores or hyphens.' \
     '  --install-nix  Show official installation instructions if Nix is missing' \
@@ -41,7 +41,7 @@ usage() {
     'Builds use path:<repo>/nixos, include untracked files, and never write locks.' \
     'Deployment identity and defaults are explicit in nixos/profile.nix.' \
     'For another user, edit profile.nix; selectors do not infer identity from the environment.' \
-    'Hardware files and /etc/nixos are never overwritten or linked.'
+    'NixOS copies /etc/nixos/hardware-configuration.nix into the ignored local file.'
 }
 
 while (($#)); do
@@ -121,6 +121,10 @@ flake_dir="$repo_dir/nixos"
 [[ -f "$flake_dir/flake.lock" ]] ||
   die "Missing $flake_dir/flake.lock. Review and create the lock explicitly with nix flake lock before retrying."
 flake="path:$flake_dir"
+# Keep generated disk configuration local. Copy before evaluating the host.
+if [[ -e /etc/NIXOS ]]; then
+  bash "$flake_dir/native/copy-hardware.sh" "$repo_dir"
+fi
 evalflags=(--no-write-lock-file)
 
 if [[ -z "$profile" ]]; then
@@ -153,27 +157,7 @@ if [[ "$target" == "$flake#nixosConfigurations."* ]]; then
     die "No configured Home Manager entry for current user $(id -un). Edit the explicit deployment identity in $flake_dir/profile.nix before retrying."
   [[ "$configured_user" == "$(id -un)" ]] || die \
     "Configured Home Manager entry requires user $configured_user; current user is $(id -un). Edit the explicit deployment identity in $flake_dir/profile.nix before retrying."
-  command -v findmnt >/dev/null 2>&1 || die 'findmnt (util-linux) is required to validate hardware'
-  say 'Checking configured root and boot devices and filesystem types against mounted disks'
-  for mount in / /boot; do
-    uuid=$(findmnt --noheadings --raw --mountpoint "$mount" --output UUID) ||
-      die "Cannot identify $mount. Mount the correct filesystem before retrying."
-    [[ -n "$uuid" && "$uuid" =~ ^[a-zA-Z0-9-]+$ ]] ||
-      die "Missing or invalid UUID for $mount; hardware compatibility cannot be verified."
-    device=$(nix "${nixflags[@]}" eval "${evalflags[@]}" --raw \
-      "$target.fileSystems.\"$mount\".device")
-    [[ "$device" == "/dev/disk/by-uuid/$uuid" ]] || die \
-      "Hardware mismatch for $mount: configured $device, mounted UUID $uuid.
-Generate hardware configuration for review with: sudo nixos-generate-config --show-hardware-config
-Manually adapt $flake_dir/hardware-configuration.nix and hardware.nix (including storage and GPU/PRIME settings), then retry. No hardware files were overwritten."
-    mounted_type=$(findmnt --noheadings --raw --mountpoint "$mount" --output FSTYPE) ||
-      die "Cannot identify filesystem type for $mount. Mount the correct filesystem before retrying."
-    configured_type=$(nix "${nixflags[@]}" eval "${evalflags[@]}" --raw \
-      "$target.fileSystems.\"$mount\".fsType")
-    [[ -n "$mounted_type" && "$mounted_type" == "$configured_type" ]] || die \
-      "Filesystem type mismatch for $mount: configured $configured_type, mounted ${mounted_type:-unknown}. Review hardware-configuration.nix and hardware.nix before retrying. No hardware files were overwritten."
-  done
-  warn 'Disk UUIDs match, but this host has laptop-specific CPU, GPU/PRIME, boot and storage settings. Review hardware.nix and hardware-configuration.nix; arbitrary hardware is not supported automatically.'
+  warn 'The generated hardware file is local. Review hardware.nix for laptop-specific GPU/PRIME, extra storage and kernel policy before using another machine.'
   build_target="$target.system.build.toplevel"
 else
   say "Checking identity for standalone profile $profile"
@@ -181,20 +165,20 @@ else
   configured_home=$(nix "${nixflags[@]}" eval "${evalflags[@]}" --raw "$target.config.home.homeDirectory")
   [[ "$configured_user" == "$(id -un)" && "$configured_home" == "$HOME" ]] || die \
     "Profile $profile requires user $configured_user with HOME=$configured_home; current user is $(id -un) with HOME=$HOME. Edit the explicit deployment identity in $flake_dir/profile.nix, or select an existing named profile with --profile."
-  say 'Standalone profile: shell, Neovim and development tools; the distribution owns GUI applications and desktop services.'
+  say 'Standalone profile: dotfiles, LazyVim and VSCodium; applications and desktop services are installed separately.'
   warn 'Activation may change managed home files and run profile activation hooks; existing conflicting files are not force-overwritten by this script.'
   build_target="$target.activationPackage"
 fi
 
-configured_flake=$(nix "${nixflags[@]}" eval "${evalflags[@]}" --raw "$home_target.programs.nh.flake")
+configured_flake=$(nix "${nixflags[@]}" eval "${evalflags[@]}" --raw "$home_target.home.sessionVariables.NH_FLAKE")
 configured_flake=${configured_flake#path:}
 if [[ "$flake_dir" != "$configured_flake" ]]; then
-  warn "This checkout uses $flake_dir, but programs.nh.flake points to $configured_flake for follow-up commands. Edit profile.configRepo in $flake_dir/profile.nix to this checkout before using nh or configured update commands. This build still uses $flake_dir; no files or persistent environment settings were changed."
+  warn "This checkout uses $flake_dir, but home.sessionVariables.NH_FLAKE points to $configured_flake for follow-up commands. Edit profile.configRepo in $flake_dir/profile.nix to this checkout before using nh or configured update commands. This build still uses $flake_dir; no files or persistent environment settings were changed."
 fi
 
 say "Building $build_target (no activation yet)"
 # Nix registers the out-link as a GC root when the build completes. Keep it
-# until activation registers its generation, including time spent at the prompt.
+# until activation registers its generation.
 # Nothing is linked inside the checkout; failures and cancellation clean up too.
 build_retention=$(mktemp -d "${TMPDIR:-/tmp}/configs-bootstrap.XXXXXXXX")
 trap 'rm -rf -- "$build_retention"' EXIT
@@ -213,16 +197,9 @@ fi
 
 if [[ -e /etc/NIXOS ]]; then
   command -v sudo >/dev/null 2>&1 || die 'sudo is required for NixOS activation'
-  command -v nix-env >/dev/null 2>&1 || die 'nix-env is required to register the NixOS generation'
-  [[ -x "$output/bin/switch-to-configuration" ]] || die 'built output has no NixOS activation executable'
-  printf '%s\n' 'Confirm you reviewed hardware settings and want to switch the system to this build.'
-  if ! read -r -p 'Activate NixOS now? [y/N] ' reply </dev/tty; then
-    die 'interactive terminal required for NixOS activation'
-  fi
-  [[ "$reply" == y || "$reply" == Y ]] || die 'activation cancelled; nothing was activated'
-  # Activate the exact closure just built, rather than reevaluating mutable files.
-  sudo nix-env --profile /nix/var/nix/profiles/system --set "$output"
-  sudo "$output/bin/switch-to-configuration" switch
+  # path: includes the ignored local hardware file. nixos-rebuild registers
+  # the generation and performs the normal NixOS switch.
+  sudo nixos-rebuild switch --flake "$flake#$host" --no-write-lock-file
 else
   [[ -x "$output/activate" ]] || die 'built output has no Home Manager activation executable'
   if [[ -n "$backup_extension" ]]; then

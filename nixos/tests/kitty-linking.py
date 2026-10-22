@@ -135,9 +135,9 @@ with tempfile.TemporaryDirectory() as directory:
         # A managed desktop-file collision fails before migration or linking.
         collision = case / 'collision "home"'
         collision.mkdir()
-        conflicting = collision / 'config "custom"/autostart/org.kde.kdeconnect.daemon.desktop'
+        conflicting = collision / 'config "custom"/gtk-3.0/settings.ini'
         conflicting.parent.mkdir(parents=True)
-        conflicting.write_bytes(b"user-owned launcher")
+        conflicting.write_bytes(b"user-owned GTK settings")
         before = tree_snapshot(collision)
         activate(case, collision, "current", success=False)
         assert tree_snapshot(collision) == before

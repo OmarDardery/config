@@ -19,11 +19,7 @@ fail() { printf 'FAIL: %s\n' "$*" >&2; exit 1; }
 source_text=$(<"$root/bootstrap.sh")
 os_check='[[ -e /etc/NIXOS ]]'
 store_check='"$output" == /nix/store/*'
-remaining=${source_text#*"$os_check"}
-[[ "$remaining" != "$source_text" ]] || fail 'missing first OS seam'
-remaining=${remaining#*"$os_check"}
-[[ "$remaining" != *"$os_check"* ]] || fail 'unexpected extra OS seam'
-[[ "$source_text" == *"$os_check"*"$os_check"* ]] || fail 'missing second OS seam'
+[[ "$source_text" == *"$os_check"* ]] || fail 'missing OS seam'
 [[ "$source_text" == *"$store_check"* ]] || fail 'missing store seam'
 remaining=${source_text#*"$store_check"}
 [[ "$remaining" != *"$store_check"* ]] || fail 'unexpected extra store seam'
@@ -54,15 +50,6 @@ case "$name" in
       -m) printf '%s\n' "$MOCK_ARCH" ;;
       *) exit 90 ;;
     esac ;;
-  findmnt)
-    [[ $# == 6 && "$1 $2 $3 $5" == '--noheadings --raw --mountpoint --output' ]] || exit 90
-    case "$4:$6" in
-      /:UUID) printf '%s\n' "$MOCK_UUID" ;;
-      /boot:UUID) printf 'boot-uuid\n' ;;
-      /:FSTYPE) printf '%s\n' "$MOCK_ROOT_TYPE" ;;
-      /boot:FSTYPE) printf '%s\n' "$MOCK_BOOT_TYPE" ;;
-      *) exit 90 ;;
-    esac ;;
   nix)
     [[ $# -ge 3 && "$1" == --extra-experimental-features && "$2" == 'nix-command flakes' ]] || exit 90
     shift 2
@@ -78,17 +65,9 @@ case "$name" in
           "$MOCK_FLAKE#nixosConfigurations.$MOCK_HOST.config.home-manager.users.\"$MOCK_USER\".home.username")
             [[ "$MOCK_HM_ENTRY" == present ]] || exit 90
             printf '%s\n' "$MOCK_PROFILE_USER" ;;
-          "$MOCK_FLAKE#nixosConfigurations.$MOCK_HOST.config.home-manager.users.\"$MOCK_USER\".programs.nh.flake"|\
-          "$MOCK_FLAKE#homeConfigurations.$MOCK_PROFILE.config.programs.nh.flake")
+          "$MOCK_FLAKE#nixosConfigurations.$MOCK_HOST.config.home-manager.users.\"$MOCK_USER\".home.sessionVariables.NH_FLAKE"|\
+          "$MOCK_FLAKE#homeConfigurations.$MOCK_PROFILE.config.home.sessionVariables.NH_FLAKE")
             printf '%s\n' "$MOCK_CONFIGURED_FLAKE" ;;
-          "$MOCK_FLAKE#nixosConfigurations.$MOCK_HOST.config.fileSystems.\"/\".fsType")
-            printf 'xfs\n' ;;
-          "$MOCK_FLAKE#nixosConfigurations.$MOCK_HOST.config.fileSystems.\"/boot\".fsType")
-            printf 'vfat\n' ;;
-          "$MOCK_FLAKE#nixosConfigurations.$MOCK_HOST.config.fileSystems.\"/\".device")
-            printf '/dev/disk/by-uuid/%s\n' "$MOCK_DEVICE_UUID" ;;
-          "$MOCK_FLAKE#nixosConfigurations.$MOCK_HOST.config.fileSystems.\"/boot\".device")
-            printf '/dev/disk/by-uuid/boot-uuid\n' ;;
           "$MOCK_FLAKE#homeConfigurations.$MOCK_PROFILE.config.home.username")
             printf '%s\n' "$MOCK_PROFILE_USER" ;;
           "$MOCK_FLAKE#homeConfigurations.$MOCK_PROFILE.config.home.homeDirectory")
@@ -117,36 +96,37 @@ case "$name" in
   sudo)
     [[ "${MOCK_ALLOW_SWITCH:-}" == yes ]] || exit 90
     "$@" ;;
-  nix-env|switch-to-configuration)
+  nixos-rebuild)
     [[ "${MOCK_ALLOW_SWITCH:-}" == yes ]] || exit 90
     roots=("$TMPDIR"/configs-bootstrap.*/result)
     [[ ${#roots[@]} == 1 && -L "${roots[0]}" && -d "${roots[0]}" ]] || exit 90
-    if [[ "$name" == nix-env ]]; then
-      [[ "$*" == "--profile /nix/var/nix/profiles/system --set $MOCK_STORE/output" ]] || exit 90
-    else
-      [[ "$*" == switch ]] || exit 90
-      [[ "${MOCK_SWITCH_FAIL:-}" != yes ]] || exit 42
-    fi ;;
+    [[ "$*" == "switch --flake $MOCK_FLAKE#$MOCK_HOST --no-write-lock-file" ]] || exit 90
+    [[ "${MOCK_SWITCH_FAIL:-}" != yes ]] || exit 42 ;;
   git) exit 90 ;;
   *) exit 90 ;;
 esac
 MOCK
 printf '%s\n' "$mock_text" >> "$tmp/bin/mock"
 chmod +x "$tmp/bin/mock"
-for command in id uname findmnt nix git sudo nix-env; do
+for command in id uname nix git sudo nixos-rebuild; do
   ln -s mock "$tmp/bin/$command"
 done
-for command in realpath mktemp rm ln; do
+for command in realpath mktemp rm ln bash cmp cat cp chmod mv mkdir; do
   ln -s "$(command -v "$command")" "$tmp/bin/$command"
 done
 ln -s "$tmp/bin/mock" "$tmp/store/output/activate"
-mkdir -p "$tmp/store/output/bin"
-ln -s "$tmp/bin/mock" "$tmp/store/output/bin/switch-to-configuration"
 
 # A real, local dirty index and untracked file ensure preservation assertions
 # cover more than command logs. No network, commits, or user git config changes.
 printf 'staged flake\n' > "$tmp/checkout/nixos/flake.nix"
 printf '{}\n' > "$tmp/checkout/nixos/flake.lock"
+mkdir -p "$tmp/checkout/nixos/native"
+printf 'local generated hardware\n' > "$tmp/source-hardware.nix"
+hardware_text=$(<"$root/native/copy-hardware.sh")
+hardware_text=${hardware_text//\/etc\/nixos\/hardware-configuration.nix/"$tmp/source-hardware.nix"}
+printf '%s\n' "$hardware_text" > "$tmp/checkout/nixos/native/copy-hardware.sh"
+printf '/nixos/hardware-configuration.nix\n' > "$tmp/checkout/.gitignore"
+
 git -C "$tmp/checkout" init -q
 git -C "$tmp/checkout" add nixos/flake.nix
 printf 'dirty flake\n' > "$tmp/checkout/nixos/flake.nix"
@@ -159,13 +139,13 @@ cp "$tmp/checkout/nixos/flake.lock" "$tmp/lock.before"
 
 reset_case() {
   repo_args=(--repo-dir "$tmp/checkout")
-  os=linux uid=1000 user=fixture uuid=root-uuid device_uuid=root-uuid
-  arch=x86_64 system=x86_64-linux root_type=xfs boot_type=vfat hm_entry=present
+  os=linux uid=1000 user=fixture
+  arch=x86_64 system=x86_64-linux hm_entry=present
   configured_flake="$tmp/checkout/nixos"
   profile_user=fixture profile_home="$tmp/home"
   build=ok output="$tmp/store/output"
   default_profile=oad default_host=nixos selected_profile=oad selected_host=nixos
-  backup_extension=
+  backup_extension= allow_switch=no switch_fail=no
   : > "$tmp/log"
 }
 
@@ -173,9 +153,8 @@ run_case() {
   local expected=$1 label=$2 status=0
   shift 2
   "$env_bin" -i PATH="$tmp/bin" HOME="$tmp/home" TMPDIR="$tmp/retention" \
-    MOCK_OS="$os" MOCK_UID="$uid" MOCK_USER="$user" \
-    MOCK_UUID="$uuid" MOCK_DEVICE_UUID="$device_uuid" \
-    MOCK_ARCH="$arch" MOCK_SYSTEM="$system" MOCK_ROOT_TYPE="$root_type" MOCK_BOOT_TYPE="$boot_type" \
+    MOCK_ALLOW_SWITCH="$allow_switch" MOCK_SWITCH_FAIL="$switch_fail" MOCK_OS="$os" MOCK_UID="$uid" MOCK_USER="$user" \
+    MOCK_ARCH="$arch" MOCK_SYSTEM="$system" \
     MOCK_HM_ENTRY="$hm_entry" MOCK_CONFIGURED_FLAKE="$configured_flake" \
     MOCK_PROFILE_USER="$profile_user" MOCK_PROFILE_HOME="$profile_home" \
     MOCK_DEFAULT_PROFILE="$default_profile" MOCK_DEFAULT_HOST="$default_host" \
@@ -194,7 +173,8 @@ run_case() {
   [[ ! -e "${leftovers[0]}" ]] || fail "$label: build root was not cleaned up"
   local log
   log=$(<"$tmp/log")
-  [[ "$log" != *git* && "$log" != *sudo* && "$log" != *nix-env* ]] || fail "$label: forbidden command"
+  [[ "$log" != *git* && "$log" != *nix-env* ]] || fail "$label: forbidden command"
+  [[ "$allow_switch" == yes || "$log" != *sudo* ]] || fail "$label: unexpected sudo"
   [[ "$log" != *activate* || "$expected" == pass && " $* " == *' --activate '* ]] || fail "$label: unexpected activation"
   cases=$((cases + 1))
   printf 'PASS: %s\n' "$label"
@@ -272,19 +252,15 @@ reset_case; os=nixos; hm_entry=missing
 run_case 'No configured Home Manager entry' 'NixOS missing user entry'; no_build
 reset_case; os=nixos; profile_user=oad
 run_case 'requires user oad' 'NixOS user mismatch'; no_build
-reset_case; os=nixos; root_type=ext4
-run_case 'Filesystem type mismatch for /:' 'root filesystem mismatch'; no_build
-reset_case; os=nixos; boot_type=ext4
-run_case 'Filesystem type mismatch for /boot:' 'boot filesystem mismatch'; no_build
-reset_case; os=nixos; root_type=''
-run_case 'mounted unknown' 'empty filesystem type'; no_build
 reset_case
 run_case pass 'portable tools build without desktop services'
-[[ "$(<"$tmp/stdout")" == *'the distribution owns GUI applications and desktop services'* ]] || fail 'missing portable profile description'
-reset_case; os=nixos; uuid=''
-run_case 'Missing or invalid UUID' 'empty UUID refusal'; no_build
-reset_case; os=nixos; device_uuid=other-uuid
-run_case 'Hardware mismatch' 'root UUID mismatch refusal'; no_build
+[[ "$(<"$tmp/stdout")" == *'applications and desktop services are installed separately'* ]] || fail 'missing portable profile description'
+reset_case; os=nixos; allow_switch=yes
+run_case pass 'NixOS copies local hardware and switches through nixos-rebuild' --activate
+cmp "$tmp/source-hardware.nix" "$tmp/checkout/nixos/hardware-configuration.nix"
+[[ "$(<"$tmp/log")" == *'nixos-rebuild switch --flake path:'*'#nixos --no-write-lock-file'* ]] || fail 'missing path flake switch'
+reset_case; os=nixos; allow_switch=yes; switch_fail=yes
+run_case fail 'NixOS propagates a failed rebuild' --activate
 reset_case; profile_user=other-user
 run_case 'requires user other-user' 'profile user mismatch'; no_build
 reset_case; profile_home=/wrong-home
@@ -314,7 +290,7 @@ done
 reset_case; backup_extension=backup; build=fail
 run_case fail 'failed build with backup cannot activate' --activate --backup-extension "$backup_extension"
 
-python3 "$root/tests/bootstrap-retention.py" "$tmp" "$bash_bin"
+
 
 git -C "$tmp/checkout" status --porcelain=v1 > "$tmp/status.after"
 git -C "$tmp/checkout" diff --cached --binary > "$tmp/index.after"

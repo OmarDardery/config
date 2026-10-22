@@ -1,4 +1,4 @@
-"""Exercise the generated Bat seed/cache hooks in an isolated writable home."""
+"""Exercise the explicit desktop setup command in an isolated writable home."""
 import json
 import os
 from pathlib import Path
@@ -31,11 +31,9 @@ with tempfile.TemporaryDirectory() as directory:
         template['output_path'] = output
     desired.write_text(tomlkit.dumps(content))
     script = script.replace(fixture["noctaliaConfig"], str(desired))
-    environment = {**os.environ, "HOME": str(home), "XDG_CONFIG_HOME": str(config), "XDG_CACHE_HOME": str(cache)}
+    environment = {**os.environ, "HOME": str(home), "XDG_CONFIG_HOME": str(config), "XDG_CACHE_HOME": str(cache),
+                   "PATH": str(Path(fixture["noctalia"]) / "bin") + ":" + str(Path(fixture["bat"]) / "bin") + ":" + os.environ["PATH"]}
     environment.pop("DRY_RUN", None)
-    # No palette or cache is created by the actual dry-run-aware HM hooks.
-    subprocess.run(["bash", "-c", script], env={**environment, "DRY_RUN": "1"}, check=True)
-    assert not list(home.iterdir())
     selected = home / 'personal "wallpaper".jpg'
     shutil.copyfile(Path(fixture["samples"]) / 'dark-mountain.jpg', selected)
     state = home / '.local/state/noctalia/settings.toml'

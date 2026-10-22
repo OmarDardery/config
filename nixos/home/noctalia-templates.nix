@@ -27,13 +27,15 @@ let
   };
   zenControls = ../assets/zen-window-controls.css;
   apps = import ../pkgs/noctalia-app-themes.nix {
-    inherit pkgs lib config;
+    inherit pkgs lib;
+    configHome = config.xdg.configHome;
+    cacheHome = config.xdg.cacheHome;
     templates = community;
   };
 in
 {
   kitty = (render "${builtin}/kitty/kitty.conf" "${themeDir}/kitty.conf") // {
-    post_hook = "${pkgs.procps}/bin/pkill -USR1 -x kitty || true";
+    post_hook = "pkill -USR1 -x kitty || true";
   };
   umbriel = render "${builtin}/umbriel/umbriel.toml" "${themeDir}/umbriel.toml";
   vscode = render "${community}/vscode/vscode.json" "${themeDir}/vscode.json";
@@ -56,13 +58,13 @@ in
   bat =
     (render "${community}/bat/bat.tmTheme" "${config.xdg.configHome}/bat/themes/noctalia.tmTheme")
     // {
-      post_hook = "${pkgs.bat}/bin/bat cache --build";
+      post_hook = "bat cache --build";
       hook_async = false;
     };
   btop =
     (render "${builtin}/btop/btop.theme" "${config.xdg.configHome}/btop/themes/noctalia.theme")
     // {
-      post_hook = "${pkgs.procps}/bin/pkill -USR2 -x btop || true";
+      post_hook = "pkill -USR2 -x btop || true";
     };
   opencode = render "${community}/opencode/opencode.json" "${config.xdg.configHome}/opencode/themes/noctalia.json";
   gimp = render "${community}/gimp/gimp.css" "${config.xdg.configHome}/GIMP/${lib.versions.majorMinor pkgs.gimp.version}/gimp.css";
