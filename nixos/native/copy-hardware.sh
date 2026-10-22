@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
-# Called by bootstrap before any NixOS evaluation; never modifies /etc/nixos.
+# Prepare local hardware before NixOS evaluation; never modifies /etc/nixos.
 set -euo pipefail
 repo=${1:?Repository directory required}
 source_file=/etc/nixos/hardware-configuration.nix
 target="$repo/nixos/hardware-configuration.nix"
+case "${2:-}" in
+  '') ;; # Explicit setup refreshes from /etc/nixos, backing up changes.
+  --if-missing) [[ ! -s "$target" ]] || exit 0 ;;
+  *) printf '%s\n' 'Unknown hardware copy option.' >&2; exit 2 ;;
+esac
 [[ -f "$source_file" && -s "$source_file" ]] || {
   printf '%s\n' "Missing $source_file; run sudo nixos-generate-config first." >&2
   exit 1

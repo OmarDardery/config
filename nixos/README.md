@@ -143,7 +143,16 @@ The `up` and `update` commands on standalone Linux use the selected Home Manager
 profile, including `oad-desktop`. The pinned manager CLI runs through `nix run`;
 no global manager package is installed. Native system/application updates stay
 with the distribution. On NixOS, `update` retains `nh os switch` and activation
-logs, followed by Flatpak updates.
+logs, followed by Flatpak updates. `update`, `up`/`rebuild` and `nbuild` restore a
+missing local hardware file from `/etc/nixos` before evaluating the host, and
+preserve an existing nonempty file. This also handles pulling the migration that
+stopped tracking generated hardware. Older installed update scripts need a
+one-time copy before the first successful rebuild:
+
+```sh
+cp /etc/nixos/hardware-configuration.nix ~/config/nixos/hardware-configuration.nix
+update
+```
 
 ## Checks
 

@@ -9,9 +9,12 @@
 let
   repository = lib.escapeShellArg "path:${profile.configRepo}";
   directory = lib.escapeShellArg profile.configRepo;
+  prepareHardware = "bash ${lib.escapeShellArg "${profile.configRepo}/native/copy-hardware.sh"} ${
+    lib.escapeShellArg (builtins.dirOf profile.configRepo)
+  } --if-missing";
   switchCommand =
     if isNixOS then
-      "nh os switch --hostname ${lib.escapeShellArg profile.hostName}"
+      "${prepareHardware} && nh os switch --hostname ${lib.escapeShellArg profile.hostName} ${repository}"
     else
       "nix run ${repository}#home-manager -- switch --flake ${lib.escapeShellArg "path:${profile.configRepo}#${profile.profileName}"}";
   updateCommand = "config-update ${directory} ${if isNixOS then "os" else "home"} ${
@@ -42,7 +45,7 @@ in
     rebuild = switchCommand;
     nbuild =
       if isNixOS then
-        "nh os build --hostname ${lib.escapeShellArg profile.hostName}"
+        "${prepareHardware} && nh os build --hostname ${lib.escapeShellArg profile.hostName} ${repository}"
       else
         "nix build ${lib.escapeShellArg "path:${profile.configRepo}#homeConfigurations.${profile.profileName}.activationPackage"}";
     neval = "nix flake check ${repository} --no-build --no-write-lock-file";

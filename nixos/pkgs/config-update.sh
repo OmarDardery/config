@@ -26,6 +26,13 @@ if ! flock -n 9; then
   exit 1
 fi
 
+# A pull can delete the formerly tracked hardware file. Restore it before
+# evaluating/updating this NixOS checkout, but preserve existing local edits.
+if [[ "$backend" == os ]]; then
+  flake_directory=${repository#path:}
+  bash "$flake_directory/native/copy-hardware.sh" "$(dirname -- "$flake_directory")" --if-missing
+fi
+
 printf '%s\n' 'Updating flake inputs...'
 nix flake update --flake "$repository"
 

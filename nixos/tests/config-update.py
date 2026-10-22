@@ -19,6 +19,16 @@ class UpdateTests(unittest.TestCase):
         self.bin = self.root / "bin"
         self.bin.mkdir()
         self.log = self.root / "commands.jsonl"
+        self.checkout = self.root / "checkout with spaces" / "nixos"
+        (self.checkout / "native").mkdir(parents=True)
+        self.hardware = self.checkout / "hardware-configuration.nix"
+        self.hardware.write_text("existing local hardware\n")
+        self.system_hardware = self.root / "system-hardware.nix"
+        self.system_hardware.write_text("generated system hardware\n")
+        helper = SCRIPT.parents[1] / "native/copy-hardware.sh"
+        (self.checkout / "native/copy-hardware.sh").write_text(
+            helper.read_text().replace("/etc/nixos/hardware-configuration.nix", str(self.system_hardware))
+        )
         for command in ("nix", "nh", "flatpak"):
             path = self.bin / command
             path.write_text(
@@ -34,7 +44,7 @@ class UpdateTests(unittest.TestCase):
 
     def run_update(self, arguments=None, failure="", path=None):
         return subprocess.run(
-            ["bash", str(SCRIPT), *(arguments if arguments is not None else ["/checkout with spaces", "os", "host"])],
+            ["bash", str(SCRIPT), *(arguments if arguments is not None else [str(self.checkout), "os", "host"])],
             stdin=subprocess.DEVNULL,
             text=True,
             capture_output=True,
@@ -54,11 +64,37 @@ class UpdateTests(unittest.TestCase):
         result = self.run_update()
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(self.commands(), [
-            ["nix", "flake", "update", "--flake", "path:/checkout with spaces"],
-            ["nh", "os", "switch", "--show-activation-logs", "--hostname", "host", "path:/checkout with spaces"],
+            ["nix", "flake", "update", "--flake", f"path:{self.checkout}"],
+            ["nh", "os", "switch", "--show-activation-logs", "--hostname", "host", f"path:{self.checkout}"],
             ["flatpak", "update", "--noninteractive", "--assumeyes"],
         ])
         self.assertIn("completed", result.stdout)
+
+    def test_missing_hardware_is_restored_before_nix_runs(self):
+        self.hardware.unlink()
+        result = self.run_update()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.hardware.read_text(), self.system_hardware.read_text())
+        self.assertLess(result.stdout.index("Copied"), result.stdout.index("Updating flake inputs"))
+
+    def test_existing_local_hardware_is_not_overwritten(self):
+        self.system_hardware.unlink()
+        result = self.run_update()
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.hardware.read_text(), "existing local hardware\n")
+
+    def test_missing_hardware_source_stops_before_lockfile_changes(self):
+        self.hardware.unlink()
+        self.system_hardware.unlink()
+        result = self.run_update()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.commands(), [])
+        self.assertIn("nixos-generate-config", result.stderr)
+
+    def test_home_update_does_not_require_hardware_or_copy_helper(self):
+        shutil.rmtree(self.checkout)
+        result = self.run_update([str(self.checkout), "home", "user"])
+        self.assertEqual(result.returncode, 0, result.stderr)
 
     def test_home_profile_and_prefixed_repository(self):
         result = self.run_update(["path:/checkout 'quoted'", "home", "user@host"])
