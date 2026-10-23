@@ -250,9 +250,26 @@ let
         test -f "$EDITOR_CHECK_DONE"
         touch "$out"
       '';
+  shellFixture = pkgs.writeText "kitty-shell-fixture.json" (
+    builtins.toJSON {
+      kitty = "${pkgs.kitty}/bin/kitty";
+      integration = "${pkgs.kitty}/lib/kitty/shell-integration/zsh";
+      zsh = "${pkgs.zsh}/bin/zsh";
+      kittyConfig = builtins.unsafeDiscardStringContext home.xdg.configFile."kitty/kitty.conf".text;
+      zshrc = builtins.unsafeDiscardStringContext home.home.file.".zshrc".text;
+      zshenv = builtins.unsafeDiscardStringContext home.home.file.".zshenv".text;
+    }
+  );
   fixtureJson = pkgs.writeText "kitty-linking-fixtures.json" (builtins.toJSON fixtures);
 in
 {
+  notebook-kernel = scriptCheck "project-notebook-kernel-checks" ''
+    ${pkgs.python3.withPackages (ps: [ ps.ipykernel ])}/bin/python3 ${tests}/notebook-kernel.py
+  '';
+  kitty-shell = scriptCheck "kitty-shell-integration-checks" ''
+    export PATH=${lib.makeBinPath [ pkgs.starship ]}:"$PATH"
+    python ${tests}/kitty-shell.py ${shellFixture}
+  '';
   dotfile-syntax = scriptCheck "generated-dotfile-syntax-checks" ''
     bash -n ${home.home.file.".bashrc".source}
     ${pkgs.zsh}/bin/zsh -n ${syntaxFile "zshrc" home.home.file.".zshrc".text}
@@ -275,9 +292,24 @@ in
   '';
   editor-integration = editorCheck "editor-integration-checks" false home;
   editor-notebooks = editorCheck "editor-notebook-checks" true home;
-  portable-editor =
-    editorCheck "portable-editor-checks" false
-      flake.homeConfigurations.${profile.profileName}.config;
+  portable-editor = scriptCheck "native-editor-dotfile-checks" ''
+    bash -n ${./pkgs/native-editor-setup.sh}
+    ${pkgs.lua5_1}/bin/luac -p ${
+      syntaxFile "native-init.lua"
+        flake.homeConfigurations.${profile.profileName}.config.xdg.configFile."nvim/init.lua".text
+    }
+    ${lib.concatMapStringsSep "\n"
+      (file: "${pkgs.lua5_1}/bin/luac -p ${syntaxFile "native-plugin.lua" file.text}")
+      (
+        builtins.attrValues (
+          lib.filterAttrs (
+            name: file:
+            file.enable && file.text != null && lib.hasPrefix "nvim/" name && lib.hasSuffix ".lua" name
+          ) flake.homeConfigurations.${profile.profileName}.config.xdg.configFile
+        )
+      )
+    }
+  '';
   desktop-integration =
     pkgs.runCommand "desktop-integration-checks"
       {

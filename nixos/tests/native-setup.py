@@ -16,6 +16,45 @@ spec.loader.exec_module(configure)
 
 
 class NativeSetup(unittest.TestCase):
+    def test_native_editor_setup_reports_extension_failures_after_plugin_sync(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            commands = directory / "bin"
+            commands.mkdir()
+            config = directory / "config/VSCodium/User"
+            config.mkdir(parents=True)
+            (config / "extensions.list").write_text("publisher.good\npublisher.missing\n")
+            log = directory / "commands.log"
+            mock = commands / "mock"
+            mock.write_text(r'''#!/usr/bin/env bash
+set -euo pipefail
+printf '%s %s\n' "${0##*/}" "$*" >> "$TEST_LOG"
+case "${0##*/}" in
+  python3)
+    mkdir -p "$3/bin"
+    ln -s "$TEST_MOCK" "$3/bin/python"
+    ;;
+  codium) [[ "$2" != publisher.missing ]] ;;
+esac
+''')
+            mock.chmod(0o755)
+            for command in ("nvim", "codium", "python3", "git"):
+                (commands / command).symlink_to(mock)
+            result = subprocess.run(
+                ["bash", str(ROOT / "pkgs/native-editor-setup.sh")],
+                env={**os.environ, "HOME": temporary, "XDG_CONFIG_HOME": str(directory / "config"),
+                     "XDG_DATA_HOME": str(directory / "data"), "TEST_LOG": str(log),
+                     "TEST_MOCK": str(mock), "PATH": f"{commands}:{os.environ['PATH']}"},
+                text=True, capture_output=True,
+            )
+            self.assertEqual(result.returncode, 1, result.stderr)
+            self.assertIn("publisher.missing", result.stderr)
+            calls = log.read_text()
+            self.assertIn("python -m pip install", calls)
+            self.assertIn("python -m ipykernel install", calls)
+            self.assertIn("nvim --headless +Lazy! sync +UpdateRemotePlugins +qa", calls)
+            self.assertNotIn("nix ", calls)
+
     def test_config_merge_and_idempotence(self):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary)
@@ -174,7 +213,7 @@ native_apply
                 common = (ROOT / "native/common.sh").read_text().replace(". /etc/os-release", f'. "{release}"')
                 # Package orchestration stops at the shared apply boundary; actual
                 # Home Manager/NixOS switching is covered by bootstrap.sh tests.
-                common += '\nnative_apply() { printf "APPLY\\n" >> "$TEST_LOG"; }\n'
+                common += '\nnative_neovim() { printf "NATIVE-NVIM\\n" >> "$TEST_LOG"; }\nnative_apply() { printf "APPLY\\n" >> "$TEST_LOG"; }\n'
                 (native / "common.sh").write_text(common)
                 commands = directory / "bin"
                 commands.mkdir()
@@ -189,11 +228,12 @@ case "$name" in
  id) [[ "$1" == -u ]] && printf '1000\\n' ;;
  sudo) # Never execute privileged commands, including package maintainers.
    case "${1:-}" in -v|apt-get|dnf|dpkg|install) ;; test|cmp) exit 1 ;; *) exit 99 ;; esac ;;
+ gpg) while (($#)); do if [[ "$1" == --output ]]; then printf 'key fixture\\n' > "$2"; break; fi; shift; done ;;
  curl) while (($#)); do if [[ "$1" == -o ]]; then printf 'download fixture\\n' > "$2"; break; fi; shift; done ;;
 esac
 ''')
                 mock.chmod(0o755)
-                for name in ("sudo", "curl", "id"):
+                for name in ("sudo", "curl", "id", "gpg"):
                     (commands / name).symlink_to(mock)
                 log = directory / "log"
                 home = directory / "home"

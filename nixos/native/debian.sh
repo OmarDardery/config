@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Debian desktop packages, followed by the shared dotfiles/editor profile.
+# Debian applications, followed by the shared configuration-only profile.
 set -euo pipefail
 repo_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
 # shellcheck source=nixos/native/common.sh
@@ -21,9 +21,24 @@ sudo dpkg -i "$work/keyring.deb"
 curl --fail --location --proto '=https' --tlsv1.2 \
   "https://pkg.noctalia.dev/deb/noctalia-$repository.sources" -o "$work/noctalia.sources"
 native_install_file "$work/noctalia.sources" "/etc/apt/sources.list.d/noctalia-$repository.sources" 644 root root
+# VSCodium's documented signed package repository.
+curl --fail --location --proto '=https' --tlsv1.2 \
+  https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/raw/master/pub.gpg -o "$work/vscodium.asc"
+gpg --batch --dearmor --output "$work/vscodium.gpg" "$work/vscodium.asc"
+native_install_file "$work/vscodium.gpg" /usr/share/keyrings/vscodium-archive-keyring.gpg 644 root root
+cat > "$work/vscodium.sources" <<'SOURCES'
+Types: deb
+URIs: https://download.vscodium.com/debs
+Suites: vscodium
+Components: main
+Architectures: amd64
+Signed-by: /usr/share/keyrings/vscodium-archive-keyring.gpg
+SOURCES
+native_install_file "$work/vscodium.sources" /etc/apt/sources.list.d/vscodium.sources 644 root root
 sudo apt-get update
 sudo apt-get install -y \
-  nix-bin nix-setup-systemd git git-lfs gh zsh kitty firefox-esr \
+  nix-bin nix-setup-systemd git git-lfs gh zsh kitty firefox-esr codium neovim \
+  build-essential clangd clang-format cmake pkg-config nodejs npm golang-go rustc cargo imagemagick \
   thunar thunar-archive-plugin thunar-volman tumbler file-roller gvfs-backends gvfs-fuse \
   mpv imv papers libreoffice xournalpp flatpak \
   python3 python3-venv python3-tomlkit jq ripgrep fd-find bat btop fzf direnv zoxide \
@@ -43,4 +58,5 @@ for pair in bat:batcat fd:fdfind; do
   fi
 done
 export PATH="$HOME/.local/bin:$PATH"
+native_neovim
 native_apply

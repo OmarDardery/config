@@ -1,17 +1,17 @@
 # Desktop configuration
 
-Shared dotfiles, LazyVim and VSCodium across Linux distributions, with separate
-NixOS application and system modules.
+Shared Umbriel, Noctalia, Kitty, Zsh, VSCodium and LazyVim configurations across
+Linux distributions, with separate application installation.
 
 | Profile | Home Manager | Application/service installation |
 | --- | --- | --- |
-| NixOS `nixos` | Dotfiles, both editors and their private dependencies | NixOS modules |
-| Linux `oad` | Shared dotfiles and both editors | Native distribution |
-| Linux `oad-desktop` | Also Noctalia/Umbriel dotfiles and dynamic editor themes | Native distribution |
+| NixOS `nixos` | All dotfiles; both editors and their private dependencies | NixOS modules install the desktop applications |
+| Other Linux `oad` / `oad-desktop` | All six configurations, shortcuts and themes | Native packages, Lazy/Mason and Codium own installation |
 
-Home Manager does not install a shell, terminal, compositor, greeter, CLI suite,
-Flatpaks or user services. It configures native tools without replacing them.
-Editor dependencies remain in Nix and are available inside the editors.
+On other distributions Home Manager installs no applications, editor plugins or
+language tools. Its profile contains only its internal session-variable helper.
+NixOS keeps pinned editor packages/plugins/tooling in Nix. The `oad-desktop` name
+is retained for compatibility; both standalone outputs configure the full desktop.
 
 ## Deploy
 
@@ -34,9 +34,10 @@ Review `nixos/hardware.nix` separately on different hardware: it still contains
 this laptop's NVIDIA/PRIME and extra-storage policy.
 
 Debian/Fedora install the browser, desktop and greeter through APT/DNF, then
-apply their shared dotfiles and Nix editors. Reboot to enter the new greeter.
+apply all shared dotfiles. Editors are native applications too. Reboot to enter the new greeter.
 See [native setup details and upstream repositories](nixos/native/README.md).
-For only portable dotfiles/editors, or a build preview, use
+Run `editor-setup` after native installation for editor plugins and notebook tools.
+For a dotfiles-only switch or a build preview, use
 `nixos/bootstrap.sh --help`.
 
 Log out and back in after migration to clear old shell/environment settings.

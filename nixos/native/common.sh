@@ -6,7 +6,7 @@ native_preflight() {
   if [[ "${1:-}" == --help && $# == 1 ]]; then
     printf '%s\n' 'Run this script as your normal user from its checkout.' \
       'Edit nixos/profile.nix for your username, home and checkout path first.' \
-      'Installs native packages and Nix editors, configures the desktop, and enables greetd for the next boot.'
+      'Installs native applications, applies Nix dotfiles, configures the desktop, and enables greetd for the next boot.'
     exit 0
   fi
   [[ $# == 0 ]] || { printf '%s\n' 'Only --help is supported.' >&2; exit 2; }
@@ -36,6 +36,7 @@ native_apply() {
   # Bootstrap checks the configured identity and architecture before building.
   bash "$repo_dir/nixos/bootstrap.sh" --repo-dir "$repo_dir" --profile "${profile}-desktop" \
     --activate --backup-extension "before-native-$(date +%Y%m%d-%H%M%S)"
+  hash -r
   "$HOME/.local/bin/desktop-apply"
 
   # Use the packaged helper/account and PAM stack instead of replacing PAM.
@@ -72,6 +73,7 @@ native_apply() {
     exit 1
   fi
   sudo systemctl set-default graphical.target
+  printf '\n%s\n' 'Run editor-setup after login to install native editor plugins and notebook dependencies.'
   printf '\n%s\n' 'Setup complete. Reboot and select Umbriel in Noctalia Greeter.' \
     'The current graphical session was left running. Wallpaper/color auto-sync runs from Noctalia after login.' \
     'GPU drivers, firmware and existing network configuration remain distribution-managed.'
@@ -83,4 +85,31 @@ native_install_file() {
     sudo cp -a --backup=numbered -- "$target" "$target.before-config"
   fi
   sudo install -D -m "$mode" -o "$owner" -g "$group" -- "$source" "$target"
+}
+
+# Debian stable's Neovim is older than LazyVim requires. Prefer a suitable
+# distribution binary; otherwise install the verified official upstream release.
+native_neovim() {
+  if [[ -x /usr/bin/nvim ]] && /usr/bin/nvim --headless -u NONE \
+    -c "if !has('nvim-0.11.2') | cquit 1 | endif" -c qa; then
+    return
+  fi
+  version=v0.12.6
+  destination="${XDG_DATA_HOME:-$HOME/.local/share}/native-apps/neovim-$version"
+  if [[ ! -x "$destination/bin/nvim" ]]; then
+    curl --fail --location --proto '=https' --tlsv1.2 \
+      "https://github.com/neovim/neovim/releases/download/$version/nvim-linux-x86_64.tar.gz" -o "$work/neovim.tar.gz"
+    printf '%s  %s\n' '474430d53e6264f6d6dd18db42d6dc9df3a1b56ca9e88a325bbf860e1a811d87' "$work/neovim.tar.gz" | sha256sum --check
+    staging=$(mktemp -d "$work/neovim.XXXXXXXX")
+    tar --extract --gzip --file "$work/neovim.tar.gz" --strip-components=1 --directory "$staging"
+    mkdir -p -- "${destination%/*}"
+    if [[ -e "$destination" ]]; then mv --backup=numbered -- "$destination" "$destination.before-native-editor"; fi
+    mv -- "$staging" "$destination"
+  fi
+  mkdir -p -- "$HOME/.local/bin"
+  link="$HOME/.local/bin/nvim"
+  if [[ "$(readlink -- "$link" || true)" != "$destination/bin/nvim" ]]; then
+    if [[ -e "$link" || -L "$link" ]]; then mv --backup=numbered -- "$link" "$link.before-native-editor"; fi
+    ln -s -- "$destination/bin/nvim" "$link"
+  fi
 }

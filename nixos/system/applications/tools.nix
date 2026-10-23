@@ -20,7 +20,6 @@ in
     with pkgs;
     [
       kitty
-      zsh
       starship
       zoxide
       fzf

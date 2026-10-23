@@ -1,4 +1,10 @@
-{ pkgs, ... }:
+{
+  pkgs,
+  lib,
+  config,
+  isNixOS,
+  ...
+}:
 let
   pythonPackages =
     ps: with ps; [
@@ -28,7 +34,7 @@ let
   '';
 in
 {
-  programs.neovim = {
+  programs.neovim = lib.mkIf isNixOS {
     withPython3 = true;
     extraPython3Packages = pythonPackages;
     extraLuaPackages = ps: [ ps.magick ];
@@ -38,7 +44,10 @@ in
     ];
   };
 
-  xdg.configFile."nvim/plugin/molten.vim".source = manifest;
+  xdg.configFile."nvim/plugin/molten.vim" = {
+    enable = isNixOS;
+    source = manifest;
+  };
 
   xdg.configFile."nvim/lua/plugins/jupyter.lua".text = ''
     local function kitty_images()
@@ -50,6 +59,7 @@ in
       {
         "benlubas/molten-nvim",
         ft = { "quarto", "markdown", "python" },
+        build = ${if isNixOS then "false" else builtins.toJSON ":UpdateRemotePlugins"},
         dependencies = { "3rd/image.nvim" },
         init = function()
           vim.g.molten_image_provider = kitty_images() and "image.nvim" or "none"
@@ -90,13 +100,18 @@ in
           })
         end,
         keys = {
-          { "<leader>mi", "<cmd>MoltenInit nix-python<cr>", desc = "Notebook: start Nix Python kernel" },
+          { "<leader>mi", "<cmd>MoltenInit ${
+            if isNixOS then "nix-python" else "editor-python"
+          }<cr>", desc = "Notebook: start default Python kernel" },
           { "<leader>mI", "<cmd>MoltenInit<cr>", desc = "Notebook: choose kernel" },
           { "<leader>mp", function()
             local buf = vim.api.nvim_get_current_buf()
             vim.system({ "${
-              (import ../../pkgs/editor-tools.nix { inherit pkgs; }).notebookKernel
-            }/bin/notebook-kernel", LazyVim.root() }, { text = true }, function(result)
+              if isNixOS then
+                "${(import ../../pkgs/editor-tools.nix { inherit pkgs; }).notebookKernel}/bin/notebook-kernel"
+              else
+                "notebook-kernel"
+            }", LazyVim.root() }, { text = true }, function(result)
               vim.schedule(function()
                 if result.code ~= 0 then
                   vim.notify(result.stderr, vim.log.levels.ERROR, { title = "Project notebook kernel" })
@@ -126,6 +141,7 @@ in
         build = false,
         opts = {
           backend = "kitty",
+          processor = "${if isNixOS then "magick_rock" else "magick_cli"}",
           max_width = 100,
           max_height = 12,
           max_height_window_percentage = math.huge,

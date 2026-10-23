@@ -1,5 +1,5 @@
 # Use the VSCodium-specific Home Manager module for its config and extension paths.
-# Nix supplies extensions; store paths select external tools where needed.
+# NixOS pins extensions/tool paths; other distributions use native tools and gallery extensions.
 {
   pkgs,
   lib,
@@ -11,10 +11,68 @@
 }:
 let
   toolchain = import ../../lib/toolchain.nix { inherit pkgs; };
+  editorExtensions = with pkgs.vscode-extensions; [
+    # Languages
+    # Nix. nix-ide is the extension; nixd and nixfmt below do the work.
+    jnoortheen.nix-ide
+    # Lua
+    sumneko.lua
+    # C/C++. clangd is the language server here; CodeLLDB handles debugging.
+    llvm-vs-code-extensions.vscode-clangd
+    vadimcn.vscode-lldb
+    ms-vscode.cmake-tools
+    # PlatformIO requires the cpptools extension. Its IntelliSense engine is disabled;
+    # clangd provides C/C++ language support.
+    ms-vscode.cpptools
+    # Go — brings its own debug adapter, driving delve.
+    golang.go
+    # Rust. rust-analyzer's own extension; CodeLLDB above debugs it.
+    rust-lang.rust-analyzer
+    # TypeScript / JavaScript. No language extension: VSCodium bundles the
+    # TypeScript server, the same way it bundles JSON support.
+    dbaeumer.vscode-eslint
+    esbenp.prettier-vscode
+    # Tauri schemas and project commands.
+    tauri-apps.tauri-vscode
+    # Python supplies environment selection and test/debug UI; basedpyright supplies analysis.
+    ms-python.python
+    ms-python.vscode-python-envs
+    ms-python.debugpy
+    detachhead.basedpyright
+    charliermarsh.ruff
+    # Notebook integration uses the configured Python kernel.
+    ms-toolsai.jupyter
+    ms-toolsai.jupyter-renderers
+    ms-toolsai.jupyter-keymap
+    # Markdown
+    yzhang.markdown-all-in-one
+    davidanson.vscode-markdownlint
+    # YAML / TOML
+    redhat.vscode-yaml
+    tamasfe.even-better-toml
+    # Docker UI; hadolint is available through the shared toolchain.
+    ms-azuretools.vscode-docker
+    # Shell
+    timonwong.shellcheck
+    foxundermoon.shell-format
+
+    # Embedded
+    platformio.platformio-vscode-ide
+
+    # Tooling and UI
+    eamodio.gitlens
+    mhutchie.git-graph
+    mkhl.direnv
+    editorconfig.editorconfig
+    gruntfuggly.todo-tree
+    github.vscode-pull-request-github
+    anthropic.claude-code
+    pkief.material-icon-theme
+  ];
 
   # clang-tools, vscode-langservers-extracted etc. are multi-binary packages, so
   # name the binary explicitly rather than relying on meta.mainProgram.
-  bin = pkg: name: "${pkg}/bin/${name}";
+  bin = pkg: name: if isNixOS then "${pkg}/bin/${name}" else name;
 
   # Noctalia must render this file before the theme's first use. Keep the
   # manifest path inside the extension; only the symlink points outside it.
@@ -68,94 +126,72 @@ let
   };
 in
 {
+  xdg.configFile."VSCodium/User/extensions.list" = {
+    enable = !isNixOS;
+    text =
+      lib.concatMapStringsSep "\n" (e: "${e.vscodeExtPublisher}.${e.vscodeExtName}") editorExtensions
+      + "\n";
+  };
+  home.file.".vscode-oss/extensions/noctalia.noctalia-1.0.0/package.json" = {
+    enable = !isNixOS && desktopEnabled;
+    text = builtins.toJSON {
+      name = "noctalia";
+      publisher = "noctalia";
+      version = "1.0.0";
+      engines.vscode = "^1.70.0";
+      contributes.themes = [
+        {
+          id = "NoctaliaTheme";
+          label = "NoctaliaTheme";
+          uiTheme = "vs-dark";
+          path = "theme.json";
+        }
+        {
+          id = "NoctaliaLight";
+          label = "NoctaliaLight";
+          uiTheme = "vs";
+          path = "theme.json";
+        }
+      ];
+    };
+  };
+  home.file.".vscode-oss/extensions/noctalia.noctalia-1.0.0/theme.json" = {
+    enable = !isNixOS && desktopEnabled;
+    source = config.lib.file.mkOutOfStoreSymlink "${config.xdg.stateHome}/noctalia/theme/vscode.json";
+  };
   programs.vscodium = {
     enable = true;
 
     # PlatformIO downloads foreign toolchain binaries; use the FHS wrapper.
-    package = pkgs.symlinkJoin {
-      name = "vscodium-with-tools";
-      inherit (pkgs.vscodium) version;
-      paths = [ (if isNixOS then pkgs.vscodium.fhs else pkgs.vscodium) ];
-      nativeBuildInputs = [ pkgs.makeWrapper ];
-      postBuild = ''
-        wrapProgram "$out/bin/codium" --prefix PATH : ${
-          lib.makeBinPath (
-            toolchain.runtimes
-            ++ [
-              pkgs.platformio-core
-              pkgs.opencode
-              (import ../../pkgs/editor-tools.nix { inherit pkgs; }).notebookKernel
-            ]
-          )
-        }
-      '';
-      meta.mainProgram = "codium";
-    };
+    package =
+      if !isNixOS then
+        null
+      else
+        pkgs.symlinkJoin {
+          name = "vscodium-with-tools";
+          inherit (pkgs.vscodium) version;
+          paths = [ (if isNixOS then pkgs.vscodium.fhs else pkgs.vscodium) ];
+          nativeBuildInputs = [ pkgs.makeWrapper ];
+          postBuild = ''
+            wrapProgram "$out/bin/codium" --prefix PATH : ${
+              lib.makeBinPath (
+                toolchain.runtimes
+                ++ [
+                  pkgs.platformio-core
+                  pkgs.opencode
+                  (import ../../pkgs/editor-tools.nix { inherit pkgs; }).notebookKernel
+                ]
+              )
+            }
+          '';
+          meta.mainProgram = "codium";
+        };
     # Expose tools to the editor and its terminals without installing a global toolchain.
     # wrapProgram is applied to both the regular and FHS launcher.
 
     profiles.default = {
       extensions =
-        with pkgs.vscode-extensions;
-        [
-          # Languages
-          # Nix. nix-ide is the extension; nixd and nixfmt below do the work.
-          jnoortheen.nix-ide
-          # Lua
-          sumneko.lua
-          # C/C++. clangd is the language server here; CodeLLDB handles debugging.
-          llvm-vs-code-extensions.vscode-clangd
-          vadimcn.vscode-lldb
-          ms-vscode.cmake-tools
-          # PlatformIO requires the cpptools extension. Its IntelliSense engine is disabled;
-          # clangd provides C/C++ language support.
-          ms-vscode.cpptools
-          # Go — brings its own debug adapter, driving delve.
-          golang.go
-          # Rust. rust-analyzer's own extension; CodeLLDB above debugs it.
-          rust-lang.rust-analyzer
-          # TypeScript / JavaScript. No language extension: VSCodium bundles the
-          # TypeScript server, the same way it bundles JSON support.
-          dbaeumer.vscode-eslint
-          esbenp.prettier-vscode
-          # Tauri schemas and project commands.
-          tauri-apps.tauri-vscode
-          # Python supplies environment selection and test/debug UI; basedpyright supplies analysis.
-          ms-python.python
-          ms-python.vscode-python-envs
-          ms-python.debugpy
-          detachhead.basedpyright
-          charliermarsh.ruff
-          # Notebook integration uses the configured Python kernel.
-          ms-toolsai.jupyter
-          ms-toolsai.jupyter-renderers
-          ms-toolsai.jupyter-keymap
-          # Markdown
-          yzhang.markdown-all-in-one
-          davidanson.vscode-markdownlint
-          # YAML / TOML
-          redhat.vscode-yaml
-          tamasfe.even-better-toml
-          # Docker UI; hadolint is available through the shared toolchain.
-          ms-azuretools.vscode-docker
-          # Shell
-          timonwong.shellcheck
-          foxundermoon.shell-format
-
-          # Embedded
-          platformio.platformio-vscode-ide
-
-          # Tooling and UI
-          eamodio.gitlens
-          mhutchie.git-graph
-          mkhl.direnv
-          editorconfig.editorconfig
-          gruntfuggly.todo-tree
-          github.vscode-pull-request-github
-          anthropic.claude-code
-          pkief.material-icon-theme
-        ]
-        ++ lib.optional desktopEnabled noctaliaTheme;
+        lib.optionals isNixOS editorExtensions ++ lib.optional (isNixOS && desktopEnabled) noctaliaTheme;
 
       keybindings = [
         {
@@ -211,9 +247,9 @@ in
           if desktopEnabled then "NoctaliaLight" else "Default Light Modern";
         "workbench.iconTheme" = "material-icon-theme";
 
-        # Nix manages editor and extension updates.
-        "extensions.autoUpdate" = false;
-        "extensions.autoCheckUpdates" = false;
+        # Native extensions update through Codium; NixOS keeps pinned extensions.
+        "extensions.autoUpdate" = !isNixOS;
+        "extensions.autoCheckUpdates" = !isNixOS;
         "update.mode" = "none";
 
         "telemetry.telemetryLevel" = "off";
@@ -243,9 +279,9 @@ in
         "C_Cpp.updateChannel" = "Default";
 
         # The pinned extension prepends customPATH to the inherited PATH.
-        "platformio-ide.useBuiltinPIOCore" = false;
-        "platformio-ide.useBuiltinPython" = false;
-        "platformio-ide.customPATH" = "${pkgs.platformio-core}/bin";
+        "platformio-ide.useBuiltinPIOCore" = !isNixOS;
+        "platformio-ide.useBuiltinPython" = !isNixOS;
+        "platformio-ide.customPATH" = if isNixOS then "${pkgs.platformio-core}/bin" else "";
 
         # Go
         # The Go extension would otherwise offer to install these into GOPATH.
@@ -272,7 +308,7 @@ in
         "rust-analyzer.server.path" = bin pkgs.rust-analyzer "rust-analyzer";
 
         # Python
-        # Use project versions when installed, with Nix-owned extension bundles as fallback.
+        # Prefer project versions; extensions provide a fallback when available.
         "basedpyright.importStrategy" = "fromEnvironment";
         "basedpyright.disableOrganizeImports" = true;
         "ruff.importStrategy" = "fromEnvironment";

@@ -17,10 +17,10 @@ The distribution scripts in this directory perform the following steps:
    Noctalia, Umbriel, Umbriel's portal and Noctalia Greeter.
 2. Install Firefox/Firefox ESR, Kitty, Thunar and its plugins, media/document/office
    tools, capture utilities, fonts, shell basics and the distribution's multi-user
-   Nix packages. Fedora also installs native Yazi and Starship from Terra.
+   Nix packages. Neovim and VSCodium are native applications too. Fedora also installs native Yazi and Starship from Terra.
 3. Build and activate `<profileName>-desktop` through Home Manager, backing up
    conflicting unmanaged files with a timestamped suffix. Home Manager installs
-   only LazyVim/VSCodium and their private dependencies, and writes dotfiles.
+   no applications, plugins or language tools, and writes all six configurations.
 4. Run `desktop-apply` and install a native user unit to repeat it at graphical
    login. Enable flakes in the managed user Nix configuration. Debian's `batcat`
    and `fdfind` receive user-local `bat` and `fd` links when those names are free.
@@ -43,11 +43,32 @@ A failed package download/build stops setup; rerun after resolving the failure.
 Native package versions follow their repositories; they are not pinned by the Nix
 lock file. A fresh real-machine login remains necessary to verify graphics/PAM.
 
+## Native editors
+
+Run `editor-setup` after logging in to the newly configured account. It creates a
+native Python virtual environment for notebook/provider tools, installs Codium's
+configured extension IDs, and asks Lazy to sync plugins and register Molten.
+It never runs during a Home Manager activation. Missing gallery extensions are
+reported for manual installation from publisher-provided VSIX files.
+
+LazyVim needs Neovim 0.11.2+. The installer prefers a suitable `/usr/bin/nvim`;
+otherwise it installs Neovim's official v0.12.6 Linux archive in the user's native
+application directory, verifying its recorded SHA-256. This fallback is outside
+Nix and preserves any replaced user-local launcher. Update that fallback through
+the native installer; Nix does not update it. VSCodium uses the signed repository
+linked by its installation guide. Common compilers, Node and ImageMagick are
+installed by APT/DNF; Lazy/Mason and native extensions own editor plugins/tools.
+Other optional native tools such as OpenCode, nixd and nixfmt can be installed
+separately when needed. The dotfile profile itself never installs them.
+
 ## Sources and updates
 
 - [Noctalia installation](https://docs.noctalia.dev/noctalia/getting-started/installation/)
 - [Umbriel installation](https://docs.noctalia.dev/umbriel/installation/)
 - [Greeter installation](https://docs.noctalia.dev/greeter/installation/)
+- [VSCodium installation](https://vscodium.com/install)
+- [Neovim release](https://github.com/neovim/neovim/releases/tag/v0.12.6)
+- [LazyVim requirements](https://www.lazyvim.org/)
 - [Terra repository configuration](https://github.com/terrapkg/subatomic-repos/blob/main/terra.repo)
 - [Debian Nix setup](https://packages.debian.org/trixie/nix-setup-systemd)
 - [Fedora Nix daemon](https://packages.fedoraproject.org/pkgs/nix/nix-daemon/)

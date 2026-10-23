@@ -165,7 +165,7 @@ else
   configured_home=$(nix "${nixflags[@]}" eval "${evalflags[@]}" --raw "$target.config.home.homeDirectory")
   [[ "$configured_user" == "$(id -un)" && "$configured_home" == "$HOME" ]] || die \
     "Profile $profile requires user $configured_user with HOME=$configured_home; current user is $(id -un) with HOME=$HOME. Edit the explicit deployment identity in $flake_dir/profile.nix, or select an existing named profile with --profile."
-  say 'Standalone profile: dotfiles, LazyVim and VSCodium; applications and desktop services are installed separately.'
+  say 'Standalone profile: dotfiles only; applications and desktop services are installed separately.'
   warn 'Activation may change managed home files and run profile activation hooks; existing conflicting files are not force-overwritten by this script.'
   build_target="$target.activationPackage"
 fi

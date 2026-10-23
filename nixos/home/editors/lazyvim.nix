@@ -1,5 +1,4 @@
-# Nix supplies plugins, grammars and language tools; lazy.nvim controls loading.
-# Enable extras here and add their plugins/tools to the corresponding lists.
+# Shared LazyVim preferences: pinned NixOS tools or native Lazy/Mason installation.
 {
   pkgs,
   lib,
@@ -11,6 +10,31 @@
 }:
 let
   toolchain = import ../../lib/toolchain.nix { inherit pkgs; };
+  bin = package: command: if isNixOS then "${package}/bin/${command}" else command;
+  extras = [
+    "dap.core"
+    "test.core"
+    "lang.nix"
+    "lang.clangd"
+    "lang.go"
+    "lang.rust"
+    "lang.typescript"
+    "lang.python"
+    "lang.markdown"
+    "lang.json"
+    "lang.yaml"
+    "lang.toml"
+    "lang.docker"
+    "lang.git"
+    "formatting.prettier"
+    "linting.eslint"
+    (if isNixOS then "ai.copilot-native" else "ai.copilot")
+    "coding.mini-surround"
+    "coding.yanky"
+  ];
+  extrasLua = lib.concatMapStringsSep "\n" (
+    name: ''{ import = "lazyvim.plugins.extras.${name}" },''
+  ) extras;
   # Use the pinned npm distribution of the Copilot language server.
   copilotLanguageServer = pkgs.copilot-language-server.overrideAttrs (_: {
     version = "1.495.0";
@@ -206,7 +230,7 @@ in
 {
   imports = [ ./notebooks.nix ];
 
-  programs.neovim = {
+  programs.neovim = lib.mkIf isNixOS {
     enable = true;
     defaultEditor = true;
     viAlias = true;
@@ -285,25 +309,7 @@ in
           { "catppuccin/nvim", name = "catppuccin", enabled = false },
 
           -- Enable extras declaratively; add their dependencies to the package lists.
-          { import = "lazyvim.plugins.extras.dap.core" },
-          { import = "lazyvim.plugins.extras.test.core" },
-          { import = "lazyvim.plugins.extras.lang.nix" },
-          { import = "lazyvim.plugins.extras.lang.clangd" },
-          { import = "lazyvim.plugins.extras.lang.go" },
-          { import = "lazyvim.plugins.extras.lang.rust" },
-          { import = "lazyvim.plugins.extras.lang.typescript" },
-          { import = "lazyvim.plugins.extras.lang.python" },
-          { import = "lazyvim.plugins.extras.lang.markdown" },
-          { import = "lazyvim.plugins.extras.lang.json" },
-          { import = "lazyvim.plugins.extras.lang.yaml" },
-          { import = "lazyvim.plugins.extras.lang.toml" },
-          { import = "lazyvim.plugins.extras.lang.docker" },
-          { import = "lazyvim.plugins.extras.lang.git" },
-          { import = "lazyvim.plugins.extras.formatting.prettier" },
-          { import = "lazyvim.plugins.extras.linting.eslint" },
-          { import = "lazyvim.plugins.extras.ai.copilot-native" },
-          { import = "lazyvim.plugins.extras.coding.mini-surround" },
-          { import = "lazyvim.plugins.extras.coding.yanky" },
+          ${extrasLua}
 
           { import = "plugins" },
 
@@ -322,6 +328,40 @@ in
               return opts
             end,
           },
+        },
+      })
+    '';
+  };
+
+  xdg.configFile."nvim/init.lua" = lib.mkIf (!isNixOS) {
+    text = ''
+      vim.g.mapleader = " "
+      vim.g.maplocalleader = "\\"
+      vim.g.lazyvim_json = vim.fn.stdpath("data") .. "/lazyvim.json"
+      vim.g.lazyvim_picker = "snacks"
+      vim.g.lazyvim_cmp = "blink.cmp"
+      vim.g.lazyvim_explorer = "snacks"
+      vim.g.lazyvim_python_lsp = "basedpyright"
+      vim.g.python3_host_prog = ${
+        lib.generators.toLua { } "${config.xdg.dataHome}/editor-python/bin/python"
+      }
+      vim.env.PATH = vim.fn.fnamemodify(vim.g.python3_host_prog, ":h") .. ":" .. vim.env.PATH
+      local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+      if not vim.uv.fs_stat(lazypath) then
+        local output = vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable",
+          "https://github.com/folke/lazy.nvim.git", lazypath })
+        if vim.v.shell_error ~= 0 then error(output) end
+      end
+      vim.opt.rtp:prepend(lazypath)
+      require("lazy").setup({
+        lockfile = vim.fn.stdpath("state") .. "/lazy-lock.json",
+        defaults = { lazy = true },
+        checker = { enabled = false },
+        rocks = { enabled = false },
+        spec = {
+          { "LazyVim/LazyVim", import = "lazyvim.plugins", opts = { colorscheme = "habamax" } },
+          ${extrasLua}
+          { import = "plugins" },
         },
       })
     '';
@@ -361,7 +401,7 @@ in
         },
         config = function()
           vim.o.autoread = true
-          local command = { "${pkgs.opencode}/bin/opencode", "--port", "0" }
+          local command = { "${bin pkgs.opencode "opencode"}", "--port", "0" }
           local function terminal_opts()
             return {
               cwd = LazyVim.root(),
@@ -547,14 +587,14 @@ in
       },
       {
         "iamcco/markdown-preview.nvim",
-        build = false,
+        build = ${if isNixOS then "false" else ''function() vim.fn["mkdp#util#install"]() end''},
       },
       {
         -- Use the pinned server directly to avoid rustup shim recursion.
         "mrcjkb/rustaceanvim",
         opts = {
           server = {
-            cmd = { "${pkgs.rust-analyzer}/bin/rust-analyzer" },
+            cmd = { "${bin pkgs.rust-analyzer "rust-analyzer"}" },
             default_settings = {
               ["rust-analyzer"] = ${lib.generators.toLua { } toolchain.rustAnalyzerSettings},
             },
@@ -581,24 +621,31 @@ in
       {
         "mfussenegger/nvim-dap-python",
         config = function()
-          require("dap-python").setup("${toolchain.debugAdapters.python}/bin/python3")
+          require("dap-python").setup("${
+            if isNixOS then
+              "${toolchain.debugAdapters.python}/bin/python3"
+            else
+              "${config.xdg.dataHome}/editor-python/bin/python"
+          }")
         end,
       },
       {
         "leoluz/nvim-dap-go",
-        opts = { delve = { path = "${pkgs.delve}/bin/dlv" } },
+        opts = { delve = { path = "${bin pkgs.delve "dlv"}" } },
       },
-      {
-        "mrcjkb/rustaceanvim",
-        opts = function(_, opts)
-          opts.dap = {
-            adapter = require("rustaceanvim.config").get_codelldb_adapter(
-              "${toolchain.debugAdapters.lldb}/bin/codelldb",
-              "${toolchain.debugAdapters.lldb}/share/lldb/lib/liblldb.so"
-            ),
-          }
-        end,
-      },
+      ${lib.optionalString isNixOS ''
+        {
+          "mrcjkb/rustaceanvim",
+          opts = function(_, opts)
+            opts.dap = {
+              adapter = require("rustaceanvim.config").get_codelldb_adapter(
+                "${toolchain.debugAdapters.lldb}/bin/codelldb",
+                "${toolchain.debugAdapters.lldb}/share/lldb/lib/liblldb.so"
+              ),
+            }
+          end,
+        },
+      ''}
       {
         "nvim-neotest/neotest",
         opts = {
@@ -645,7 +692,7 @@ in
           if not clangd then
             return
           end
-          clangd.cmd = vim.list_extend({ "${pkgs.clang-tools}/bin/clangd" }, ${clangdArgs})
+          clangd.cmd = vim.list_extend({ "${bin pkgs.clang-tools "clangd"}" }, ${clangdArgs})
         end,
       },
     }

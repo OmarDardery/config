@@ -8,6 +8,7 @@ in
       ../home/default.nix
       modules.homeManager.dotfiles
       modules.homeManager.editors
+      modules.homeManager.desktop-dotfiles
     ];
     targets.genericLinux = {
       enable = true;
