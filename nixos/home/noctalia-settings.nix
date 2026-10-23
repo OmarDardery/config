@@ -41,7 +41,7 @@
       margin_ends = 12;
       padding = 8;
       widget_spacing = 4;
-      position = "top";
+      position = "bottom";
       radius = 12;
       shadow = true;
       thickness = 32;
