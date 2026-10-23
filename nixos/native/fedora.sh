@@ -26,7 +26,7 @@ metadata_expire=1h
 REPO
 native_install_file "$work/vscodium.repo" /etc/yum.repos.d/vscodium.repo 644 root root
 sudo dnf install -y \
-  nix nix-daemon git git-lfs gh zsh kitty firefox codium neovim \
+  nix nix-daemon git git-lfs gh zsh zsh-autosuggestions zsh-syntax-highlighting kitty firefox codium neovim \
   gcc gcc-c++ make clang-tools-extra cmake pkgconf-pkg-config nodejs npm golang rust cargo ImageMagick \
   Thunar thunar-archive-plugin thunar-volman tumbler file-roller gvfs-smb gvfs-mtp \
   mpv imv papers libreoffice xournalpp flatpak \

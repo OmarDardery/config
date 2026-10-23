@@ -256,7 +256,7 @@ let
       integration = "${pkgs.kitty}/lib/kitty/shell-integration/zsh";
       zsh = "${pkgs.zsh}/bin/zsh";
       kittyConfig = builtins.unsafeDiscardStringContext home.xdg.configFile."kitty/kitty.conf".text;
-      zshrc = builtins.unsafeDiscardStringContext home.home.file.".zshrc".text;
+      zshrc = home.home.file.".zshrc".text;
       zshenv = builtins.unsafeDiscardStringContext home.home.file.".zshenv".text;
     }
   );

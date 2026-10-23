@@ -37,7 +37,7 @@ SOURCES
 native_install_file "$work/vscodium.sources" /etc/apt/sources.list.d/vscodium.sources 644 root root
 sudo apt-get update
 sudo apt-get install -y \
-  nix-bin nix-setup-systemd git git-lfs gh zsh kitty firefox-esr codium neovim \
+  nix-bin nix-setup-systemd git git-lfs gh zsh zsh-autosuggestions zsh-syntax-highlighting kitty firefox-esr codium neovim \
   build-essential clangd clang-format cmake pkg-config nodejs npm golang-go rustc cargo imagemagick \
   thunar thunar-archive-plugin thunar-volman tumbler file-roller gvfs-backends gvfs-fuse \
   mpv imv papers libreoffice xournalpp flatpak \

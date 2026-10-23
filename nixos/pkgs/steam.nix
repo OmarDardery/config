@@ -37,6 +37,10 @@ in
   # Same environment/libraries as upstream packages/nix/steam.nix, without
   # its unconditional ln -sf in extraProfile. Bootstrap setup is opt-in below.
   steam = runtimePkgs.steam.override {
+    # steamwebhelper's container cannot resolve /run/current-system/sw paths.
+    extraProfile = ''
+      export XCURSOR_PATH="${pkgs.bibata-cursors}/share/icons:${pkgs.adwaita-icon-theme}/share/icons''${XCURSOR_PATH:+:$XCURSOR_PATH}"
+    '';
     extraLibraries = _: [
       millennium
       runtimePkgs.openssl
