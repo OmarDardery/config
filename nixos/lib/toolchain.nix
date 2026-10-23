@@ -60,7 +60,7 @@
           "${flakeConfig}.pkgs"
         else
           "(builtins.getFlake ${quote "path:${profile.configRepo}"}).homeConfigurations.${quote profile.profileName}.pkgs";
-      formatting.command = [ "${pkgs.nixfmt}/bin/nixfmt" ];
+      formatting.command = [ (if isNixOS then "${pkgs.nixfmt}/bin/nixfmt" else "nixfmt") ];
       options = {
         home_manager.expr =
           if isNixOS then

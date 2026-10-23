@@ -72,14 +72,14 @@
             flake = inputs.self;
           };
           devShells.${system} = import ./dev-shells.nix { inherit pkgs; };
-          # Shared dotfiles and editors; other applications remain native.
+          # Standalone Linux manages dotfiles only; native tools own applications.
           homeConfigurations.${profile.profileName} = home-manager.lib.homeManagerConfiguration {
             inherit pkgs;
             extraSpecialArgs = {
               inherit inputs profile;
               isNixOS = false;
               isLaptop = false;
-              desktopEnabled = false;
+              desktopEnabled = true;
             };
             modules = [
               config.flake.modules.homeManager.portable
@@ -99,7 +99,6 @@
             };
             modules = [
               config.flake.modules.homeManager.portable
-              config.flake.modules.homeManager.desktop-dotfiles
             ];
           };
 

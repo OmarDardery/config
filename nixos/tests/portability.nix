@@ -47,11 +47,11 @@ let
     c:
     builtins.all (
       p:
-      builtins.elem p [
-        c.programs.neovim.finalPackage
-        c.programs.vscodium.package
-        c.home.sessionVariablesPackage
-      ]
+      builtins.elem p (
+        [ c.home.sessionVariablesPackage ]
+        ++ lib.optional c.programs.neovim.enable c.programs.neovim.finalPackage
+        ++ lib.optional (c.programs.vscodium.package != null) c.programs.vscodium.package
+      )
     ) c.home.packages;
   checks = {
     packageBoundary = builtins.all onlyEditors [
@@ -60,10 +60,43 @@ let
       nativeDesktop
       integrated
     ];
-    bothEditors = builtins.all (c: c.programs.neovim.enable && c.programs.vscodium.enable) [
-      tools
+    nativeConfigurationOnly =
+      builtins.all
+        (
+          c:
+          c.home.packages == [ c.home.sessionVariablesPackage ]
+          && !c.programs.neovim.enable
+          && c.programs.vscodium.package == null
+          && c.programs.vscodium.profiles.default.extensions == [ ]
+          && c.xdg.configFile."nvim/init.lua".enable
+          && c.xdg.configFile."umbriel/config.toml".enable
+          && c.xdg.configFile."noctalia/config.toml".enable
+          && c.xdg.configFile."kitty/kitty.conf".enable
+          && c.home.file.".zshrc".enable
+        )
+        [
+          tools
+          nativeDesktop
+        ];
+    nativeToolPaths =
+      builtins.all
+        (
+          c:
+          !lib.hasInfix "/nix/store/" (
+            builtins.toJSON {
+              vscode = c.programs.vscodium.profiles.default.userSettings;
+              lua = lib.mapAttrs (_: f: f.text) (
+                lib.filterAttrs (name: f: f.enable && f.text != null && lib.hasPrefix "nvim/" name) c.xdg.configFile
+              );
+            }
+          )
+        )
+        [
+          tools
+          nativeDesktop
+        ];
+    nixosEditors = builtins.all (c: c.programs.neovim.enable && c.programs.vscodium.package != null) [
       home
-      nativeDesktop
       integrated
     ];
     kittyShellIntegration =
@@ -120,10 +153,8 @@ let
         ];
     portableBoundary =
       !tools.targets.genericLinux.gpu.enable
-      && !(tools.xdg.configFile ? "umbriel/config.toml")
-      && !(tools.xdg.configFile ? "noctalia/config.toml")
-      && !tools.xdg.mimeApps.enable
-      && !(tools.home.sessionVariables ? QT_QPA_PLATFORMTHEME)
+      && tools.xdg.configFile ? "umbriel/config.toml"
+      && tools.xdg.configFile ? "noctalia/config.toml"
       && !(tools.home.sessionVariables ? LD_LIBRARY_PATH)
       && !(tools.home.sessionVariables ? XKB_CONFIG_ROOT);
     optionalDesktopFiles =
@@ -249,19 +280,18 @@ let
         tools.programs.vscodium.profiles.default.userSettings."basedpyright.analysis.typeCheckingMode"
         == "basic"
       && tools.programs.vscodium.profiles.default.userSettings."python.useEnvironmentsExtension"
-      && tools.xdg.dataFile ? "jupyter/kernels/nix-python/kernel.json"
+      && !tools.xdg.dataFile."jupyter/kernels/nix-python/kernel.json".enable
+      && integrated.xdg.dataFile."jupyter/kernels/nix-python/kernel.json".enable
       && !(builtins.elem base.pkgs.vscode-extensions.usernamehw.errorlens tools.programs.vscodium.profiles.default.extensions);
     privateEditorTools =
-      builtins.elem base.pkgs.rustc tools.programs.neovim.extraPackages
-      && builtins.elem base.pkgs.basedpyright tools.programs.neovim.extraPackages
-      && lib.hasInfix "/bin/notebook-kernel" tools.xdg.configFile."nvim/lua/plugins/jupyter.lua".text;
+      builtins.elem base.pkgs.rustc home.programs.neovim.extraPackages
+      && builtins.elem base.pkgs.basedpyright home.programs.neovim.extraPackages
+      && lib.hasInfix "/bin/notebook-kernel" home.xdg.configFile."nvim/lua/plugins/jupyter.lua".text;
     independentThemes =
-      !tools.xdg.configFile."nvim/lua/plugins/noctalia.lua".enable
+      tools.xdg.configFile."nvim/lua/plugins/noctalia.lua".enable
       && home.xdg.configFile."nvim/lua/plugins/noctalia.lua".enable
       && nativeDesktop.xdg.configFile."nvim/lua/plugins/noctalia.lua".enable
-      &&
-        tools.programs.vscodium.profiles.default.userSettings."workbench.colorTheme"
-        == "Default Dark Modern"
+      && tools.programs.vscodium.profiles.default.userSettings."workbench.colorTheme" == "NoctaliaTheme"
       && vscodeThemeExtension != null;
     nixd = home.programs.vscodium.profiles.default.userSettings."nix.serverSettings".nixd == nixd;
     tailscaleFirewall =

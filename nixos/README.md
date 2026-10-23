@@ -16,10 +16,10 @@ at their existing values.
 # NixOS: copy local hardware, then switch the full configuration.
 bash nixos-setup.sh
 
-# Another distribution: shared dotfiles and both editors.
+# Another distribution: all dotfiles, without installing applications.
 nix build path:./nixos#homeConfigurations.oad.activationPackage
 
-# Also configure an independently installed native Noctalia/Umbriel desktop.
+# Compatibility selector for the same full native desktop configuration.
 nix build path:./nixos#homeConfigurations.oad-desktop.activationPackage
 ```
 
@@ -39,7 +39,7 @@ bash nixos-setup.sh
 bash debian-setup.sh
 # OR
 bash fedora-setup.sh
-# Dotfiles and editors alone on an existing Nix-enabled Linux installation:
+# All dotfiles on an existing Nix-enabled Linux installation:
 bash nixos/bootstrap.sh --repo-dir "$PWD" --activate --backup-extension bak
 ```
 
@@ -69,11 +69,13 @@ Existing checkouts are never pulled, staged or reset by deployment scripts.
 | `pkgs/` | Packaging and executable helpers |
 | `assets/` | Wallpapers, CSS and tablet seed |
 
-Home Manager installs only the editors, their dependencies and its internal
-session-variable helper. Dotfile generators use `package = null` where supported;
-other preferences are ordinary files. Native commands are resolved through PATH.
-No Home Manager user services or timers own desktop processes. NixOS provides
-native user units for KDE Connect, Bluetooth media controls and desktop setup.
+On NixOS, Home Manager installs the editors and their private dependencies; system
+modules install the other applications. On other distributions, Home Manager
+writes configuration only: no application binaries, editor plugins or language
+tools are installed into the profile. Supported generators use `package = null`.
+The native Neovim setup uses Lazy/Mason; VSCodium uses its native extension gallery
+and PATH-resolved tools. Both standalone selectors configure all six applications.
+No Home Manager services or timers own desktop processes.
 
 NixOS and integrated Home Manager share a package set. Noctalia/Umbriel retain
 upstream's independent package sets for native dependencies and caches. Fonts,
@@ -99,11 +101,15 @@ unsupported replacement of Steam's runtime binaries is applied automatically.
 
 ## Editors and notebooks
 
-LazyVim supplies plugins, parsers, language servers, debug adapters and runtimes
-through its wrapper. VSCodium uses explicit tool paths and a wrapper for its
-terminal tools. On NixOS it retains the FHS launcher for PlatformIO; on other
-distributions it uses ordinary VSCodium. Neither changes the host's global Rust,
-Python, Node or C toolchain.
+On NixOS, LazyVim supplies pinned plugins, parsers, language servers, adapters and
+runtimes through its wrapper; VSCodium retains its FHS launcher for PlatformIO.
+On other distributions, native Neovim/VSCodium are configured without Nix
+wrappers or store paths for tools. Lazy/Mason install Neovim plugins/tools and
+Codium installs its extensions. Run `editor-setup` once after applying dotfiles to
+prepare native notebook dependencies, plugins and extensions. Extensions not
+available from the native gallery are reported for manual publisher-VSIX setup.
+The managed custom Noctalia theme is ordinary extension metadata and a palette
+link; it does not install VSCodium through Nix.
 
 ```sh
 uv add --dev ipykernel
@@ -115,7 +121,8 @@ path and never installs project dependencies. In VSCodium select **Select Anothe
 Kernel → Jupyter Kernels → Python (project .venv)**. Existing saved Python
 interpreter selections may need **Python: Select Interpreter** once; the default
 `.venv` hint does not override a cached selection. In LazyVim use `<leader>mp` for
-the project kernel or `<leader>mi` for the Nix fallback.
+the project kernel or `<leader>mi` for the editor fallback (Nix Python on NixOS,
+`editor-python` on other distributions).
 
 Python analysis is basic and limited to open files. Ruff remains enabled.
 Neovim keeps diagnostic signs/underlines; `<leader>cd` and `<leader>xx` show

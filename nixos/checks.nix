@@ -292,9 +292,24 @@ in
   '';
   editor-integration = editorCheck "editor-integration-checks" false home;
   editor-notebooks = editorCheck "editor-notebook-checks" true home;
-  portable-editor =
-    editorCheck "portable-editor-checks" false
-      flake.homeConfigurations.${profile.profileName}.config;
+  portable-editor = scriptCheck "native-editor-dotfile-checks" ''
+    bash -n ${./pkgs/native-editor-setup.sh}
+    ${pkgs.lua5_1}/bin/luac -p ${
+      syntaxFile "native-init.lua"
+        flake.homeConfigurations.${profile.profileName}.config.xdg.configFile."nvim/init.lua".text
+    }
+    ${lib.concatMapStringsSep "\n"
+      (file: "${pkgs.lua5_1}/bin/luac -p ${syntaxFile "native-plugin.lua" file.text}")
+      (
+        builtins.attrValues (
+          lib.filterAttrs (
+            name: file:
+            file.enable && file.text != null && lib.hasPrefix "nvim/" name && lib.hasSuffix ".lua" name
+          ) flake.homeConfigurations.${profile.profileName}.config.xdg.configFile
+        )
+      )
+    }
+  '';
   desktop-integration =
     pkgs.runCommand "desktop-integration-checks"
       {

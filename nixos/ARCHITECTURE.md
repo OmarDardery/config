@@ -1,7 +1,8 @@
 # Ownership and module plan
 
-The goal is one set of preferences across Linux distributions without installing
-another distribution's desktop through Home Manager.
+The goal is one set of preferences across Linux distributions. NixOS installs
+applications through Nix; other distributions use native application installation
+and Home Manager writes their dotfiles only.
 
 | Layer | Responsibility | Entry point |
 | --- | --- | --- |
@@ -22,9 +23,10 @@ another distribution's desktop through Home Manager.
    modules, and plain dotfiles when a module cannot operate without its package.
    Noctalia/Umbriel use their official Home Manager modules with null packages
    and services disabled, retaining upstream config generation.
-3. Installing language tools globally on another distribution creates competing
-   toolchains. Put editor dependencies in the editor wrappers; project environments
-   and native command-line tools remain independent.
+3. On NixOS, keep editor dependencies in their Nix wrappers. On other distributions,
+   do not install editors, plugins or language tools through Nix: share settings,
+   resolve native commands through PATH, and let Lazy/Mason/Codium manage tools.
+   Project environments remain independent on both backends.
 4. Desktop setup must not block a dotfile rebuild or assume a compositor exists.
    Keep palette initialization in the explicit `desktop-apply` command. NixOS runs
    it from a native user unit at graphical login; Debian/Fedora installers provide
@@ -36,13 +38,11 @@ another distribution's desktop through Home Manager.
 
 ## Profiles
 
-- `homeConfigurations.oad`: shared dotfiles and both editors. Does not install
-  shell/CLI programs, a compositor, shell, greeter, portals or user services.
-- `homeConfigurations.oad-desktop`: also writes desktop dotfiles and enables the
-  Noctalia editor themes. Still installs only the editors. Install the desktop
-  through the native package manager first.
-- `nixosConfigurations.nixos`: native NixOS system/application/service modules
-  plus Home Manager dotfiles and editors.
+- `homeConfigurations.oad`: all six applications' dotfiles, no applications.
+- `homeConfigurations.oad-desktop`: compatibility selector with the same full
+  dotfile scope; its aliases preserve this output name.
+- `nixosConfigurations.nixos`: native NixOS application/service modules plus
+  Home Manager dotfiles and Nix-packaged editors/private dependencies.
 
 The root `nixos-setup.sh`, `debian-setup.sh` and `fedora-setup.sh` are entry points.
 Native package lists live in `native/debian.sh` and `native/fedora.sh`, with shared
@@ -51,15 +51,17 @@ NixOS copies its generated hardware file before evaluation; Git ignores that
 file. Use `path:` flake references so local hardware participates in rebuilds.
 
 Names and identity come from `profile.nix`. `stateVersion` remains unchanged.
-Editor libraries, plugins, tools and Home Manager's internal activation utilities
-remain Nix dependencies; “only editors” refers to applications installed into the
-Home Manager package profile, not to every dependency in the Nix store.
+Editor libraries/plugins/tools are Nix dependencies on NixOS only. Standalone
+profiles contain only Home Manager's internal session helper. Rendering helpers
+and source assets used to generate dotfiles can still have Nix build dependencies;
+they do not install the six application binaries.
 
 ## Verification
 
 Evaluate all profiles with a second identity and paths containing spaces/quotes.
-Assert that Home Manager's package list contains only the two editor packages and
-its session-variable utility, and that it has no user services or timers. Verify
+Assert that standalone profiles contain only the session-variable utility, while
+NixOS installs both editors. Neither profile owns user services or timers. Check
+that native editor settings contain no Nix executable paths. Verify
 native command references, the opt-in desktop profile, generated configs, notebook
 integration, activation-file migration, and update/bootstrap routing. Build or run
 tests that exercise behavior; live graphics and display-manager changes need a
