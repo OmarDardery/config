@@ -99,6 +99,30 @@ force it off. See [Valve's runtime discussion](https://github.com/ValveSoftware/
 Millennium's pinned bootstrap libraries remain unchanged. No beta opt-in or
 unsupported replacement of Steam's runtime binaries is applied automatically.
 
+## Font and cursor troubleshooting
+
+Steam's client container needs cursor themes at their actual store paths. Its
+wrapper adds the installed Bibata and Adwaita directories to `XCURSOR_PATH`.
+Fully exit Steam before relaunching after a rebuild; log in again if the session
+still has old cursor environment variables.
+
+If ProtonPlus displays boxes instead of text, close it and refresh its sandbox's
+font cache before reopening it:
+
+```sh
+flatpak run --command=fc-cache com.vysp3r.ProtonPlus -f -v
+```
+
+If boxes remain, inspect the font selected inside the sandbox:
+
+```sh
+flatpak run --command=fc-match com.vysp3r.ProtonPlus sans-serif
+```
+
+The NixOS configuration already enables `fonts.fontDir` and installs Noto fonts.
+The screenshot alone cannot distinguish stale caches from font discovery or a
+user font override.
+
 ## Editors and notebooks
 
 On NixOS, LazyVim supplies pinned plugins, parsers, language servers, adapters and
