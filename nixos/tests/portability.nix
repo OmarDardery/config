@@ -66,6 +66,34 @@ let
       nativeDesktop
       integrated
     ];
+    kittyShellIntegration =
+      builtins.all
+        (
+          c:
+          c.programs.kitty.shellIntegration.mode == null
+          && c.programs.kitty.settings.shell_integration == "enabled"
+          && c.programs.kitty.settings.confirm_os_window_close == -1
+          && !c.programs.kitty.shellIntegration.enableBashIntegration
+          && !c.programs.kitty.shellIntegration.enableZshIntegration
+        )
+        [
+          tools
+          home
+          nativeDesktop
+          integrated
+        ];
+    oneYaziWrapper =
+      builtins.all (c: !c.programs.yazi.enableBashIntegration && !c.programs.yazi.enableZshIntegration)
+        [
+          tools
+          home
+          nativeDesktop
+          integrated
+        ];
+    steamMultilib = system.hardware.graphics.enable32Bit;
+    nativePromptTools =
+      builtins.elem base.pkgs.zsh system.environment.systemPackages
+      && builtins.elem base.pkgs.starship system.environment.systemPackages;
     noHomeServices = builtins.all (c: c.systemd.user.services == { } && c.systemd.user.timers == { }) [
       tools
       home

@@ -80,6 +80,23 @@ upstream's independent package sets for native dependencies and caches. Fonts,
 GTK/Qt libraries, portals, drivers, login services and desktop applications are
 installed outside Home Manager.
 
+## Terminal and gaming integration
+
+Kitty loads its own native shell integration. Home Manager writes its settings
+but does not inject integration into disabled shell modules. Idle prompts close
+without confirmation; active commands still trigger confirmation. Open a new
+Kitty window after applying this fix, because reloading settings cannot retrofit
+the missing hooks into an already-running Zsh. After moving shell applications
+from the old user profile to the system, log in again to clear inherited paths.
+
+Steam's 64-bit Linux client does not make a 64-bit-only host supported. Keep the
+32-bit host graphics/runtime support required by games and Steam helpers. The
+[official NixOS Steam module](https://github.com/NixOS/nixpkgs/blob/nixos-26.05/nixos/modules/programs/steam.nix)
+already enables that support; do not duplicate it in the laptop hardware file or
+force it off. See [Valve's runtime discussion](https://github.com/ValveSoftware/steam-for-linux/issues/13015).
+Millennium's pinned bootstrap libraries remain unchanged. No beta opt-in or
+unsupported replacement of Steam's runtime binaries is applied automatically.
+
 ## Editors and notebooks
 
 LazyVim supplies plugins, parsers, language servers, debug adapters and runtimes

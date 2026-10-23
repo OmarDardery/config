@@ -22,10 +22,7 @@
     # Xbox Bluetooth controller support; USB uses the kernel xpad driver.
     xpadneo.enable = true;
 
-    graphics = {
-      enable = true;
-      enable32Bit = true;
-    };
+    graphics.enable = true;
 
     # Native driver and daemon; the tablet preference seed is in home/hardware-user.nix.
     uinput.enable = true;
@@ -67,7 +64,7 @@
 
         offload = {
           enable = true;
-          enableOffloadCmd = false; # home-owned `nvidia-offload` wrapper
+          enableOffloadCmd = false; # system-provided `nvidia-offload` wrapper
         };
       };
     };

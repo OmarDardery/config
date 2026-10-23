@@ -9,9 +9,7 @@
 let
   repository = lib.escapeShellArg "path:${profile.configRepo}";
   directory = lib.escapeShellArg profile.configRepo;
-  prepareHardware = "bash ${lib.escapeShellArg "${profile.configRepo}/native/copy-hardware.sh"} ${
-    lib.escapeShellArg (builtins.dirOf profile.configRepo)
-  } --if-missing";
+  prepareHardware = "bash ${lib.escapeShellArg "${profile.configRepo}/native/copy-hardware.sh"} ${lib.escapeShellArg (builtins.dirOf profile.configRepo)} --if-missing";
   switchCommand =
     if isNixOS then
       "${prepareHardware} && nh os switch --hostname ${lib.escapeShellArg profile.hostName} ${repository}"
