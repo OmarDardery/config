@@ -106,11 +106,21 @@ wrapper adds the installed Bibata and Adwaita directories to `XCURSOR_PATH`.
 Fully exit Steam before relaunching after a rebuild; log in again if the session
 still has old cursor environment variables.
 
-If ProtonPlus displays boxes instead of text, close it and refresh its sandbox's
-font cache before reopening it:
+NixOS owns fonts in `system/applications/fonts.nix`. A read-only `bindfs` mount
+exposes resolved font files at `/usr/share/fonts`, following the
+[NixOS non-Nix application integration](https://wiki.nixos.org/wiki/Fixes_for_non-Nix_applications).
+Home Manager does not install fonts or manage fontconfig. Debian/Fedora retain
+their native font integration.
+
+At rebuild/login, the system-defined `flatpak-font-cache` user service refreshes
+caches inside both user and system Flatpaks after the migration, font-set
+changes and app updates. Successful refreshes are remembered, and failures are
+retried at the next service start. It runs as the logged-in user and only invokes `fc-cache`;
+application data and sandbox permissions are preserved. Reopen affected apps
+after rebuilding; logging in again also starts the service. Check failures with:
 
 ```sh
-flatpak run --command=fc-cache com.vysp3r.ProtonPlus -f -v
+journalctl --user -u flatpak-font-cache -b
 ```
 
 If boxes remain, inspect the font selected inside the sandbox:
@@ -118,10 +128,6 @@ If boxes remain, inspect the font selected inside the sandbox:
 ```sh
 flatpak run --command=fc-match com.vysp3r.ProtonPlus sans-serif
 ```
-
-The NixOS configuration already enables `fonts.fontDir` and installs Noto fonts.
-The screenshot alone cannot distinguish stale caches from font discovery or a
-user font override.
 
 ## Editors and notebooks
 

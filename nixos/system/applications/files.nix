@@ -22,10 +22,6 @@
     kdePackages.kdeconnect-kde
     bluez
   ];
-  fonts.packages = with pkgs; [
-    noto-fonts
-    noto-fonts-color-emoji
-  ];
   qt = {
     enable = true;
     platformTheme = "kde";
