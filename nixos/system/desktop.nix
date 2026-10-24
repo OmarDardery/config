@@ -78,10 +78,6 @@
     HandlePowerKeyLongPress = "ignore";
   };
 
-  # Make the terminal font available system-wide and discoverable by Flatpaks.
-  fonts.packages = [ pkgs.nerd-fonts.jetbrains-mono ];
-  fonts.fontDir.enable = true;
-
   # One audio stack for the greeter and desktop, including PulseAudio clients.
   security.rtkit.enable = true;
   services.pulseaudio.enable = false;

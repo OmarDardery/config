@@ -218,6 +218,14 @@ let
           "com.orcaslicer.OrcaSlicer"
           "com.vysp3r.ProtonPlus"
         ];
+    systemFonts =
+      system.fonts.fontDir.enable
+      && system.fileSystems."/usr/share/fonts".fsType == "fuse.bindfs"
+      && system.fileSystems."/usr/share/fonts".device == "${system.system.path}/share/X11/fonts"
+      && builtins.elem "resolve-symlinks" system.fileSystems."/usr/share/fonts".options
+      && builtins.elem "ro" system.fileSystems."/usr/share/fonts".options
+      && system.systemd.user.services.flatpak-font-cache.serviceConfig.Type == "oneshot"
+      && !integrated.fonts.fontconfig.enable;
     nativeUserServices =
       system.systemd.user.services.kdeconnect.serviceConfig.Type == "dbus"
       &&

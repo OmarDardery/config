@@ -4,6 +4,7 @@
       ../system/applications/apps.nix
       ../system/applications/tools.nix
       ../system/applications/files.nix
+      ../system/applications/fonts.nix
       ../system/applications/capture.nix
       ../system/applications/displays.nix
       ../system/applications/engineering.nix
