@@ -26,8 +26,7 @@ class NativeSetup(unittest.TestCase):
             (config / "extensions.list").write_text("publisher.good\npublisher.missing\n")
             log = directory / "commands.log"
             mock = commands / "mock"
-            mock.write_text(r'''#!/usr/bin/env bash
-set -euo pipefail
+            mock.write_text(f"#!{shutil.which('bash')}\n" + r'''set -euo pipefail
 printf '%s %s\n' "${0##*/}" "$*" >> "$TEST_LOG"
 case "${0##*/}" in
   python3)
@@ -129,7 +128,7 @@ esac
                 home = directory / "home"
                 (home / ".local/bin").mkdir(parents=True)
                 desktop = home / ".local/bin/desktop-apply"
-                desktop.write_text('#!/usr/bin/env bash\nprintf "DESKTOP-APPLY\\n" >> "$TEST_LOG"\n')
+                desktop.write_text(f"#!{shutil.which('bash')}\n" + 'printf "DESKTOP-APPLY\\n" >> "$TEST_LOG"\n')
                 desktop.chmod(0o755)
                 work = directory / "work"
                 work.mkdir()
@@ -218,8 +217,7 @@ native_apply
                 commands = directory / "bin"
                 commands.mkdir()
                 mock = commands / "mock"
-                mock.write_text('''#!/usr/bin/env bash
-set -euo pipefail
+                mock.write_text(f"#!{shutil.which('bash')}\n" + '''set -euo pipefail
 name=${0##*/}
 printf '%s' "$name" >> "$TEST_LOG"
 printf ' %q' "$@" >> "$TEST_LOG"
