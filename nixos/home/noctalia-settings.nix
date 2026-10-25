@@ -20,7 +20,7 @@
   };
   bar = {
     default = {
-      background_opacity = 0.90;
+      background_opacity = 0.72;
       border = "outline";
       border_width = 1.0;
       capsule = false;
@@ -37,12 +37,12 @@
         "group:status"
         "session"
       ];
-      margin_edge = 8;
-      margin_ends = 12;
+      margin_edge = 10;
+      margin_ends = 16;
       padding = 8;
       widget_spacing = 4;
       position = "bottom";
-      radius = 12;
+      radius = 20;
       shadow = true;
       thickness = 32;
       reserve_space = false;
@@ -67,9 +67,9 @@
             "tailscale"
             "pomodoro"
           ];
-          opacity = 0.55;
+          opacity = 0.32;
           padding = 6.0;
-          radius = 8.0;
+          radius = 12.0;
         }
         {
           accordion = false;
@@ -86,9 +86,9 @@
             "battery"
             "control-center"
           ];
-          opacity = 0.55;
+          opacity = 0.32;
           padding = 6.0;
-          radius = 8.0;
+          radius = 12.0;
         }
       ];
     };
@@ -121,13 +121,16 @@
   };
   dock = {
     enabled = true;
-    background_opacity = 0.90;
+    background_opacity = 0.70;
     border = "outline";
     border_width = 1.0;
     icon_size = 32;
-    margin_edge = 8;
-    radius = 12;
-    magnification_scale = 1.15;
+    margin_edge = 10;
+    radius = 22;
+    concave_edge_corners = false;
+    magnification = true;
+    magnification_scale = 1.35;
+    show_dots = true;
     active_monitor_only = true;
     position = "right";
     reserve_space = false;
@@ -136,13 +139,18 @@
   notification = {
     follow_focused_output = true;
     max_visible = 3;
-    background_opacity = 0.94;
+    background_opacity = 0.82;
     offset_x = 12;
     offset_y = 8;
   };
   osd = {
     position = "top_center";
     hide_delay_ms = 1000;
+    background_opacity = 0.78;
+  };
+  lockscreen = {
+    transition = [ "fade" "zoom" ];
+    transition_duration = 650.0;
   };
   lockscreen_widgets = {
     enabled = false;
@@ -206,10 +214,11 @@
       ];
     };
     animation = {
-      speed = 1.25;
+      enabled = true;
+      speed = 1.0;
     };
     shadow = {
-      alpha = 0.3;
+      alpha = 0.35;
     };
     panel = {
       launcher_placement = "floating";
@@ -217,6 +226,12 @@
       open_near_click_launcher = false;
       open_near_click_wallpaper = true;
       transparency_mode = "glass";
+      borders = true;
+      border_width = 1.0;
+      shadow = true;
+      control_center_placement = "floating";
+      control_center_position = "bottom_right";
+      floating_offset = 12;
     };
     launcher = {
       layout = "simple";
@@ -240,6 +255,8 @@
   };
   wallpaper = {
     transition_on_startup = true;
+    transition = [ "fade" "disc" "melt" ];
+    transition_duration = 1100.0;
     directory = "~/Pictures/Wallpapers";
   };
   widget = {

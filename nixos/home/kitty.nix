@@ -24,7 +24,7 @@
       bold_font = "auto";
       italic_font = "auto";
       bold_italic_font = "auto";
-      background_opacity = "0.92";
+      background_opacity = "0.84";
       dynamic_background_opacity = true;
       cursor_trail = 1;
       enable_audio_bell = false;
@@ -32,7 +32,7 @@
       confirm_os_window_close = -1;
       scrollback_lines = 20000;
       scrollback_pager_history_size = 32;
-      window_padding_width = 6;
+      window_padding_width = 10;
       initial_window_width = "95c";
       initial_window_height = "35c";
       enabled_layouts = "splits,stack,tall";

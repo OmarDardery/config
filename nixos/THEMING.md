@@ -1,5 +1,39 @@
 # Upstream theming and terminal tools
 
+## Liquid glass desktop
+
+The shell uses wallpaper-tinted frosted glass: a 72% opaque floating bottom bar,
+a 70% opaque right dock with hover magnification and running-app dots, glass
+panels, and translucent notification/volume cards. Windows have 20px corners,
+thin palette-driven borders and soft offset shadows. Kitty uses an 84% opaque
+background with live blur; its text stays fully opaque. Applications retain
+their own content opacity so documents and games stay readable.
+
+Umbriel uses a small spring overshoot on opening, a faster shrink/fade on close,
+smooth workspace slides and elastic pointer-drag physics. Move and resize use
+the same spring to keep tiled reflows aligned. The scratchpad adds a blurred,
+dimmed backdrop. Noctalia animates its own panels; compositor layer animations
+stay at their upstream default to avoid animating the shell twice. Wallpaper
+changes choose between fade, disc and melt, while the lockscreen uses fade/zoom.
+This is native transparency and blur rather than a screen-refraction shader.
+
+After rebuilding, run `desktop-apply` to reconcile old shell preference overrides
+with the declared styling (it backs up changed state). This preserves the chosen
+wallpaper, palette and light/dark mode. Log out and back in if the shell has not
+reloaded, and reopen Kitty for its opacity/padding changes. Validate on the host:
+
+```sh
+noctalia config validate ~/.config/noctalia/config.toml
+umbriel config validate -c ~/.config/umbriel/config.toml
+```
+
+The locked inputs' full rendering/config check is
+`nix build ./nixos#checks.x86_64-linux.theme-rendering` from the repository root.
+On a slower GPU, reduce `appearance.blur.passes` to 2 or disable
+`animation.windows_drag.physics` in `home/umbriel.nix`. **Mod+O** opens overview,
+**Mod+Ctrl+Space** reveals the scratchpad, and **Mod+A** opens the floating
+control center.
+
 Home Manager generates Noctalia and Umbriel dotfiles without installing either
 application. NixOS installs them through native system/application modules; other
 distributions install their own packages. Template
@@ -29,7 +63,7 @@ This bootstrap does not save or change the selected wallpaper. Existing palettes
 are never overwritten by desktop initialization. Noctalia Greeter can sync the desktop appearance without rebuilding.
 
 The [43PR setup linked from the video](https://github.com/43PR/dotfiles) inspired
-the slimmer floating top bar and integrated wallpaper/color workflow. Its Arch
+the floating bar and integrated wallpaper/color workflow. Its Arch
 installer, extra shell and Hyprland-specific configuration are not imported.
 
 [Stylix was reviewed](https://nix-community.github.io/stylix/configuration.html).
