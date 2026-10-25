@@ -13,7 +13,6 @@ let
   settings = import ./noctalia-settings.nix;
   appThemes = import ../pkgs/noctalia-app-themes.nix {
     inherit pkgs lib;
-    configHome = config.xdg.configHome;
     cacheHome = config.xdg.cacheHome;
     templates = inputs.noctalia-templates;
   };
@@ -28,7 +27,7 @@ in
     # The native executable validates generated files in the theme-rendering check.
     checkConfig = false;
     settings = lib.recursiveUpdate settings {
-      # Later sources win: keep the patched Nix plugins ahead of Git catalog copies.
+      # Later sources win; the patched Nix plugins override Git catalog copies.
       plugins.source = [
         {
           name = "official";
@@ -92,7 +91,8 @@ in
       state=${lib.escapeShellArg "${config.xdg.stateHome}/noctalia/settings.toml"}
       if [[ -f "$state" ]]; then
         ${reconcilePython}/bin/python3 ${../pkgs}/reconcile-noctalia.py \
-          "$state" ${config.xdg.configFile."noctalia/config.toml".source} --managed --apply
+          "$state" ${config.xdg.configFile."noctalia/config.toml".source} --managed --apply \
+          --reset theme.templates.user.fastfetch --reset theme.templates.user.inkscape
       fi
       if command -v bat >/dev/null 2>&1; then bat cache --build; fi
       if command -v xfconf-query >/dev/null 2>&1; then
@@ -104,8 +104,7 @@ in
     '';
   };
 
-  # Remove the former managed directory link, then keep a writable folder.
-  # Bundled samples are individual links; personal files are never replaced.
+  # Link bundled samples individually into a writable personal wallpaper folder.
   xdg.dataFile."noctalia/wallpaper-samples".source = ../assets/wallpapers;
   home.activation.noctaliaWallpaperSamples = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
     run mkdir -p ${lib.escapeShellArg "${config.home.homeDirectory}/Pictures/Wallpapers"}

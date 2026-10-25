@@ -55,7 +55,6 @@
 
   services.gvfs.enable = true;
   services.tumbler.enable = true;
-  services.flatpak.enable = true;
   programs.thunar = {
     enable = true;
     plugins = with pkgs; [
@@ -65,10 +64,7 @@
   };
 
   # User units live in applications/services.nix; restrict ports to Tailscale.
-  programs.kdeconnect = {
-    enable = false;
-    package = null;
-  };
+  programs.kdeconnect.enable = false;
   services.upower.enable = true;
   services.fwupd.enable = true;
 

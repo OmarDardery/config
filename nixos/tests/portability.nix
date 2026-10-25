@@ -123,6 +123,27 @@ let
           nativeDesktop
           integrated
         ];
+    onDemandDocker =
+      system.virtualisation.docker.enable
+      && !system.virtualisation.docker.enableOnBoot
+      && builtins.elem "sockets.target" system.systemd.sockets.docker.wantedBy;
+    homeBackups =
+      system.services.restic.backups.home.repository == "/mnt/storage/backup"
+      && system.services.restic.backups.home.paths == [ profile.homeDirectory ]
+      && system.services.restic.backups.home.passwordFile == "/var/lib/restic/home.password"
+      && system.services.restic.backups.home.runCheck
+      && system.services.restic.backups.home.timerConfig.Persistent
+      &&
+        system.systemd.services.restic-backups-home.unitConfig.ConditionPathIsMountPoint
+        == "/mnt/storage"
+      && system.systemd.services.restic-backups-home.unitConfig.RequiresMountsFor == [ "/mnt/storage" ];
+    removedApplications =
+      !(builtins.elem base.pkgs.inkscape system.environment.systemPackages)
+      && builtins.all (p: !lib.hasPrefix "fastfetch" (lib.getName p)) (
+        system.environment.systemPackages
+      )
+      && !(integrated.programs.noctalia.settings.theme.templates.user ? fastfetch)
+      && !(integrated.programs.noctalia.settings.theme.templates.user ? inkscape);
     steamMultilib = system.hardware.graphics.enable32Bit;
     nativePromptTools =
       builtins.elem base.pkgs.zsh system.environment.systemPackages

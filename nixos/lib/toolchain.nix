@@ -92,8 +92,7 @@
     gotools
     golangci-lint
     delve
-    # Rust. rustup does not put rust-analyzer on PATH unless the component is
-    # added, so the package is used instead.
+    # Rust language server; independent of project rustup components.
     rust-analyzer
     # TypeScript / JavaScript. The Prettier extra uses the CLI directly.
     vtsls

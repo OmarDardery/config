@@ -331,11 +331,12 @@ in
   noctalia-greeter = system.services.displayManager.noctalia-greeter.package;
   portability = pkgs.writeText "portability-checks.json" (builtins.toJSON portability.checks);
   desktop-migrations = scriptCheck "desktop-migration-checks" "python ${tests}/desktop-migrations.py";
-  config-update = scriptCheck "configuration-update-checks" "python ${tests}/config-update.py";
-  fastfetch-theme = scriptCheck "fastfetch-theme-checks" ''
-    export PATH=${pkgs.lib.makeBinPath [ pkgs.jq ]}:"$PATH"
-    python ${tests}/noctalia-fastfetch.py ${inputs.noctalia-templates}
+  restic-password = scriptCheck "restic-password-checks" ''
+    export PATH=${lib.makeBinPath [ pkgs.openssl ]}:"$PATH"
+    python ${tests}/restic-password.py
   '';
+  ci-isolation = scriptCheck "ci-hardware-isolation-checks" "python ${tests}/ci-isolation.py";
+  config-update = scriptCheck "configuration-update-checks" "python ${tests}/config-update.py";
   reconciliation = scriptCheck "noctalia-reconciliation-checks" "python ${tests}/reconcile-noctalia.py";
   office-convert = scriptCheck "office-conversion-checks" "python ${tests}/office-convert.py";
   native-setup = scriptCheck "native-setup-checks" "python ${tests}/native-setup.py";

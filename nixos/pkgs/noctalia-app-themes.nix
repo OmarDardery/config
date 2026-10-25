@@ -1,13 +1,9 @@
 {
   pkgs,
   lib,
-  configHome,
   cacheHome,
   templates,
 }:
-let
-  cache = cacheHome;
-in
 {
   libreoffice = pkgs.writeShellApplication {
     name = "noctalia-apply-libreoffice-theme";
@@ -20,7 +16,7 @@ in
       util-linux
     ];
     text = ''
-      work=${lib.escapeShellArg "${cache}/noctalia/libreoffice-template"}
+      work=${lib.escapeShellArg "${cacheHome}/noctalia/libreoffice-template"}
       mkdir -p "$work"
       exec 9>"$work/.lock"
       flock 9
@@ -28,26 +24,6 @@ in
         cp -f -- "${templates}/libreoffice/$file" "$work/$file"
       done
       exec bash "$work/apply.sh"
-    '';
-  };
-  fastfetch = pkgs.symlinkJoin {
-    name = "fastfetch-noctalia";
-    paths = [ pkgs.fastfetch ];
-    nativeBuildInputs = [ pkgs.makeWrapper ];
-    postBuild = ''
-      wrapProgram "$out/bin/fastfetch" \
-        --prefix PATH : ${
-          lib.makeBinPath [
-            pkgs.bash
-            pkgs.coreutils
-            pkgs.jq
-          ]
-        } \
-        --run ${lib.escapeShellArg ''
-          exec ${pkgs.bash}/bin/bash ${./noctalia-fastfetch.sh} \
-            ${pkgs.fastfetch}/bin/fastfetch ${templates}/fastfetch/apply.sh \
-            ${lib.escapeShellArg "${configHome}"} "$@"
-        ''}
     '';
   };
 }

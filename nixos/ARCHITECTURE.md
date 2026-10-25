@@ -14,27 +14,24 @@ and Home Manager writes their dotfiles only.
 | Login | Install and configure the privileged Noctalia Greeter | `modules/greeter.nix` |
 | Native distribution | Install applications, compositor, portals, drivers and login services | `native/README.md` |
 
-## Design iterations
+## Boundaries
 
-1. Splitting only the old import list leaves package installation, services and
-   configuration coupled inside Home Manager modules. Separate these responsibilities.
-2. Suppressing `home.packages` globally would silently hide future accidental
-   installations. Instead use upstream `package = null` for configuration-only
-   modules, and plain dotfiles when a module cannot operate without its package.
-   Noctalia/Umbriel use their official Home Manager modules with null packages
-   and services disabled, retaining upstream config generation.
-3. On NixOS, keep editor dependencies in their Nix wrappers. On other distributions,
-   do not install editors, plugins or language tools through Nix: share settings,
-   resolve native commands through PATH, and let Lazy/Mason/Codium manage tools.
-   Project environments remain independent on both backends.
-4. Desktop setup must not block a dotfile rebuild or assume a compositor exists.
-   Keep palette initialization in the explicit `desktop-apply` command. NixOS runs
-   it from a native user unit at graphical login; Debian/Fedora installers provide
-   an equivalent native unit after installing the desktop.
-5. Keep feature composition explicit through flake-parts' typed `flake.modules`.
-   Leaf implementations stay in `home/` and `system/`; package helpers, assets and
-   tests are ordinary files rather than auto-imported modules. Adding a helper
-   cannot accidentally enable a feature.
+Use upstream `package = null` for configuration-only modules and plain dotfiles
+when a module cannot operate without installing its package. Noctalia/Umbriel
+retain upstream config generation with their packages and services disabled in
+Home Manager. NixOS owns their native packages and session integration.
+
+NixOS editor wrappers include private dependencies. On other distributions,
+Lazy/Mason/Codium manage plugins and tools through native commands; project
+environments remain independent on both backends.
+
+`desktop-apply` initializes palettes and managed desktop preferences at graphical
+login through a native user unit. It can also be run explicitly within a session.
+Dotfile activation does not require a compositor or block on desktop setup.
+
+Keep composition explicit in `flake.modules`. Leaf implementations belong in
+`home/` and `system/`; helpers, assets and tests are ordinary files whose presence
+does not enable features automatically.
 
 ## Profiles
 

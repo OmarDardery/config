@@ -186,7 +186,7 @@ in
           '';
           meta.mainProgram = "codium";
         };
-    # Expose tools to the editor and its terminals without installing a global toolchain.
+    # Give the editor and its terminals explicit tool paths.
     # wrapProgram is applied to both the regular and FHS launcher.
 
     profiles.default = {

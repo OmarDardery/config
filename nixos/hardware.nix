@@ -29,8 +29,8 @@
 
     # NVIDIA driver and PRIME offload policy.
     nvidia = {
-      # Official Nixpkgs new-feature driver; includes Linux 7.3 API support.
-      # Hashes: NixOS/nixpkgs@a73abadb83fd64aee8abce72cc56811a178c1905
+      # Version/hashes from NixOS/nixpkgs@a73abadb83fd64aee8abce72cc56811a178c1905.
+      # Build checks.nvidia-open before changing this kernel/driver pair.
       package = config.boot.kernelPackages.nvidiaPackages.mkDriver {
         version = "615.78.08";
         sha256_64bit = "sha256-Pj9t3cLudnoIGFMAr3vjyyhuznZpjS3eNSRZl4LQf/4=";
@@ -47,13 +47,10 @@
 
       nvidiaSettings = false; # matching settings GUI is installed above
 
-      # Saves all of VRAM on suspend instead of the bare essentials. Fixes
-      # corruption/crashes after resume on some machines, but is itself known
-      # to cause suspend failures. Leave off unless resume actually misbehaves.
+      # Preserve the working suspend policy; test resume before enabling.
       powerManagement.enable = false;
 
-      # Runtime suspend was already working with this disabled. Changing it
-      # requires separate suspend testing; do not assume an extra battery win.
+      # Runtime suspend works without forcing fine-grained power management.
       powerManagement.finegrained = false;
 
       # The AMD iGPU drives the desktop; NVIDIA is used through nvidia-offload.
@@ -78,16 +75,14 @@
     "nvidia"
   ];
 
-  # Fixes this laptop's stripe corruption. Changes require a fresh login.
-  # Historical graphics findings remain in the README.
-  # Keep this global for the AMD-rendered desktop and login greeter.
+  # Work around AMD stripe corruption in both desktop and greeter; relog to change.
   environment.sessionVariables.AMD_DEBUG = "nodcc";
 
   fileSystems."/mnt/storage" = {
     device = "/dev/disk/by-uuid/71d4d606-a6ef-42bb-b63c-8f5a8fee4b24";
     fsType = "xfs";
     options = [
-      "nofail" # Prevent system from failing if this drive doesn't mount
+      "nofail"
       "x-systemd.automount"
       "x-systemd.device-timeout=5s"
     ];

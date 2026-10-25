@@ -1,0 +1,39 @@
+name: Nix configuration
+
+on:
+  pull_request:
+    paths:
+      - 'nixos/**'
+      - '.github/workflows/nix.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'nixos/**'
+      - '.github/workflows/nix.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nix-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  configuration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out configuration
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Install Nix
+        uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            extra-substituters = https://noctalia.cachix.org
+            extra-trusted-public-keys = noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4=
+            max-jobs = 2
+            cores = 4
+      - name: Evaluate profiles and build focused checks
+        run: bash nixos/tests/ci.sh
