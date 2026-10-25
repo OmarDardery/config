@@ -92,7 +92,9 @@ in
       if [[ -f "$state" ]]; then
         ${reconcilePython}/bin/python3 ${../pkgs}/reconcile-noctalia.py \
           "$state" ${config.xdg.configFile."noctalia/config.toml".source} --managed --apply \
-          --reset theme.templates.user.fastfetch --reset theme.templates.user.inkscape
+          --reset theme.templates.user.fastfetch --reset theme.templates.user.inkscape \
+          --reset 'bar.default.monitor.*.background_opacity' \
+          --reset 'dock.monitor.*.background_opacity'
       fi
       if command -v bat >/dev/null 2>&1; then bat cache --build; fi
       if command -v xfconf-query >/dev/null 2>&1; then

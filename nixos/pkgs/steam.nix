@@ -2,6 +2,7 @@
   pkgs,
   millenniumInput,
   colorsFile ? null,
+  desktopScale ? null,
 }:
 assert pkgs.stdenv.hostPlatform.system == "x86_64-linux";
 let
@@ -46,7 +47,13 @@ in
       runtimePkgs.openssl
       runtimePkgs.pkgsi686Linux.openssl
     ];
-    extraEnv.MILLENNIUM_RUNTIME_PATH = "${millennium}/lib/libmillennium_x86.so";
+    extraEnv = {
+      MILLENNIUM_RUNTIME_PATH = "${millennium}/lib/libmillennium_x86.so";
+    } // pkgs.lib.optionalAttrs (desktopScale != null) {
+      # Steam's desktop UI does not reliably follow fractional XSETTINGS/SDL DPI.
+      # Scope this to Steam; GTK/Qt/Wayland apps keep their native output scale.
+      STEAM_FORCE_DESKTOPUI_SCALING = toString desktopScale;
+    };
   };
 
   setup =

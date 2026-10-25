@@ -20,7 +20,7 @@
   };
   bar = {
     default = {
-      background_opacity = 0.72;
+      background_opacity = 0.46;
       border = "outline";
       border_width = 1.0;
       capsule = false;
@@ -29,7 +29,7 @@
       ];
       concave_edge_corners = false;
       end = [
-        "media"
+        "group:activity"
         "group:tools"
         "tray"
         "privacy"
@@ -54,6 +54,18 @@
       ];
       capsule_group = [
         {
+          id = "activity";
+          enabled = true;
+          members = [ "media" ];
+          fill = "surface_variant";
+          foreground = "on_surface";
+          opacity = 0.24;
+          padding = 8.0;
+          radius = 20.0;
+          border = "outline";
+          border_width = 1.0;
+        }
+        {
           id = "tools";
           accordion = true;
           accordion_direction = "start";
@@ -67,7 +79,7 @@
             "tailscale"
             "pomodoro"
           ];
-          opacity = 0.32;
+          opacity = 0.20;
           padding = 6.0;
           radius = 12.0;
         }
@@ -86,7 +98,7 @@
             "battery"
             "control-center"
           ];
-          opacity = 0.32;
+          opacity = 0.20;
           padding = 6.0;
           radius = 12.0;
         }
@@ -121,7 +133,7 @@
   };
   dock = {
     enabled = true;
-    background_opacity = 0.70;
+    background_opacity = 0.52;
     border = "outline";
     border_width = 1.0;
     icon_size = 32;
@@ -178,6 +190,8 @@
     auto_update = "none";
   };
   shell = {
+    corner_radius_scale = 1.2;
+    font_family = "Inter";
     polkit_agent = true;
     greeter_sync.auto_sync = true;
     setup_wizard_enabled = false;
@@ -223,6 +237,8 @@
     panel = {
       launcher_placement = "floating";
       launcher_position = "center";
+      clipboard_placement = "floating";
+      clipboard_position = "center";
       open_near_click_launcher = false;
       open_near_click_wallpaper = true;
       transparency_mode = "glass";
@@ -236,6 +252,7 @@
     launcher = {
       layout = "simple";
       category_icons_only = true;
+      search_position = "top";
     };
     clipboard_history_max_entries = 100;
     clipboard_keep_from_closed_apps = true;

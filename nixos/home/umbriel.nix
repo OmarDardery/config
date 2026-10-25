@@ -7,6 +7,7 @@
   ...
 }:
 let
+  display = import ../lib/display.nix;
   once = action: {
     inherit action;
     repeat = false;
@@ -74,15 +75,16 @@ in
       # No independent palette: Noctalia owns colors; native defaults before rendering.
       include.optional.files = [ "${config.xdg.stateHome}/noctalia/theme/umbriel.toml" ];
       general = {
-        autostart = [
-          "noctalia"
-        ];
+        autostart = [ "noctalia" ]
+          ++ lib.optional isLaptop
+            "xrdb -merge ${lib.escapeShellArg "${config.xdg.configHome}/X11/Xresources"}";
         mod_key = "Super";
         show_cheatsheet = false;
         focus_on_activate = true;
         # Keep X11 games sharp at the panel resolution despite desktop scaling.
         # Changing this requires restarting the compositor session.
         xwayland_native_resolution = true;
+        xwayland_xsettings = true;
       };
       input = {
         keyboard = {
@@ -166,8 +168,8 @@ in
         curve = "spring:1,800";
         windows_in = {
           style = "popin";
-          curve = "spring:0.88,800";
-          scale = 0.92;
+          curve = "spring:1,900";
+          scale = 0.96;
         };
         windows_out = {
           style = "popin";
@@ -182,7 +184,7 @@ in
           curve = "spring:1,700";
           workspace_curve = "spring:1,800";
         };
-        windows_drag.physics = true;
+        windows_drag.physics = false;
         border.curve = "spring:1,1000";
         scratchpad = {
           dim = 0.35;
@@ -448,7 +450,7 @@ in
         {
           match.namespace = "^noctalia-(bar-[^\"]+|notification|dock|panel|attached-panel|osd|window-switcher|desktop-widget-[^\"]*)$";
           blur = true;
-          blur_ignore_alpha = 0.5;
+          blur_ignore_alpha = 0.1;
           blur_popups = true;
           # Preserve live window content behind the shell, not wallpaper-only blur.
           blur_optimized = false;
@@ -460,7 +462,7 @@ in
         # Match the display identity, not the racing eDP connector number.
         "BOE NE140QDM-NX7 Unknown" = {
           mode = "2560x1600@165";
-          scale = 1.5;
+          scale = display.laptopScale;
           position = [
             0
             0
@@ -470,7 +472,7 @@ in
           mode = "1920x1080@60";
           scale = 1.0;
           position = [
-            1706
+            (builtins.ceil (2560 / display.laptopScale))
             0
           ];
         };
