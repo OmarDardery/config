@@ -198,6 +198,14 @@ logs, followed by Flatpak updates. `update`, `up`/`rebuild` and `nbuild` restore
 missing local hardware file from `/etc/nixos` before evaluating the host, and
 preserve an existing nonempty file.
 
+## Backups and containers
+
+Home backups target `/mnt/storage/backup`; see [BACKUPS.md](BACKUPS.md) for the
+first-backup and restore checks. Its password is generated once at runtime and
+preserved across rebuilds. Docker starts on demand through its
+socket. Containers requiring unattended boot startup need
+`virtualisation.docker.enableOnBoot = true`.
+
 ## Checks
 
 ```sh
@@ -210,3 +218,7 @@ native command routing, editor settings, desktop initialization, file migration,
 plugins and updater behavior. The NVIDIA module and greeter are separate build
 checks because evaluation cannot catch compilation failures. Actual display,
 GPU/suspend, greeter and VSCodium GUI behavior need real-machine testing.
+
+GitHub Actions runs `bash nixos/tests/ci.sh` on Nix changes. It copies the flake
+into a temporary directory and substitutes an evaluation-only hardware fixture;
+it never deploys that fixture or edits the local generated hardware file.

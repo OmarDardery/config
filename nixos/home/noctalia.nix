@@ -13,7 +13,6 @@ let
   settings = import ./noctalia-settings.nix;
   appThemes = import ../pkgs/noctalia-app-themes.nix {
     inherit pkgs lib;
-    configHome = config.xdg.configHome;
     cacheHome = config.xdg.cacheHome;
     templates = inputs.noctalia-templates;
   };
@@ -92,7 +91,8 @@ in
       state=${lib.escapeShellArg "${config.xdg.stateHome}/noctalia/settings.toml"}
       if [[ -f "$state" ]]; then
         ${reconcilePython}/bin/python3 ${../pkgs}/reconcile-noctalia.py \
-          "$state" ${config.xdg.configFile."noctalia/config.toml".source} --managed --apply
+          "$state" ${config.xdg.configFile."noctalia/config.toml".source} --managed --apply \
+          --reset theme.templates.user.fastfetch --reset theme.templates.user.inkscape
       fi
       if command -v bat >/dev/null 2>&1; then bat cache --build; fi
       if command -v xfconf-query >/dev/null 2>&1; then

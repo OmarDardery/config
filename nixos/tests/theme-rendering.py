@@ -94,7 +94,6 @@ def main():
             assert umbrella["colors"]["border"]["focused"].startswith("#")
             assert templates["umbriel"]["input_path"].endswith("/assets/templates/umbriel/umbriel.toml")
             assert json.loads(rendered["opencode"].read_text())["theme"]
-            assert json.loads(rendered["fastfetch"].read_text())["display"]["color"]
             ET.parse(rendered["libreoffice"])
             assert '--theme-color: "Matugen"' in rendered["steam"].read_text()
             tomllib.loads(rendered["yazi"].read_text())

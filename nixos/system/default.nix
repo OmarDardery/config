@@ -1,6 +1,7 @@
 { ... }:
 {
   imports = [
+    ./backups.nix
     ./base.nix
     ./networking.nix
     ./nix.nix

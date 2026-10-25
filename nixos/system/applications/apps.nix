@@ -13,7 +13,6 @@
     mpv
     imv
     gimp
-    inkscape
     simple-scan
     wireshark
   ];

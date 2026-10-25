@@ -1,19 +1,10 @@
 {
   pkgs,
   profile,
-  lib,
-  inputs,
   ...
 }:
 let
   toolchain = import ../../lib/toolchain.nix { inherit pkgs; };
-  appThemes = import ../../pkgs/noctalia-app-themes.nix {
-    inherit pkgs lib;
-    configHome = "${profile.homeDirectory}/.config";
-    cacheHome = "${profile.homeDirectory}/.cache";
-    templates = inputs.noctalia-templates;
-  };
-
 in
 {
   environment.systemPackages =
@@ -27,7 +18,6 @@ in
       eza
       lazygit
       btop
-      appThemes.fastfetch
       yazi
       ripgrep
       fd

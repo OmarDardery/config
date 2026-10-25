@@ -28,7 +28,6 @@ let
   zenControls = ../assets/zen-window-controls.css;
   apps = import ../pkgs/noctalia-app-themes.nix {
     inherit pkgs lib;
-    configHome = config.xdg.configHome;
     cacheHome = config.xdg.cacheHome;
     templates = community;
   };
@@ -68,8 +67,6 @@ in
     };
   opencode = render "${community}/opencode/opencode.json" "${config.xdg.configHome}/opencode/themes/noctalia.json";
   gimp = render "${community}/gimp/gimp.css" "${config.xdg.configHome}/GIMP/${lib.versions.majorMinor pkgs.gimp.version}/gimp.css";
-  inkscape = render "${community}/inkscape/user.css" "${config.xdg.configHome}/inkscape/ui/user.css";
-  fastfetch = render "${community}/fastfetch/fastfetch-colors.jsonc" "${config.xdg.configHome}/fastfetch/themes/noctalia.jsonc";
   libreoffice =
     (render "${community}/libreoffice/Theme_Colors.xcu" "${config.xdg.stateHome}/noctalia/libreoffice-theme-staging/Theme_Colors.xcu")
     // {

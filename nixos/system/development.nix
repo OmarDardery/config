@@ -10,6 +10,8 @@
   # Docker daemon and container virtualization
   virtualisation.docker = {
     enable = true;
+    # The socket starts Docker when WinBoat or a development client needs it.
+    enableOnBoot = false;
     # BuildKit cache only: leave containers, images and volumes alone.
     daemon.settings.builder.gc = {
       enabled = true;

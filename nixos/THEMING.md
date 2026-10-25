@@ -83,8 +83,7 @@ theming daemon or rebuild-on-wallpaper-change mechanism is installed.
 | LazyVim, VSCodium, Yazi, Fzf, Lazygit | Community templates | Existing native theme loaders/watchers |
 | Zen, Steam/Millennium | Community templates | Existing profile-aware adapters |
 | OpenCode | Community templates | Native theme directories and declarative preferences |
-| GIMP, Inkscape | Community CSS | Personal override CSS; GIMP path matches the pinned 3.0 series |
-| Fastfetch | Community colors/apply script | Disposable color processing plus native CLI overrides; user JSONC stays intact |
+| GIMP | Community CSS | Personal override CSS; GIMP path follows the installed version |
 | LibreOffice | Community ColorScheme extension | Apply script staged in writable cache; skips installation while Office is open |
 
 There is no matching upstream template for every application. The official

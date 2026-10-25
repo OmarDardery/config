@@ -116,6 +116,25 @@ class ReconciliationTests(unittest.TestCase):
         self.assertEqual(self.run_helper(apply=True, resets=['config_version']), ([], None))
         self.assertEqual(self.state.read_bytes(), original)
 
+    def test_removed_app_templates_do_not_survive_as_runtime_overrides(self):
+        original = self.files(
+            '[theme]\nmode = "light"\n'
+            '[theme.templates.user.fastfetch]\ninput_path = "/old/fastfetch"\n'
+            '[theme.templates.user.inkscape]\ninput_path = "/old/inkscape"\n'
+            '[theme.templates.user.personal]\ninput_path = "/keep/personal"\n'
+            '[wallpaper.default]\npath = "/keep/wallpaper.png"\n',
+            '[theme.templates.user.kitty]\ninput_path = "/new/kitty"\n',
+        )
+        resets = ['theme.templates.user.fastfetch', 'theme.templates.user.inkscape']
+        removed, backup = self.run_helper(apply=True, managed=True, resets=resets)
+        self.assertEqual(removed, resets)
+        self.assertEqual(backup.read_bytes(), original)
+        state = tomllib.loads(self.state.read_text())
+        self.assertEqual(state['theme']['mode'], 'light')
+        self.assertEqual(set(state['theme']['templates']['user']), {'personal'})
+        self.assertEqual(state['wallpaper']['default']['path'], '/keep/wallpaper.png')
+        self.assertEqual(self.run_helper(apply=True, managed=True, resets=resets), ([], None))
+
     def test_wallpaper_and_algorithm_choices_survive_rebuilds(self):
         self.files('[theme]\nwallpaper_scheme = "vibrant"\nmode = "light"\n'
                    '[wallpaper.default]\npath = "/home/user/personal image.png"\n',
