@@ -335,7 +335,7 @@ in
         "Mod+Ctrl+Shift+WheelUp" = "column-move-left";
         "Mod+Tab" = "workspace-focus-last";
 
-        # Maximize and center the focused column.
+        # Column sizing and placement.
         "Mod+Ctrl+F" = once "window-toggle-maximize";
         "Mod+Ctrl+C" = "column-center";
         "Mod+C" = "column-center";

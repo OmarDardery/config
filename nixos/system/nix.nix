@@ -3,7 +3,6 @@
   imports = [ inputs.nix-index-database.nixosModules.nix-index ];
   programs.command-not-found.enable = false;
   programs.nix-index-database.comma.enable = true;
-  # Nix
   nix = {
     daemonCPUSchedPolicy = "batch";
     daemonIOSchedPriority = 6;
@@ -21,8 +20,7 @@
         "flakes"
       ];
 
-      # Prebuilt noctalia, so it isn't compiled from source on every update.
-      # Only works because the noctalia input does not follow our nixpkgs.
+      # Independent Noctalia input pins preserve binary-cache compatibility.
       extra-substituters = [ "https://noctalia.cachix.org" ];
       extra-trusted-public-keys = [
         "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4="

@@ -3,7 +3,8 @@
 Feature modules in `modules/` compose typed Home Manager and NixOS modules through
 flake-parts. `home/` contains dotfile/editor implementations; `system/` contains
 native NixOS integration; `system/applications/` installs general applications.
-See [ARCHITECTURE.md](ARCHITECTURE.md) for ownership boundaries and design decisions.
+See [ARCHITECTURE.md](ARCHITECTURE.md) for ownership boundaries and design decisions,
+and [IMPROVEMENTS.md](IMPROVEMENTS.md) for the prioritized follow-up review.
 
 ## Profiles
 
@@ -84,20 +85,16 @@ installed outside Home Manager.
 
 ## Terminal and gaming integration
 
-Kitty loads its own native shell integration. Home Manager writes its settings
-but does not inject integration into disabled shell modules. Idle prompts close
-without confirmation; active commands still trigger confirmation. Open a new
-Kitty window after applying this fix, because reloading settings cannot retrofit
-the missing hooks into an already-running Zsh. After moving shell applications
-from the old user profile to the system, log in again to clear inherited paths.
+Kitty loads its native shell integration. Idle prompts close without confirmation;
+active commands still trigger confirmation. Open a new terminal after changing
+shell integration or login environment settings.
 
 Steam's 64-bit Linux client does not make a 64-bit-only host supported. Keep the
 32-bit host graphics/runtime support required by games and Steam helpers. The
 [official NixOS Steam module](https://github.com/NixOS/nixpkgs/blob/nixos-26.05/nixos/modules/programs/steam.nix)
 already enables that support; do not duplicate it in the laptop hardware file or
 force it off. See [Valve's runtime discussion](https://github.com/ValveSoftware/steam-for-linux/issues/13015).
-Millennium's pinned bootstrap libraries remain unchanged. No beta opt-in or
-unsupported replacement of Steam's runtime binaries is applied automatically.
+Millennium uses pinned bootstrap libraries; Steam retains its native runtime.
 
 ## Font and cursor troubleshooting
 
@@ -113,8 +110,8 @@ Home Manager does not install fonts or manage fontconfig. Debian/Fedora retain
 their native font integration.
 
 At rebuild/login, the system-defined `flatpak-font-cache` user service refreshes
-caches inside both user and system Flatpaks after the migration, font-set
-changes and app updates. Successful refreshes are remembered, and failures are
+caches inside both user and system Flatpaks after font-set changes and app updates.
+Successful refreshes are remembered, and failures are
 retried at the next service start. It runs as the logged-in user and only invokes `fc-cache`;
 application data and sandbox permissions are preserved. Reopen affected apps
 after rebuilding; logging in again also starts the service. Check failures with:
@@ -199,14 +196,7 @@ no global manager package is installed. Native system/application updates stay
 with the distribution. On NixOS, `update` retains `nh os switch` and activation
 logs, followed by Flatpak updates. `update`, `up`/`rebuild` and `nbuild` restore a
 missing local hardware file from `/etc/nixos` before evaluating the host, and
-preserve an existing nonempty file. This also handles pulling the migration that
-stopped tracking generated hardware. Older installed update scripts need a
-one-time copy before the first successful rebuild:
-
-```sh
-cp /etc/nixos/hardware-configuration.nix ~/config/nixos/hardware-configuration.nix
-update
-```
+preserve an existing nonempty file.
 
 ## Checks
 

@@ -55,6 +55,17 @@ class FastfetchThemes(unittest.TestCase):
         result = json.loads(self.run_app('--config', 'my config.jsonc').stdout)
         self.assertEqual(result, ['--config', 'my config.jsonc'])
 
+    def test_incomplete_palette_falls_back(self):
+        self.add_theme()
+        (self.config / 'fastfetch/themes/noctalia.jsonc').write_text('{}')
+        self.assertEqual(json.loads(self.run_app('--pipe').stdout), ['--pipe'])
+
+    def test_caller_color_override_still_wins(self):
+        self.add_theme()
+        result = json.loads(self.run_app('--color-title', '#fedcba').stdout)
+        self.assertEqual(result[-2:], ['--color-title', '#fedcba'])
+        self.assertEqual(len(result), 16)
+
     def test_broken_palette_falls_back_without_losing_user_config(self):
         self.add_theme()
         (self.config / 'fastfetch/themes/noctalia.jsonc').write_text('invalid JSON')

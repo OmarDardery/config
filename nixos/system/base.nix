@@ -5,14 +5,12 @@
   ...
 }:
 {
-  # Boot
   boot.loader.systemd-boot.enable = true;
   boot.loader.timeout = 2;
   boot.loader.efi.canTouchEfiVariables = true;
   # Bound kernel/initrd retention on the 1 GB EFI partition.
   boot.loader.systemd-boot.configurationLimit = 10;
 
-  # Users
   users.users.${profile.username} = {
     isNormalUser = true;
     home = profile.homeDirectory;
@@ -49,9 +47,7 @@
     ];
   };
 
-  # Locale
-  # Location and locale are independent: keep Cairo's clock and timezone,
-  # while applications consistently use English text, digits, and formats.
+  # Cairo timezone with English application formats.
   time.timeZone = "Africa/Cairo";
   i18n.defaultLocale = "en_US.UTF-8";
 

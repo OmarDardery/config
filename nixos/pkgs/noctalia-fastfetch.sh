@@ -20,15 +20,25 @@ cp -- "$theme" "$work/fastfetch/themes/noctalia.jsonc"
 printf '{}\n' > "$work/fastfetch/config.jsonc"
 if XDG_CONFIG_HOME="$work" bash "$apply"; then
   palette="$work/fastfetch/config.jsonc"
-  # Native CLI overrides preserve JSONC, relative paths and custom module lists.
-  "$native" \
-    --logo-color-1 "$(jq -r '.logo.color."1"' "$palette")" \
-    --logo-color-2 "$(jq -r '.logo.color."2"' "$palette")" \
-    --color-keys "$(jq -r '.display.color.keys' "$palette")" \
-    --color-title "$(jq -r '.display.color.title' "$palette")" \
-    --percent-color-green "$(jq -r '.display.percent.color.green' "$palette")" \
-    --percent-color-yellow "$(jq -r '.display.percent.color.yellow' "$palette")" \
-    --percent-color-red "$(jq -r '.display.percent.color.red' "$palette")" "$@"
-else
-  "$native" "$@"
+  # Extract all CLI colors in one process; reject incomplete palettes.
+  if colors=$(jq -er '
+    [.logo.color."1", .logo.color."2", .display.color.keys,
+     .display.color.title, .display.percent.color.green,
+     .display.percent.color.yellow, .display.percent.color.red]
+    | if all(.[]; type == "string" and test("^#[0-9a-fA-F]{6}$"))
+      then .[] else error("Incomplete Fastfetch palette") end
+  ' "$palette"); then
+    mapfile -t colors <<< "$colors"
+    # CLI overrides preserve JSONC, relative paths and custom module lists.
+    "$native" \
+      --logo-color-1 "${colors[0]}" \
+      --logo-color-2 "${colors[1]}" \
+      --color-keys "${colors[2]}" \
+      --color-title "${colors[3]}" \
+      --percent-color-green "${colors[4]}" \
+      --percent-color-yellow "${colors[5]}" \
+      --percent-color-red "${colors[6]}" "$@"
+    exit
+  fi
 fi
+"$native" "$@"

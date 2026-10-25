@@ -1,7 +1,6 @@
 {
   pkgs,
   inputs,
-  profile,
   lib,
   ...
 }:
@@ -23,6 +22,7 @@
   systemd.user.services.desktop-config = {
     description = "Initialize desktop application themes";
     wantedBy = [ "graphical-session.target" ];
+    partOf = [ "graphical-session.target" ];
     after = [ "graphical-session-pre.target" ];
     unitConfig.ConditionPathExists = "%h/.local/bin/desktop-apply";
     serviceConfig = {

@@ -5,9 +5,6 @@
   cacheHome,
   templates,
 }:
-let
-  cache = cacheHome;
-in
 {
   libreoffice = pkgs.writeShellApplication {
     name = "noctalia-apply-libreoffice-theme";
@@ -20,7 +17,7 @@ in
       util-linux
     ];
     text = ''
-      work=${lib.escapeShellArg "${cache}/noctalia/libreoffice-template"}
+      work=${lib.escapeShellArg "${cacheHome}/noctalia/libreoffice-template"}
       mkdir -p "$work"
       exec 9>"$work/.lock"
       flock 9

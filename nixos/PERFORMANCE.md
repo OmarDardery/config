@@ -6,9 +6,8 @@ These are NixOS policies; portable Home Manager installs no kernel or scheduler.
 
 ## Current configuration
 
-- Keep Nixpkgs' `linuxPackages_latest` kernel (Linux 7.3 on the current channel)
-  with NVIDIA 615.78.08 open modules. The driver version and hashes match official
-  Nixpkgs' new-feature package; no local kernel compatibility patch is used.
+- Use Nixpkgs' `linuxPackages_latest` kernel with the explicitly pinned NVIDIA
+  open driver in `hardware.nix`; no local kernel compatibility patch is used.
 - Run upstream `scx_lavd` through NixOS's `services.scx`, using the smaller
   `pkgs.scx.rustscheds` package instead of the full Rust/C scheduler bundle.
 - Use `--autopower`: LAVD reads power-profiles-daemon's active profile over D-Bus,
@@ -29,53 +28,30 @@ control semantics depend on the active scheduler. I/O priorities also depend on
 the device's scheduler. Existing GPU workarounds, suspend policy, displays,
 filesystem settings and the kernel/driver pair stay unchanged.
 
-## NVIDIA and Linux 7.3 compatibility
+## Kernel and external modules
 
-The former NVIDIA 610.57.04 pin calls the older
-`dmem_cgroup_register_region(size, name)` interface. Linux 7.3 changed its first
-argument to a `dmem_cgroup_init` pointer, causing compilation to fail. NVIDIA
-615.78.08 detects and handles that interface. Its version and all five hashes
-come from [official Nixpkgs](https://github.com/NixOS/nixpkgs/blob/a73abadb83fd64aee8abce72cc56811a178c1905/pkgs/os-specific/linux/nvidia-x11/default.nix).
-The [upstream driver code](https://github.com/NVIDIA/open-gpu-kernel-modules/blob/615.78.08/kernel-open/nvidia/os-interface.c)
-contains the conditional compatibility implementation.
-
-Kernel selection, open modules, PRIME offload, suspend policy and flake inputs
-are unchanged. A channel upgrade alone cannot fix an explicit old driver pin.
-
-The `nvidia-open` flake check builds the actual kernel module: evaluation alone
-cannot catch C compilation failures. Before activating, build it and the system:
+The NVIDIA version/hashes in `hardware.nix` come from
+[official Nixpkgs](https://github.com/NixOS/nixpkgs/blob/a73abadb83fd64aee8abce72cc56811a178c1905/pkgs/os-specific/linux/nvidia-x11/default.nix).
+Keep the explicit driver pin compatible with the selected kernel. Flake input
+updates do not automatically update that pin. Evaluation cannot detect C API
+incompatibilities: build the NVIDIA check and full system before activation.
+The full system build also covers xpadneo.
 
 ```sh
 cd ~/config/nixos
-nix build '.#checks.x86_64-linux.nvidia-open' --no-link
-nix build '.#nixosConfigurations.nixos.config.system.build.toplevel' --no-link
+nix build 'path:.#checks.x86_64-linux.nvidia-open' --no-link
+nix build 'path:.#nixosConfigurations.nixos.config.system.build.toplevel' --no-link
 nh os switch
 ```
 
-Reboot after activation to load matching kernel and driver modules, then check
-`uname -r`, `nvidia-smi` and `systemctl status scx.service`. No lockfile update
-is needed for this fix.
+Reboot after a kernel/driver change to load matching modules, then check
+`uname -r`, `nvidia-smi` and `systemctl status scx.service`.
 
-## Kernel/flake audit — 2026-10-18
-
-| Source | Findings | Decision |
-| --- | --- | --- |
-| [CachyOS/linux-cachyos](https://github.com/CachyOS/linux-cachyos) | Official patches/configuration; links community Nix packaging. BMQ cannot use sched_ext. | Reference source; no local kernel recipe needed. |
-| [xddxdd/nix-cachyos-kernel](https://github.com/xddxdd/nix-cachyos-kernel) | Dedicated Nix flake, release/pinned package sets and CPU variants. Maintainer reported compromised servers on October 15 and shut down Hydra/cache. | Do not add its cache or depend on unavailable builds. This is community packaging, not a CachyOS-maintained NixOS module. |
-| [Chaotic Nyx](https://github.com/chaotic-cx/nyx/tree/nyxpkgs-unstable) | Community flake with cached CachyOS kernels and upstream configuration parity. Documents a restricted integration for stable NixOS; keep its own Nixpkgs pin for cache reuse. | Viable future CachyOS experiment, after matching NVIDIA/module builds and comparing on hardware. Avoid importing an entire overlay merely to enable LAVD. |
-| [drakon64/nixos-cachyos-kernel](https://github.com/drakon64/nixos-cachyos-kernel) | Archived April 2025. | Do not adopt. |
-| Locked Nixpkgs kernel + [sched-ext/scx](https://github.com/sched-ext/scx) | NixOS already packages the upstream scheduler and service; the configured kernel has sched_ext support. | Selected; no extra input, cache, overlay or custom derivation. |
-
-The cache incident is confirmed by the [maintainer's own comment](https://github.com/xddxdd/nix-cachyos-kernel/issues/110#issuecomment-6189203183).
-No claim is made that kernel artifacts were tampered with. A community flake's
-source and its binary-cache trust are separate decisions. Recheck project status
-before adopting it later.
-
-For a future CachyOS comparison, choose a non-BMQ stable/LTS variant, pin its
-flake, retain a bootable stock generation and build all external modules first
-(NVIDIA open modules and xpadneo here). Do not globally enable CPU-specific
-compiler flags: they invalidate ordinary package caches and expand rebuilds.
-LTO/Zen4 kernels need an actual workload comparison to justify their build cost.
+A custom kernel/cache is an optional experiment. Pin the source, verify the
+cache's current provenance, retain a bootable stock generation, and build all
+external modules before trying it. Avoid global CPU-specific compiler flags,
+which expand rebuilds and prevent ordinary binary-cache reuse. See
+[IMPROVEMENTS.md](IMPROVEMENTS.md) for the current follow-up priorities.
 
 ## Verify and compare
 

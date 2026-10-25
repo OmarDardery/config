@@ -28,7 +28,7 @@ in
     # The native executable validates generated files in the theme-rendering check.
     checkConfig = false;
     settings = lib.recursiveUpdate settings {
-      # Later sources win: keep the patched Nix plugins ahead of Git catalog copies.
+      # Later sources win; the patched Nix plugins override Git catalog copies.
       plugins.source = [
         {
           name = "official";
@@ -104,8 +104,7 @@ in
     '';
   };
 
-  # Remove the former managed directory link, then keep a writable folder.
-  # Bundled samples are individual links; personal files are never replaced.
+  # Link bundled samples individually into a writable personal wallpaper folder.
   xdg.dataFile."noctalia/wallpaper-samples".source = ../assets/wallpapers;
   home.activation.noctaliaWallpaperSamples = lib.hm.dag.entryAfter [ "linkGeneration" ] ''
     run mkdir -p ${lib.escapeShellArg "${config.home.homeDirectory}/Pictures/Wallpapers"}
