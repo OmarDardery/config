@@ -112,7 +112,7 @@ in
       };
       layout = {
         mode = "dwindle";
-        gap = 8;
+        gap = 10;
         extent_presets = [
           0.33333
           0.5
@@ -134,16 +134,22 @@ in
         prefer_no_csd = true;
         border_width = 1;
         outer_border_width = 1;
-        corner_radius = 12;
+        corner_radius = 20;
+        drag_opacity = 0.9;
         blur = {
-          passes = 2;
-          radius = 4;
+          enabled = true;
+          passes = 3;
+          radius = 6;
+          noise = 0.015;
+          brightness = 1.0;
+          contrast = 1.0;
+          saturation = 1.15;
         };
         shadow = {
           enabled = true;
-          softness = 24;
+          softness = 36;
           offset_x = 0;
-          offset_y = 4;
+          offset_y = 8;
         };
         tab_bar = {
           style = "indicator";
@@ -155,15 +161,33 @@ in
         };
       };
       animation = {
-        # One critically damped spring for reflow, workspaces and overview.
-        curve = "spring:1,900";
-        windows_in.scale = 0.96;
-        windows_out = {
-          curve = "spring:1,1400";
-          scale = 0.96;
+        enabled = true;
+        # Keep move/resize timelines identical so tiles stay aligned during reflow.
+        curve = "spring:1,800";
+        windows_in = {
+          style = "popin";
+          curve = "spring:0.88,800";
+          scale = 0.92;
         };
-        overview.workspace_curve = "spring:1,900";
-        scratchpad.dim = 0.45;
+        windows_out = {
+          style = "popin";
+          curve = "spring:1,1200";
+          scale = 0.94;
+        };
+        workspaces = {
+          style = "slide";
+          curve = "spring:1,700";
+        };
+        overview = {
+          curve = "spring:1,700";
+          workspace_curve = "spring:1,800";
+        };
+        windows_drag.physics = true;
+        border.curve = "spring:1,1000";
+        scratchpad = {
+          dim = 0.35;
+          blur = true;
+        };
       };
       environment = {
         ELECTRON_OZONE_PLATFORM_HINT = "wayland";
@@ -370,6 +394,7 @@ in
         {
           match.app_id = "^kitty$";
           blur = true;
+          blur_optimized = false;
         }
         {
           match.app_id = "^(thunar|Thunar|org\\.xfce\\.Thunar)$";
