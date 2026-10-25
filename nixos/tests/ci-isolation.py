@@ -3,6 +3,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -26,7 +27,7 @@ class CiIsolation(unittest.TestCase):
             bin_dir.mkdir()
             mock = bin_dir / "nix"
             mock.write_text(
-                "#!/usr/bin/env python3\n"
+                f"#!{sys.executable}\n"
                 "import json, os, sys\n"
                 "from pathlib import Path\n"
                 "args = sys.argv[1:]\n"

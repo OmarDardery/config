@@ -3,6 +3,7 @@ import base64
 import os
 from pathlib import Path
 import stat
+import shutil
 import subprocess
 import tempfile
 import unittest
@@ -39,7 +40,7 @@ class PasswordInitialization(unittest.TestCase):
         binaries = self.root / 'bin'
         binaries.mkdir()
         mock = binaries / 'openssl'
-        mock.write_text('#!/usr/bin/env bash\nprintf partial\nexit 19\n')
+        mock.write_text(f'#!{shutil.which("bash")}\nprintf partial\nexit 19\n')
         mock.chmod(0o755)
         result = self.run_script(PATH=str(binaries) + ':' + os.environ['PATH'])
         self.assertEqual(result.returncode, 19)
