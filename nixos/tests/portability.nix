@@ -157,7 +157,7 @@ let
       && settings.output."BOE NE140QDM-NX7 Unknown".scale == scale
       && settings.output."HDMI-A-1".position == [ (builtins.ceil (2560 / scale)) 0 ]
       && integrated.xdg.configFile."X11/Xresources".text == "Xft.dpi: ${toString (96 * scale)}\n"
-      && builtins.elem base.pkgs.xorg.xrdb system.environment.systemPackages
+      && builtins.elem base.pkgs.xrdb system.environment.systemPackages
       && !(settings.environment ? GDK_SCALE)
       && !(settings.environment ? QT_SCALE_FACTOR);
     nativePromptTools =
