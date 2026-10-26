@@ -21,7 +21,7 @@
   bar = {
     default = {
       background_opacity = 0.46;
-      border = "outline";
+      border = "outline_variant";
       border_width = 1.0;
       capsule = false;
       center = [
@@ -62,7 +62,7 @@
           opacity = 0.24;
           padding = 8.0;
           radius = 20.0;
-          border = "outline";
+          border = "outline_variant";
           border_width = 1.0;
         }
         {
@@ -134,7 +134,7 @@
   dock = {
     enabled = true;
     background_opacity = 0.52;
-    border = "outline";
+    border = "outline_variant";
     border_width = 1.0;
     icon_size = 32;
     margin_edge = 10;

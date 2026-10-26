@@ -45,7 +45,7 @@ control center.
 
 ## Sharp rendering with a readable UI
 
-`lib/display.nix` sets the laptop UI scale to 1.75. The panel still runs at
+`lib/display.nix` sets the laptop UI scale to 1.6. The panel still runs at
 2560×1600 at 165 Hz; the HDMI display stays at 1920×1080 and 100%. Its position
 follows the scaled laptop width so changing the scale does not leave a gap.
 
@@ -53,11 +53,11 @@ Native Wayland applications receive the output scale. Xwayland keeps
 `xwayland_native_resolution = true` so games retain the panel's physical
 resolution. That deliberately stops compositor upscaling of X11 windows;
 applications must scale their UI themselves. Umbriel's XSETTINGS manager stays
-enabled. A narrowly scoped X resource (`Xft.dpi = 168`, merged by `xrdb` at
+enabled. A narrowly scoped X resource (`Xft.dpi = 153.6`, merged by `xrdb` at
 session startup) also covers Xlib/SDL clients which read font DPI there instead.
 No global `GDK_SCALE` or `QT_SCALE_FACTOR` is added, avoiding double scaling.
 
-Steam's package additionally sets `STEAM_FORCE_DESKTOPUI_SCALING=1.75` on the
+Steam's package additionally sets `STEAM_FORCE_DESKTOPUI_SCALING=1.6` on the
 laptop, following the shared scale. This scales the desktop client, preserving
 the game's available resolutions. Valve documents the override and SDL's
 primary-monitor query in [issue #5460](https://github.com/ValveSoftware/steam-for-linux/issues/5460).
@@ -66,7 +66,7 @@ on the 100% HDMI display. Wayland apps retain per-output scaling. Games' HUDs
 remain controlled by each game's settings.
 
 Reboot after rebuilding so the X11 DPI and Steam process environment are fresh.
-Check `xrdb -query` for `Xft.dpi: 168` and confirm Steam's UI size. If Steam
+Check `xrdb -query` for `Xft.dpi: 153.6` and confirm Steam's UI size. If Steam
 remains tiny, check for a user-created `steam.desktop` pointing at an older
 store path or conflicting `-forcedesktopscaling` launch argument. Flatpak apps
 with their own saved scaling overrides may need those overrides removed; this
