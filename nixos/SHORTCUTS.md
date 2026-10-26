@@ -55,7 +55,7 @@ The power button locks first. `Ctrl+Alt+Delete` quits the compositor session.
 | Mod+Home/End / Mod+Ctrl+Home/End | Focus first-last column / move it there |
 | Mod+Alt+Left/Right | Select previous-next tab |
 | Mod+Return / Mod+Shift+T | Toggle floating / focus floating-tiled windows |
-| Mod+F / Mod+Shift+F / Mod+M | Maximize / fullscreen / maximize to edges |
+| Mod+F / Mod+Shift+F or Mod+Ctrl+F / Mod+M | Fullscreen / maximize / maximize to edges |
 | Mod+C / Mod+Ctrl+C | Center the focused column |
 | Mod+W / Mod+P | Toggle column tabs / pin the window |
 | Mod+R / Mod+Shift+R / Mod+Alt+R | Next width / previous width / height preset |
