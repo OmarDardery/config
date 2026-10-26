@@ -116,6 +116,41 @@ class ReconciliationTests(unittest.TestCase):
         self.assertEqual(self.run_helper(apply=True, resets=['config_version']), ([], None))
         self.assertEqual(self.state.read_bytes(), original)
 
+    def test_monitor_opacity_reset_preserves_geometry_and_other_bars(self):
+        original = self.files(
+            '[bar.default.monitor."BOE panel"]\nbackground_opacity = 1.0\nposition = "bottom"\n'
+            '[bar.default.monitor."HDMI-A-1"]\nbackground_opacity = 0.99\nenabled = false\n'
+            '[bar.personal]\nbackground_opacity = 0.9\n'
+            '[dock.monitor."BOE panel"]\nbackground_opacity = 1.0\nposition = "right"\n'
+            '[theme]\nmode = "light"\n[wallpaper.default]\npath = "/keep/personal.png"\n',
+            '[bar.default]\nbackground_opacity = 0.46\n[dock]\nbackground_opacity = 0.52\n',
+        )
+        resets = ['bar.default.monitor.*.background_opacity', 'dock.monitor.*.background_opacity']
+        removed, _ = self.run_helper(resets=resets)
+        self.assertEqual(len(removed), 3)
+        self.assertEqual(self.state.read_bytes(), original)
+        _, backup = self.run_helper(apply=True, managed=True, resets=resets)
+        self.assertEqual(backup.read_bytes(), original)
+        state = tomllib.loads(self.state.read_text())
+        self.assertEqual(state['bar']['default']['monitor'], {
+            'BOE panel': {'position': 'bottom'}, 'HDMI-A-1': {'enabled': False},
+        })
+        self.assertEqual(state['bar']['personal']['background_opacity'], 0.9)
+        self.assertEqual(state['dock']['monitor']['BOE panel'], {'position': 'right'})
+        self.assertEqual(state['theme']['mode'], 'light')
+        self.assertEqual(state['wallpaper']['default']['path'], '/keep/personal.png')
+        self.assertEqual(self.run_helper(apply=True, managed=True, resets=resets), ([], None))
+
+    def test_reset_wildcard_matches_one_component_and_never_config_version(self):
+        self.files('config_version = 3\n[a.b]\nx = 1\n[a.c.d]\nx = 2\n', '')
+        removed, _ = self.run_helper(apply=True, resets=['a.*.x'])
+        self.assertEqual(removed, ['a.b.x'])
+        self.assertEqual(tomllib.loads(self.state.read_text()), {
+            'config_version': 3, 'a': {'c': {'d': {'x': 2}}},
+        })
+        self.run_helper(apply=True, resets=['*'])
+        self.assertEqual(tomllib.loads(self.state.read_text()), {'config_version': 3})
+
     def test_removed_app_templates_do_not_survive_as_runtime_overrides(self):
         original = self.files(
             '[theme]\nmode = "light"\n'

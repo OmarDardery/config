@@ -2,6 +2,7 @@
   pkgs,
   inputs,
   profile,
+  isLaptop,
   ...
 }:
 {
@@ -11,6 +12,7 @@
       (import ../pkgs/steam.nix {
         inherit pkgs;
         millenniumInput = inputs.millennium;
+        desktopScale = if isLaptop then (import ../lib/display.nix).laptopScale else null;
         colorsFile = "${profile.homeDirectory}/.local/state/noctalia/theme/steam.css";
       }).steam;
     remotePlay.openFirewall = false;

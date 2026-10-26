@@ -1,8 +1,15 @@
-{ isNixOS, ... }:
+{ isNixOS, isLaptop, ... }:
 let
   cursor = if isNixOS then "Bibata-Modern-Classic" else "Adwaita";
+  display = import ../lib/display.nix;
 in
 {
+  # Xlib/SDL clients may read RESOURCE_MANAGER instead of Umbriel's XSETTINGS.
+  # Merge only our font DPI, preserving unrelated X resources.
+  xdg.configFile."X11/Xresources" = {
+    enable = isLaptop;
+    text = "Xft.dpi: ${toString (96 * display.laptopScale)}\n";
+  };
   xdg.configFile."autostart/org.kde.kdeconnect.daemon.desktop".enable = isNixOS;
   xdg.configFile."autostart/org.kde.kdeconnect.daemon.desktop".text = ''
     [Desktop Entry]

@@ -145,6 +145,21 @@ let
       && !(integrated.programs.noctalia.settings.theme.templates.user ? fastfetch)
       && !(integrated.programs.noctalia.settings.theme.templates.user ? inkscape);
     steamMultilib = system.hardware.graphics.enable32Bit;
+    nativeResolutionScaling =
+      let
+        settings = integrated.programs.umbriel.settings;
+        scale = (import ../lib/display.nix).laptopScale;
+      in
+      settings.general.xwayland_native_resolution
+      && settings.general.xwayland_xsettings
+      && !settings.animation.windows_drag.physics
+      && settings.output."BOE NE140QDM-NX7 Unknown".mode == "2560x1600@165"
+      && settings.output."BOE NE140QDM-NX7 Unknown".scale == scale
+      && settings.output."HDMI-A-1".position == [ (builtins.ceil (2560 / scale)) 0 ]
+      && integrated.xdg.configFile."X11/Xresources".text == "Xft.dpi: ${toString (96 * scale)}\n"
+      && builtins.elem base.pkgs.xorg.xrdb system.environment.systemPackages
+      && !(settings.environment ? GDK_SCALE)
+      && !(settings.environment ? QT_SCALE_FACTOR);
     nativePromptTools =
       builtins.elem base.pkgs.zsh system.environment.systemPackages
       && builtins.elem base.pkgs.starship system.environment.systemPackages;

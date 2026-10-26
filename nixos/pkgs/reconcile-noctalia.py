@@ -46,7 +46,10 @@ def reconcile(state, desired, *, apply=False, resets=(), managed=False):
             value = table[key]
             if key == "config_version":
                 continue
-            if path in reset_paths or (managed and key in target and not (
+            reset = any(len(pattern) == len(path) and all(
+                expected == "*" or expected == actual
+                for expected, actual in zip(pattern, path)) for pattern in reset_paths)
+            if reset or (managed and key in target and not (
                     isinstance(value, Mapping) and isinstance(target[key], Mapping))):
                 del table[key]
                 removed.append(".".join(path))
@@ -78,7 +81,8 @@ def main():
     parser.add_argument("--apply", action="store_true", help="write changes (default: dry run)")
     parser.add_argument("--managed", action="store_true",
                         help="remove overrides for every field declared in the desired configuration")
-    parser.add_argument("--reset", action="append", default=[], metavar="DOTTED.PATH")
+    parser.add_argument("--reset", action="append", default=[], metavar="DOTTED.PATH",
+                        help="reset a path; * matches one complete table/key component")
     args = parser.parse_args()
     try:
         removed, backup = reconcile(args.state, args.desired, apply=args.apply, resets=args.reset, managed=args.managed)
