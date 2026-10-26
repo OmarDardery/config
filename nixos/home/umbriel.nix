@@ -346,8 +346,8 @@ in
         "Mod+Shift+Minus" = "window-modify-secondary-extent:-0.1";
         "Mod+Shift+Equal" = "window-modify-secondary-extent:+0.1";
         "Mod+Return" = once "window-toggle-floating";
-        "Mod+Shift+F" = once "window-toggle-fullscreen";
-        "Mod+F" = once "window-toggle-maximize";
+        "Mod+Shift+F" = once "window-toggle-maximize";
+        "Mod+F" = once "window-toggle-fullscreen";
         "Mod+W" = once "column-toggle-tabbed";
         "Mod+R" = "window-cycle-primary-extent";
         "Mod+Shift+R" = "window-cycle-primary-extent-back";
