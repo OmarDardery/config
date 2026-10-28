@@ -57,7 +57,7 @@
           id = "activity";
           enabled = true;
           members = [ "media" ];
-          fill = "surface_variant";
+          fill = "surface_container";
           foreground = "on_surface";
           opacity = 0.24;
           padding = 8.0;
@@ -70,7 +70,7 @@
           accordion = true;
           accordion_direction = "start";
           enabled = true;
-          fill = "surface_variant";
+          fill = "surface_container";
           foreground = "on_surface";
           members = [
             "screen-toolkit"
@@ -86,7 +86,7 @@
         {
           accordion = false;
           enabled = true;
-          fill = "surface_variant";
+          fill = "surface_container";
           foreground = "on_surface";
           id = "status";
           members = [
