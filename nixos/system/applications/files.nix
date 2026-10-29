@@ -10,7 +10,6 @@
     xdg-utils
     xfconf
     zenity
-    system-config-printer
     adwaita-icon-theme
     adw-gtk3
     bibata-cursors

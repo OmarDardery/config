@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   profile,
   inputs,
@@ -16,12 +17,11 @@ let
   };
 
 in
-{
+lib.mkIf config.workstation.gaming.enable {
   environment.systemPackages = [
     steamPackages.setup
     steamPackages.millennium
     launchers.gameRun
-  ]
-  ++ lib.optionals isNixOS [ launchers.performanceRun ];
+  ];
   environment.sessionVariables.STEAM_EXTRA_COMPAT_TOOLS_PATHS = "$HOME/.steam/root/compatibilitytools.d";
 }

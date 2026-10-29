@@ -13,6 +13,15 @@ language tools. Its profile contains only its internal session-variable helper.
 NixOS keeps pinned editor packages/plugins/tooling in Nix. The `oad-desktop` name
 is retained for compatibility; both standalone outputs configure the full desktop.
 
+## Lean NixOS defaults
+
+Gaming, engineering apps, WinBoat/Docker, and printing/scanning are now opt-in
+bundles in `nixos/configuration.nix`. Enable the `workstation.<bundle>.enable`
+options you use before rebuilding. See [the module layout and bundle contents](nixos/ARCHITECTURE.md).
+Editors retain their private tools; project toolchains are available with
+`nix develop path:./nixos#general` or `#embedded`. Existing application data and
+Flatpaks are preserved when a bundle is disabled.
+
 ## Deploy
 
 Edit [nixos/profile.nix](nixos/profile.nix) for your account and checkout path.

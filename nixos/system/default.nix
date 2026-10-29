@@ -7,6 +7,9 @@
     ./nix.nix
     ./performance.nix
     ./development.nix
-    ./gaming.nix
+    ./features.nix
+    ./desktop.nix
+    ./greeter.nix
+    ./applications
   ];
 }

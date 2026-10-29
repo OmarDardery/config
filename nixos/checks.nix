@@ -329,6 +329,7 @@ in
   # Evaluation alone cannot detect kernel API incompatibilities in the driver.
   nvidia-open = flake.nixosConfigurations.${profile.hostName}.config.hardware.nvidia.package.open;
   noctalia-greeter = system.services.displayManager.noctalia-greeter.package;
+  features = pkgs.writeText "feature-checks.json" (builtins.toJSON (import ./tests/features.nix { inherit flake; }));
   portability = pkgs.writeText "portability-checks.json" (builtins.toJSON portability.checks);
   desktop-migrations = scriptCheck "desktop-migration-checks" "python ${tests}/desktop-migrations.py";
   restic-password = scriptCheck "restic-password-checks" ''

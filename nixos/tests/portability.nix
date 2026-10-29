@@ -124,9 +124,11 @@ let
           integrated
         ];
     onDemandDocker =
-      system.virtualisation.docker.enable
-      && !system.virtualisation.docker.enableOnBoot
-      && builtins.elem "sockets.target" system.systemd.sockets.docker.wantedBy;
+      if system.workstation.containers.enable then
+        system.virtualisation.docker.enable
+        && !system.virtualisation.docker.enableOnBoot
+        && builtins.elem "sockets.target" system.systemd.sockets.docker.wantedBy
+      else !system.virtualisation.docker.enable;
     homeBackups =
       system.services.restic.backups.home.repository == "/mnt/storage/backup"
       && system.services.restic.backups.home.paths == [ profile.homeDirectory ]
@@ -144,7 +146,7 @@ let
       )
       && !(integrated.programs.noctalia.settings.theme.templates.user ? fastfetch)
       && !(integrated.programs.noctalia.settings.theme.templates.user ? inkscape);
-    steamMultilib = system.hardware.graphics.enable32Bit;
+    steamMultilib = !system.workstation.gaming.enable || system.hardware.graphics.enable32Bit;
     nativeResolutionScaling =
       let
         settings = integrated.programs.umbriel.settings;
@@ -250,10 +252,10 @@ let
       && system.systemd.services.flatpak-managed-install.serviceConfig.Type == "exec"
       && system.systemd.services.flatpak-managed-install-timer.serviceConfig.Type == "exec"
       &&
-        map (p: p.appId) system.services.flatpak.packages == [
-          "com.orcaslicer.OrcaSlicer"
-          "com.vysp3r.ProtonPlus"
-        ];
+        map (p: p.appId) system.services.flatpak.packages == (
+          lib.optional system.workstation.engineering.enable "com.orcaslicer.OrcaSlicer"
+          ++ lib.optional system.workstation.gaming.enable "com.vysp3r.ProtonPlus"
+        );
     systemFonts =
       system.fonts.fontDir.enable
       && system.fileSystems."/usr/share/fonts".fsType == "fuse.bindfs"
@@ -292,8 +294,8 @@ let
       && system.services.pipewire.pulse.enable
       && !system.services.pulseaudio.enable
       && system.services.udisks2.enable
-      && system.services.printing.enable
-      && system.hardware.sane.enable;
+      && system.services.printing.enable == system.workstation.printing.enable
+      && system.hardware.sane.enable == system.workstation.printing.enable;
     layout =
       home.programs.umbriel.settings.layout.mode == "dwindle"
       &&
@@ -311,7 +313,7 @@ let
       !(home.programs.umbriel.settings ? colors)
       && !(home.programs.noctalia.settings.theme ? wallpaper_scheme)
       && !(home.programs.noctalia.settings.wallpaper ? default)
-      && !home.programs.noctalia.settings.bar.default.reserve_space
+      && home.programs.noctalia.settings.bar.default.reserve_space
       && home.programs.noctalia.settings.shell.greeter_sync.auto_sync;
     nativeCommands =
       home.programs.kitty.settings.shell == "zsh"

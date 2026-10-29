@@ -1,11 +1,13 @@
 {
+  config,
+  lib,
   pkgs,
   inputs,
   profile,
   isLaptop,
   ...
 }:
-{
+lib.mkIf config.workstation.gaming.enable {
   programs.steam = {
     enable = true;
     package =

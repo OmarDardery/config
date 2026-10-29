@@ -12,6 +12,7 @@ system=$(nix eval --raw "$flake#lib.deployment.system" --no-write-lock-file)
 nix flake check "$flake" --no-build --no-write-lock-file
 checks=(
   portability
+  features
   ci-isolation
   restic-password
   dotfile-syntax

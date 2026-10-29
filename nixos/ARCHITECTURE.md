@@ -1,65 +1,79 @@
-# Ownership and module plan
+# Configuration layout
 
-The goal is one set of preferences across Linux distributions. NixOS installs
-applications through Nix; other distributions use native application installation
-and Home Manager writes their dotfiles only.
+The flake uses ordinary NixOS and Home Manager modules. There is no registration
+framework or automatic directory discovery: every enabled module has an explicit
+import.
 
-| Layer | Responsibility | Entry point |
-| --- | --- | --- |
-| Feature composition | Group related Home Manager and NixOS modules | `modules/*.nix` |
-| Dotfiles | Shell aliases, Git, Kitty, Yazi and application preferences | `modules/dotfiles.nix` |
-| Editors | LazyVim, VSCodium, extensions and private editor dependencies | `modules/editors.nix` |
-| Desktop preferences | Noctalia/Umbriel files, application themes and associations | `modules/desktop.nix` |
-| Applications | Install desktop/CLI applications and native user services on NixOS | `modules/applications.nix` |
-| Login | Install and configure the privileged Noctalia Greeter | `modules/greeter.nix` |
-| Native distribution | Install applications, compositor, portals, drivers and login services | `native/README.md` |
+| Location | Responsibility |
+| --- | --- |
+| `flake.nix` | Pinned inputs, system/home outputs, development shells and checks |
+| `profile.nix` | Deployment identity and checkout path |
+| `configuration.nix` | This host's hardware imports, optional bundles and state version |
+| `hardware.nix` | Laptop-specific GPU, peripheral and storage policy |
+| `hardware-configuration.nix` | Locally generated hardware, ignored by Git |
+| `modules/default.nix` | Shared Home Manager composition and NixOS entry point |
+| `home/` | Portable dotfiles and private NixOS editor dependencies |
+| `system/` | Host services and desktop integration |
+| `system/applications/` | Application packages grouped by purpose |
+| `lib/`, `pkgs/` | Shared settings and package/helper implementations |
+| `native/` | Debian/Fedora application installation |
+| `tests/`, `checks.nix` | Behavioral and evaluation checks |
 
-## Boundaries
+## Lean defaults and optional bundles
 
-Use upstream `package = null` for configuration-only modules and plain dotfiles
-when a module cannot operate without installing its package. Noctalia/Umbriel
-retain upstream config generation with their packages and services disabled in
-Home Manager. NixOS owns their native packages and session integration.
+The desktop, browser, Kitty/Zsh/Yazi, both configured editors, office/media apps,
+backup policy, Tailscale, capture tools and laptop hardware remain enabled.
+Language toolchains are private editor dependencies or available through
+`nix develop`; the system PATH no longer installs another global toolchain list.
+This reduces global scope, but does not eliminate those dependencies from the
+editor closure. JetBrains Toolbox is no longer installed alongside the two
+configured editors.
 
-NixOS editor wrappers include private dependencies. On other distributions,
-Lazy/Mason/Codium manage plugins and tools through native commands; project
-environments remain independent on both backends.
+Enable specialist bundles in `configuration.nix` as needed:
 
-`desktop-apply` initializes palettes and managed desktop preferences at graphical
-login through a native user unit. It can also be run explicitly within a session.
-Dotfile activation does not require a compositor or block on desktop setup.
+```nix
+workstation = {
+  gaming.enable = true;       # Steam, Millennium, GameMode, ProtonPlus
+  engineering.enable = true;  # FreeCAD, Logisim, PlatformIO, webOS, OrcaSlicer
+  containers.enable = true;   # Docker socket and WinBoat
+  printing.enable = true;     # Printers, scanners and network discovery
+};
+```
 
-Keep composition explicit in `flake.modules`. Leaf implementations belong in
-`home/` and `system/`; helpers, assets and tests are ordinary files whose presence
-does not enable features automatically.
+All four default to false. Each bundle owns the related packages and services;
+Docker group membership and WinBoat's Electron exception exist only with the
+container bundle. Disabling a bundle removes declarative packages and services;
+it does not erase application data, Docker volumes or backups. Flatpak retains
+`uninstallUnmanaged = false`, so existing Flatpaks are not forcibly removed.
+Use `nix develop path:./nixos#general`, `#embedded`, `#python` or `#rustup`
+from the repository root for project tools.
 
-## Profiles
+## Ownership and compatibility
 
-- `homeConfigurations.oad`: all six applications' dotfiles, no applications.
-- `homeConfigurations.oad-desktop`: compatibility selector with the same full
-  dotfile scope; its aliases preserve this output name.
-- `nixosConfigurations.nixos`: native NixOS application/service modules plus
-  Home Manager dotfiles and Nix-packaged editors/private dependencies.
+NixOS owns application/service installation, Home Manager owns dotfiles and
+Nix-packaged editors. Standalone Home Manager owns configuration only; native
+package managers and editor installers own applications. Both standalone selectors
+(`oad` and `oad-desktop` with the default identity) retain the same dotfile scope.
+`lib.deployment` and the NixOS host selector are unchanged.
 
-The root `nixos-setup.sh`, `debian-setup.sh` and `fedora-setup.sh` are entry points.
-Native package lists live in `native/debian.sh` and `native/fedora.sh`, with shared
-service setup in `native/common.sh` and TOML merging in `native/configure.py`.
-NixOS copies its generated hardware file before evaluation; Git ignores that
-file. Use `path:` flake references so local hardware participates in rebuilds.
+Desktop setup runs through the native graphical-session unit, never during
+Home Manager activation. Existing caches and independent Noctalia/Umbriel input
+pins are preserved for binary compatibility. Removing the top-level flake-parts
+input does not update unrelated lock-file pins.
 
-Names and identity come from `profile.nix`. `stateVersion` remains unchanged.
-Editor libraries/plugins/tools are Nix dependencies on NixOS only. Standalone
-profiles contain only Home Manager's internal session helper. Rendering helpers
-and source assets used to generate dotfiles can still have Nix build dependencies;
-they do not install the six application binaries.
+Use `path:` flake references so the local hardware file participates in builds.
+Never deploy the CI hardware fixture. State versions, NVIDIA/kernel policy,
+storage mounts and backup policy are unchanged.
 
-## Verification
+## Inspiration and verification
 
-Evaluate all profiles with a second identity and paths containing spaces/quotes.
-Assert that standalone profiles contain only the session-variable utility, while
-NixOS installs both editors. Neither profile owns user services or timers. Check
-that native editor settings contain no Nix executable paths. Verify
-native command references, the opt-in desktop profile, generated configs, notebook
-integration, activation-file migration, and update/bootstrap routing. Build or run
-tests that exercise behavior; live graphics and display-manager changes need a
-real-machine login test.
+The direct output/module layout follows the small, explicit structure of
+[Misterio77's starter configuration](https://github.com/Misterio77/nix-starter-configs/tree/main/standard).
+Separating core dependencies from feature-owned extras follows
+[hlissner's dotfiles](https://github.com/hlissner/dotfiles).
+Only structural ideas are borrowed; their hardware and package choices are not.
+
+Run `bash nixos/tests/ci.sh` from the repository root. It evaluates with disposable
+hardware, checks portable profiles and the desktop, and exercises both minimal
+and fully enabled optional bundles through `checks.features`. Live graphics,
+printing, Docker and suspend behavior still need testing on the actual laptop.

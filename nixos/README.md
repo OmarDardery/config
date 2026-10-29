@@ -1,7 +1,6 @@
 # Configuration and deployment
 
-Feature modules in `modules/` compose typed Home Manager and NixOS modules through
-flake-parts. `home/` contains dotfile/editor implementations; `system/` contains
+Plain NixOS and Home Manager modules are composed explicitly in `modules/default.nix`. `home/` contains dotfile/editor implementations; `system/` contains
 native NixOS integration; `system/applications/` installs general applications.
 See [ARCHITECTURE.md](ARCHITECTURE.md) for ownership boundaries and design decisions,
 and [IMPROVEMENTS.md](IMPROVEMENTS.md) for the prioritized follow-up review.
@@ -54,12 +53,12 @@ Existing checkouts are never pulled, staged or reset by deployment scripts.
 
 | Files | Responsibility |
 | --- | --- |
-| `modules/profiles.nix` | Assemble portable, desktop and workstation profiles |
-| `modules/editors.nix` | LazyVim/VSCodium, plugins, extensions, private toolchains |
-| `modules/dotfiles.nix` | Shell, terminal, Git and tool preferences |
-| `modules/desktop.nix` | Desktop dotfiles and native NixOS desktop integration |
-| `modules/applications.nix` | NixOS packages and native user services |
-| `modules/greeter.nix` | Official Noctalia Greeter NixOS module |
+| `modules/default.nix` | Shared home composition and NixOS entry point |
+| `home/` | Dotfiles, editors and their private tools |
+| `system/default.nix` | Explicit system imports |
+| `system/applications/default.nix` | Core application imports |
+| `system/features.nix` | Optional gaming, engineering, containers and printing bundles |
+| `system/greeter.nix` | Official Noctalia Greeter NixOS module |
 | `system/base.nix` | Account, boot, locale and integrated Home Manager |
 | `system/networking.nix` | NetworkManager, Tailscale and firewall |
 | `system/nix.nix` | Nix build limits, cache and garbage collection |
@@ -83,13 +82,21 @@ upstream's independent package sets for native dependencies and caches. Fonts,
 GTK/Qt libraries, portals, drivers, login services and desktop applications are
 installed outside Home Manager.
 
+## Optional NixOS bundles
+
+Set `workstation.gaming.enable`, `workstation.engineering.enable`,
+`workstation.containers.enable` or `workstation.printing.enable` in
+`configuration.nix`. All default to false. See [bundle contents](ARCHITECTURE.md#lean-defaults-and-optional-bundles).
+Disabling a bundle preserves user data and existing Flatpaks. Language runtimes
+remain available inside editor wrappers and `nix develop` shells.
+
 ## Terminal and gaming integration
 
 Kitty loads its native shell integration. Idle prompts close without confirmation;
 active commands still trigger confirmation. Open a new terminal after changing
 shell integration or login environment settings.
 
-Steam's 64-bit Linux client does not make a 64-bit-only host supported. Keep the
+With the gaming bundle enabled, Steam's 64-bit Linux client does not make a 64-bit-only host supported. Keep the
 32-bit host graphics/runtime support required by games and Steam helpers. The
 [official NixOS Steam module](https://github.com/NixOS/nixpkgs/blob/nixos-26.05/nixos/modules/programs/steam.nix)
 already enables that support; do not duplicate it in the laptop hardware file or
@@ -202,8 +209,8 @@ preserve an existing nonempty file.
 
 Home backups target `/mnt/storage/backup`; see [BACKUPS.md](BACKUPS.md) for the
 first-backup and restore checks. Its password is generated once at runtime and
-preserved across rebuilds. Docker starts on demand through its
-socket. Containers requiring unattended boot startup need
+preserved across rebuilds. With `workstation.containers.enable = true`,
+Docker starts on demand through its socket. Containers requiring unattended boot startup need
 `virtualisation.docker.enableOnBoot = true`.
 
 ## Checks
@@ -213,7 +220,7 @@ nix flake check path:./nixos --no-build --no-write-lock-file
 nix build path:./nixos#checks.x86_64-linux.portability
 ```
 
-Checks cover all profiles and an alternate identity, package/service boundaries,
+The `features` check exercises minimal and fully enabled bundles. Checks cover all profiles and an alternate identity, package/service boundaries,
 native command routing, editor settings, desktop initialization, file migration,
 plugins and updater behavior. The NVIDIA module and greeter are separate build
 checks because evaluation cannot catch compilation failures. Actual display,

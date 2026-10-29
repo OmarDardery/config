@@ -7,6 +7,14 @@
     ./system
   ];
 
+  # Optional bundles; enable only what this machine needs.
+  workstation = {
+    gaming.enable = false;
+    engineering.enable = false;
+    containers.enable = false;
+    printing.enable = false;
+  };
+
   # Preserve the original installation's stateful defaults.
   system.stateVersion = "26.05";
 }

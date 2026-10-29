@@ -9,7 +9,9 @@
   generated-config, script, migration and theme checks. Its hardware fixture lives
   only in a temporary checkout; the laptop's ignored hardware file is untouched.
   NVIDIA/kernel and full system builds remain explicit checks outside this workflow.
-- Docker starts through its socket when WinBoat or a development client needs it.
+- Optional bundles keep gaming, engineering, containers and printing out of the
+  default system. Direct module imports replace the flake-parts registration layer.
+- With the containers bundle enabled, Docker starts through its socket when WinBoat or a development client needs it.
   Containers do not automatically start at boot until Docker is activated. Set
   `virtualisation.docker.enableOnBoot = true` if boot-time containers are needed.
 - Fastfetch and Inkscape are removed, along with their managed palette templates
@@ -27,7 +29,7 @@ limits. Additional schedulers or power managers need measurements to justify the
 | --- | --- |
 | Kernel/GPU comparison | Test NVIDIA and xpadneo builds, suspend, external displays and games before changing `linuxPackages_latest`, driver pins or `AMD_DEBUG=nodcc`. |
 | sops-nix | Useful when encrypted credentials need to travel with Git. The local Restic password is already a runtime-only file; adding sops requires a chosen decryption key and recovery plan. |
-| Optional host services | Printing, Avahi and tablet support enable existing features. Check usage and idle power before disabling them. |
+| Tablet support | Tablet support remains enabled for the configured hardware. Check usage and idle power before disabling it. |
 | Lower refresh rate or cheaper blur | The 165 Hz panel and live blur are deliberate visual choices. Compare battery use and responsiveness before sacrificing them. |
 
 ```sh

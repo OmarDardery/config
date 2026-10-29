@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   inputs,
   lib,
@@ -8,10 +9,8 @@
   imports = [ inputs.nix-flatpak.nixosModules.nix-flatpak ];
   services.flatpak = {
     enable = true;
-    packages = [
-      "com.orcaslicer.OrcaSlicer"
-      "com.vysp3r.ProtonPlus"
-    ];
+    packages = lib.optional config.workstation.engineering.enable "com.orcaslicer.OrcaSlicer"
+      ++ lib.optional config.workstation.gaming.enable "com.vysp3r.ProtonPlus";
     uninstallUnmanaged = false;
     uninstallUnused = false;
     update.auto.enable = true;

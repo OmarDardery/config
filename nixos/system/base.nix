@@ -19,7 +19,6 @@
       "networkmanager"
       "wheel"
       "dialout"
-      "docker"
       "recording"
       "wireshark"
     ];
