@@ -94,6 +94,9 @@ in
           "$state" ${config.xdg.configFile."noctalia/config.toml".source} --managed --apply \
           --reset theme.templates.user.fastfetch --reset theme.templates.user.inkscape \
           --reset 'bar.default.monitor.*.background_opacity' \
+          --reset 'bar.default.monitor.*.auto_hide' \
+          --reset 'bar.default.monitor.*.smart_auto_hide' \
+          --reset 'bar.default.monitor.*.reserve_space' \
           --reset 'dock.monitor.*.background_opacity'
       fi
       if command -v bat >/dev/null 2>&1; then bat cache --build; fi
