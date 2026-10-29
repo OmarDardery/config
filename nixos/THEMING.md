@@ -8,7 +8,8 @@ and an activity capsule for media. This keeps the existing bottom bar and right
 dock rather than replacing Noctalia or importing a new desktop environment.
 The previews are simulated; the configuration uses native Noctalia controls.
 
-The shell uses wallpaper-tinted frosted glass: a 46% opaque floating bottom bar,
+The shell uses wallpaper-tinted frosted glass: a 46% opaque floating bottom bar
+that stays visible and reserves space for windows,
 a 52% opaque right dock with hover magnification and running-app dots, glass
 panels, and translucent notification/volume cards. Windows have 20px corners,
 thin palette-driven borders and soft offset shadows. Kitty uses an 84% opaque

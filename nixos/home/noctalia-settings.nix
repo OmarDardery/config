@@ -45,8 +45,9 @@
       radius = 20;
       shadow = true;
       thickness = 32;
-      reserve_space = false;
-      smart_auto_hide = true;
+      reserve_space = true;
+      auto_hide = false;
+      smart_auto_hide = false;
       start = [
         "launcher"
         "workspaces"
