@@ -13,11 +13,11 @@ let
     repeat = false;
   };
   locked = command: {
-    action = "spawn:noctalia msg ${command}";
+    action = "spawn noctalia msg ${command}";
     allow_when_locked = true;
   };
   capture = event: {
-    action = "spawn:noctalia msg plugin alexander/screen-toolkit:service all ${event}";
+    action = "spawn noctalia msg plugin alexander/screen-toolkit:service all ${event}";
     submap = "reset";
     repeat = false;
   };
@@ -46,7 +46,7 @@ let
   };
   rowAction =
     action:
-    "spawn:${lib.escapeShellArg "${config.home.homeDirectory}/.local/bin/umbriel-row-action"} ${action}";
+    "spawn ${lib.escapeShellArg "${config.home.homeDirectory}/.local/bin/umbriel-row-action"} ${action}";
   screenshotWindow = {
     executable = true;
     text = ''
@@ -201,53 +201,53 @@ in
       # Explicit navigation takes precedence over Umbriel's built-in bindings.
       keybinds = {
         "Mod+Shift+Escape" = once "cheatsheet-open";
-        "Mod+T" = once "spawn:kitty";
-        "Mod+Space" = once "spawn:noctalia msg panel-toggle launcher";
-        "Alt+Tab" = once "spawn:noctalia msg window-switcher hold";
-        "Mod+B" = once "spawn:${if isNixOS then "zen" else "desktop-browser"}";
-        "Mod+Alt+L" = once "spawn:noctalia msg session lock";
-        "Mod+Shift+Q" = once "spawn:noctalia msg panel-toggle session";
+        "Mod+T" = once "spawn kitty";
+        "Mod+Space" = once "spawn noctalia msg panel-toggle launcher";
+        "Alt+Tab" = once "spawn noctalia msg window-switcher hold";
+        "Mod+B" = once "spawn ${if isNixOS then "zen" else "desktop-browser"}";
+        "Mod+Alt+L" = once "spawn noctalia msg session lock";
+        "Mod+Shift+Q" = once "spawn noctalia msg panel-toggle session";
         "XF86PowerOff" = (locked "session lock") // {
           repeat = false;
           allow_when_inhibited = true;
         };
-        "Mod+Shift+F23" = once "spawn:kitty";
-        "Mod+E" = once "spawn:thunar";
-        "Mod+Shift+E" = once "spawn:kitty yazi";
-        "Mod+I" = once "spawn:codium";
-        "Mod+Ctrl+E" = once "spawn:kitty nvim ${lib.escapeShellArg profile.configRepo}";
-        "Mod+Shift+D" = once "spawn:nwg-displays";
-        "Mod+A" = once "spawn:noctalia msg panel-toggle control-center";
-        "Mod+S" = once "spawn:noctalia msg plugin alexander/screen-toolkit:service all toggle";
-        "Mod+Ctrl+S" = once "spawn:noctalia msg settings-toggle";
-        "Mod+V" = once "spawn:noctalia msg panel-toggle clipboard";
-        "Mod+N" = once "spawn:noctalia msg panel-toggle notifications";
-        "Mod+Shift+N" = once "spawn:noctalia msg notification-dnd-toggle";
-        "Mod+Ctrl+N" = once "spawn:noctalia msg notification-clear-active";
-        "Mod+Alt+W" = once "spawn:noctalia msg panel-toggle wallpaper";
-        "Mod+Ctrl+Alt+W" = once "spawn:noctalia msg settings-open theme";
+        "Mod+Shift+F23" = once "spawn kitty";
+        "Mod+E" = once "spawn thunar";
+        "Mod+Shift+E" = once "spawn kitty yazi";
+        "Mod+I" = once "spawn codium";
+        "Mod+Ctrl+E" = once "spawn kitty nvim ${lib.escapeShellArg profile.configRepo}";
+        "Mod+Shift+D" = once "spawn nwg-displays";
+        "Mod+A" = once "spawn noctalia msg panel-toggle control-center";
+        "Mod+S" = once "spawn noctalia msg plugin alexander/screen-toolkit:service all toggle";
+        "Mod+Ctrl+S" = once "spawn noctalia msg settings-toggle";
+        "Mod+V" = once "spawn noctalia msg panel-toggle clipboard";
+        "Mod+N" = once "spawn noctalia msg panel-toggle notifications";
+        "Mod+Shift+N" = once "spawn noctalia msg notification-dnd-toggle";
+        "Mod+Ctrl+N" = once "spawn noctalia msg notification-clear-active";
+        "Mod+Alt+W" = once "spawn noctalia msg panel-toggle wallpaper";
+        "Mod+Ctrl+Alt+W" = once "spawn noctalia msg settings-open theme";
         "Mod+Alt+Right" = "column-focus-tab-next";
         "Mod+Alt+Left" = "column-focus-tab-previous";
-        "Mod+Alt+C" = once "spawn:noctalia msg caffeine-toggle";
-        "Mod+Alt+N" = once "spawn:noctalia msg nightlight-force-toggle";
-        "Mod+Alt+D" = once "spawn:noctalia msg theme-mode-toggle";
-        "Mod+Alt+P" = once "spawn:noctalia msg power-cycle";
-        "Mod+Alt+A" = once "spawn:noctalia msg panel-toggle control-center audio";
-        "Mod+Alt+B" = once "spawn:noctalia msg panel-toggle control-center bluetooth";
-        "Mod+Alt+E" = once "spawn:noctalia msg panel-toggle launcher /emo";
+        "Mod+Alt+C" = once "spawn noctalia msg caffeine-toggle";
+        "Mod+Alt+N" = once "spawn noctalia msg nightlight-force-toggle";
+        "Mod+Alt+D" = once "spawn noctalia msg theme-mode-toggle";
+        "Mod+Alt+P" = once "spawn noctalia msg power-cycle";
+        "Mod+Alt+A" = once "spawn noctalia msg panel-toggle control-center audio";
+        "Mod+Alt+B" = once "spawn noctalia msg panel-toggle control-center bluetooth";
+        "Mod+Alt+E" = once "spawn noctalia msg panel-toggle launcher /emo";
         "Mod+Ctrl+Shift+R" = once "config-reload";
-        "Print" = once "spawn:noctalia msg screenshot-region";
-        "Shift+Print" = once "spawn:noctalia msg screenshot-fullscreen";
+        "Print" = once "spawn noctalia msg screenshot-region";
+        "Shift+Print" = once "spawn noctalia msg screenshot-fullscreen";
         "Ctrl+Print" =
-          once "spawn:${lib.escapeShellArg "${config.home.homeDirectory}/.local/bin/screenshot-window-umbriel"}";
+          once "spawn ${lib.escapeShellArg "${config.home.homeDirectory}/.local/bin/screenshot-window-umbriel"}";
         "Mod+P" = once "window-toggle-pinned";
-        "Alt+Print" = once "spawn:noctalia msg screenshot-annotate";
-        "Mod+Alt+G" = once "spawn:noctalia msg panel-toggle alexander/game-launcher:browser";
-        "Mod+Alt+V" = once "spawn:noctalia msg panel-toggle davemhammer/tailscale:manager";
-        "Mod+Alt+M" = once "spawn:noctalia msg panel-toggle icefish/phone-connect:details";
-        "Mod+Alt+O" = once "spawn:noctalia msg panel-toggle thepunkoff/pomodoro:panel";
-        "Mod+Shift+S" = once "submap:capture";
-        "submap[capture],Escape" = "submap:reset";
+        "Alt+Print" = once "spawn noctalia msg screenshot-annotate";
+        "Mod+Alt+G" = once "spawn noctalia msg panel-toggle alexander/game-launcher:browser";
+        "Mod+Alt+V" = once "spawn noctalia msg panel-toggle davemhammer/tailscale:manager";
+        "Mod+Alt+M" = once "spawn noctalia msg panel-toggle icefish/phone-connect:details";
+        "Mod+Alt+O" = once "spawn noctalia msg panel-toggle thepunkoff/pomodoro:panel";
+        "Mod+Shift+S" = once "submap capture";
+        "submap[capture],Escape" = "submap reset";
         "submap[capture],F1" = once "cheatsheet-open";
         "submap[capture],C" = capture "colorPicker";
         "submap[capture],O" = capture "ocr";
@@ -341,10 +341,10 @@ in
         "Mod+Ctrl+F" = once "window-toggle-maximize";
         "Mod+Ctrl+C" = "column-center";
         "Mod+C" = "column-center";
-        "Mod+Minus" = "window-modify-primary-extent:-0.1";
-        "Mod+Equal" = "window-modify-primary-extent:+0.1";
-        "Mod+Shift+Minus" = "window-modify-secondary-extent:-0.1";
-        "Mod+Shift+Equal" = "window-modify-secondary-extent:+0.1";
+        "Mod+Minus" = "window-modify-primary-extent -0.1";
+        "Mod+Equal" = "window-modify-primary-extent +0.1";
+        "Mod+Shift+Minus" = "window-modify-secondary-extent -0.1";
+        "Mod+Shift+Equal" = "window-modify-secondary-extent +0.1";
         "Mod+Return" = once "window-toggle-floating";
         "Mod+Shift+F" = once "window-toggle-maximize";
         "Mod+F" = once "window-toggle-fullscreen";
@@ -363,13 +363,13 @@ in
         "Mod+Ctrl+Space" = once "scratchpad-toggle";
         "Mod+Alt+Space" = once "window-restore-from-scratchpad";
         "Mod+Alt+Tab" = once "scratchpad-focus-next";
-        "Mod+Alt+1" = once "workspace-set-layout:dwindle";
-        "Mod+Alt+2" = once "workspace-set-layout:scrolling";
-        "Mod+D" = once "workspace-set-layout:toggle:dwindle,scrolling";
-        "F6" = once "spawn:noctalia msg screenshot-region";
-        "Ctrl+Shift+2" = once "spawn:noctalia msg screenshot-fullscreen";
+        "Mod+Alt+1" = once "workspace-set-layout dwindle";
+        "Mod+Alt+2" = once "workspace-set-layout scrolling";
+        "Mod+D" = once "workspace-set-layout toggle dwindle scrolling";
+        "F6" = once "spawn noctalia msg screenshot-region";
+        "Ctrl+Shift+2" = once "spawn noctalia msg screenshot-fullscreen";
         "Ctrl+Shift+3" =
-          once "spawn:${lib.escapeShellArg "${config.home.homeDirectory}/.local/bin/screenshot-window-umbriel"}";
+          once "spawn ${lib.escapeShellArg "${config.home.homeDirectory}/.local/bin/screenshot-window-umbriel"}";
         "Mod+Escape" = (once "shortcuts-inhibit-toggle") // {
           allow_when_inhibited = true;
         };
@@ -381,16 +381,16 @@ in
         lib.concatMap (n: [
           {
             name = "Mod+${toString n}";
-            value = "workspace-switch:${toString n}";
+            value = "workspace-switch ${toString n}";
           }
           {
             name = "Mod+Ctrl+${toString n}";
-            value = "column-move-to-workspace:${toString n}";
+            value = "column-move-to-workspace ${toString n}";
           }
         ]) (lib.range 1 9)
       )
       // lib.optionalAttrs isLaptop {
-        "Mod+Shift+M" = once "spawn:mirror-laptop";
+        "Mod+Shift+M" = once "spawn mirror-laptop";
       };
       window_rule = [
         {

@@ -74,6 +74,26 @@ password storage. Docker is socket-activated when the containers bundle is enabl
 The NVIDIA/kernel pair, state versions and storage policy are unchanged.
 
 GitHub Actions performs ordinary Nix evaluation against disposable hardware and
-both standalone home outputs. It never activates or deploys that hardware.
+both standalone home outputs, then validates the generated TOML with the pinned
+Umbriel executable. It never activates or deploys that hardware.
+
+Umbriel actions use whitespace-separated arguments: `spawn kitty`,
+`workspace-switch 2`, and `workspace-set-layout toggle dwindle scrolling`.
+Noctalia plugin IDs such as `alexander/screen-toolkit:service` keep their colons.
+The Umbriel input is pinned to the revision tested with this syntax. After
+rebuilding, log out and back in to run the matching compositor version.
 For a real machine, build the system before switching and test login/suspend
 when changing graphics or display-manager settings.
+
+If Flatpak reports missing refs despite the Flathub remote being
+`https://dl.flathub.org/repo/`, repair the local installations and retry:
+
+```sh
+flatpak repair --user
+sudo flatpak repair --system
+flatpak update
+```
+
+This repairs repository objects; it does not delete application data. Persistent
+missing-ref warnings require checking Flathub availability and remote metadata;
+changing an already correct remote URL is not a fix.
