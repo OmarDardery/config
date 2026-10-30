@@ -22,8 +22,8 @@
       url = "github:noctalia-dev/community-plugins/aa42b35d2e89550bd2d516718f2c29bccddbe0dc";
       flake = false;
     };
-    # Keep Umbriel's wlroots and portal dependencies together on its own pin.
-    umbriel.url = "github:noctalia-dev/umbriel";
+    # Keep the tested action syntax and matching wlroots/portal dependency pins.
+    umbriel.url = "github:noctalia-dev/umbriel/b1c3efc407c4cbc8db265bd678eddc13261553c3";
     nix-flatpak.url = "github:gmodena/nix-flatpak/v0.7.0";
     nix-index-database = {
       url = "github:nix-community/nix-index-database";

@@ -9,8 +9,6 @@
     config.hardware.nvidia.package.settings
     (import ./pkgs/nvidia-offload.nix { inherit pkgs; })
   ];
-  boot.kernelModules = [ "uinput" ];
-
   hardware = {
     bluetooth = {
       enable = true;

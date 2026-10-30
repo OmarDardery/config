@@ -18,7 +18,10 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31
         with:
-          extra_nix_config: experimental-features = nix-command flakes
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            extra-substituters = https://noctalia.cachix.org
+            extra-trusted-public-keys = noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4=
       - name: Evaluate with temporary hardware
         shell: bash
         run: |
@@ -32,3 +35,12 @@ jobs:
           for name in "$profile" "$profile-desktop"; do
             nix eval --raw "$flake#homeConfigurations.$name.activationPackage.drvPath" --no-write-lock-file
           done
+          host=$(nix eval --raw "$flake#lib.deployment.hostName" --no-write-lock-file)
+          profile_user=$(nix eval --raw "$flake#lib.deployment.username" --no-write-lock-file)
+          compositor=$(nix build --no-link --print-out-paths --no-write-lock-file "$flake#nixosConfigurations.$host.config.programs.umbriel.package")
+          settings=$(nix build --no-link --print-out-paths --no-write-lock-file "$flake#nixosConfigurations.$host.config.home-manager.users.$profile_user.xdg.configFile.\"umbriel/config.toml\".source")
+          "$compositor/bin/umbriel" config validate -c "$settings"
+          system=$(nix eval --raw "$flake#lib.deployment.system" --no-write-lock-file)
+          shell_package=$(nix build --no-link --print-out-paths --impure --expr "(builtins.getFlake \"$flake\").inputs.noctalia.packages.$system.default")
+          shell_settings=$(nix build --no-link --print-out-paths --no-write-lock-file "$flake#nixosConfigurations.$host.config.home-manager.users.$profile_user.xdg.configFile.\"noctalia/config.toml\".source")
+          "$shell_package/bin/noctalia" config validate "$shell_settings"
