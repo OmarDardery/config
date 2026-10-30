@@ -50,7 +50,7 @@ in
         }
       ];
       hooks = lib.optionalAttrs isLaptop {
-        started = "${lib.escapeShellArg "${config.home.homeDirectory}/.local/bin/desktop-power"} detect";
+        started = "${lib.escapeShellArg "${config.home.homeDirectory}/.local/bin/desktop-power"} detect --refresh";
         battery_discharging = "${lib.escapeShellArg "${config.home.homeDirectory}/.local/bin/desktop-power"} detect";
         battery_charging = "${lib.escapeShellArg "${config.home.homeDirectory}/.local/bin/desktop-power"} detect";
         battery_plugged = "${lib.escapeShellArg "${config.home.homeDirectory}/.local/bin/desktop-power"} detect";

@@ -124,7 +124,7 @@ On this laptop, Noctalia's existing power hooks select balanced on AC and
 power-saver on battery. Idle lock/screen-off are 10/15 minutes on AC and 5/6 minutes
 on battery; battery suspend locks first after 20 minutes. Presentation mode and
 normal Wayland idle inhibitors prevent these idle actions. Manual power-profile
-choices last until the next power-source change or `desktop-apply`.
+choices last until the next power-source change, shell startup or `desktop-apply`.
 
 Closing the lid suspends when undocked; with an external display, logind leaves the
 docked session running. HDMI uses the connected display's preferred mode at 100%
