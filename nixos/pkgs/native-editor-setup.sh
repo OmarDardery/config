@@ -11,7 +11,7 @@ failed=()
 while IFS= read -r extension; do
   [[ -n "$extension" ]] || continue
   if ! codium --install-extension "$extension"; then failed+=("$extension"); fi
-done < "${XDG_CONFIG_HOME:-$HOME/.config}/VSCodium/User/extensions.list"
+done < "${XDG_DATA_HOME:-$HOME/.local/share}/editor-defaults/extensions.list"
 nvim --headless '+Lazy! sync' +qa
 if ((${#failed[@]})); then
   printf 'Some extensions were unavailable from the native editor gallery:\n' >&2

@@ -9,6 +9,8 @@
 
   # Optional bundles default off; set workstation.<bundle>.enable = true here.
   # See README.md for gaming, engineering, containers and printing.
+  # Steam is part of this laptop's normal setup.
+  workstation.gaming.enable = true;
 
   # Preserve the original installation's stateful defaults.
   system.stateVersion = "26.05";

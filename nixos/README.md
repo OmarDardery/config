@@ -46,10 +46,21 @@ They install no applications. Their names follow `profile.nix`.
 
 ## Editors and project tools
 
-NixOS installs regular VSCodium and Neovim with only Nix tooling. LazyVim downloads
-its plugins on first use; those plugins are managed by Lazy rather than a second
-Nix package catalogue. Mason and Neovim's language providers are disabled.
-VSCodium permits manually installed extensions. Neither editor gets a Python
+NixOS installs regular VSCodium and Neovim with only Nix tooling. Their starter
+settings are copied once into writable user files. Edit LazyVim normally in
+`~/.config/nvim/init.lua` and `~/.config/nvim/lua/`; use `:Lazy` and `:LazyExtras`
+to manage plugins. Codium owns its settings, keybindings, profiles and extensions;
+change them through its UI or `~/.config/VSCodium/User/settings.json`.
+
+Rebuilds preserve your edits and deletions, including removed plugins/extensions.
+The first activation converts the old Nix-store links and backs up their content
+under `~/.local/state/editor-defaults/backups/`. Close both editors before
+applying, then reopen them. One-time initialization markers live alongside those
+backups; subsequent activations do not reapply the starter.
+
+LazyVim downloads its plugins on first use. Mason, Tree-sitter compilation and
+Neovim's language providers are disabled in the editable starter. Neither editor
+gets a Python
 virtual environment, Jupyter kernel, language extras, compiler suite or debugger
 from this configuration.
 

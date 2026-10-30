@@ -51,6 +51,11 @@ environments, register kernels or install notebook libraries.
 It never runs during a Home Manager activation. Missing gallery extensions are
 reported for manual installation from publisher-provided VSIX files.
 
+Editor settings are writable starter copies: edit `~/.config/nvim` or Codium's
+settings and install/remove plugins and extensions normally. Reapplying Home
+Manager preserves these changes and deletions. Close the editors during the first
+activation that migrates their old Nix-store links, then reopen them.
+
 LazyVim needs Neovim 0.11.2+. The installer prefers a suitable `/usr/bin/nvim`;
 otherwise it installs Neovim's official v0.12.6 Linux archive in the user's native
 application directory, verifying its recorded SHA-256. This fallback is outside

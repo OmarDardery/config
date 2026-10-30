@@ -8,13 +8,13 @@ import sys
 import tempfile
 import xml.etree.ElementTree as ET
 
-from state_file import identity, replace, snapshot, sync_directory
+from state_file import identity, replace, snapshot, sync_directory, write_bytes
 
 
 def kitty_declarative(target, desired):
     """Back up unmanaged Kitty settings before Home Manager links the Nix config."""
     legacy_directory = target.parent.is_symlink()
-    kitty_directory(target.parent)
+    writable_directory(target.parent, "kitty.conf")
     if legacy_directory:
         return  # The complete directory backup already preserves the original.
     if target.is_symlink():
@@ -85,6 +85,81 @@ def xournalpp_buttons(target):
         replace(target, original, rendered, preserve_mode=True)
 
 
+def editor_defaults(manifest, marker):
+    """Release managed files once; subsequent edits and removals belong to the user."""
+    if marker.exists():
+        return
+    defaults = json.loads(manifest.read_bytes())
+    backups = marker.parent / "backups" / marker.name
+    store = Path(os.environ.get("NIX_STORE_DIR", "/nix/store")).resolve()
+
+    def managed(path):
+        return path.is_symlink() and path.resolve().is_relative_to(store)
+
+    def backup_file(path):
+        backups.mkdir(parents=True, exist_ok=True)
+        fd, name = tempfile.mkstemp(prefix=f"{path.name}.", dir=backups)
+        write_bytes(fd, path.read_bytes())
+
+    def seed(source, target, force=False):
+        owned = managed(target)
+        if target.is_symlink() and not owned:
+            return  # Preserve user-owned links, including the live Noctalia palette.
+        if source.is_dir():
+            if owned:
+                writable_directory(target, backup_directory=backups)
+            target.mkdir(parents=True, exist_ok=True)
+            for child in source.iterdir():
+                seed(child, target / child.name, force or owned)
+            return
+        if target.exists() and not owned and not force:
+            target.chmod(stat.S_IMODE(target.stat().st_mode) | stat.S_IWUSR)
+            return
+        target.parent.mkdir(parents=True, exist_ok=True)
+        if source.is_symlink() and not managed(source):
+            if not target.exists():
+                target.symlink_to(os.readlink(source))
+            return
+        data = source.read_bytes()
+        before = identity_link(target) if owned else snapshot(target, missing_ok=True)
+        if before is not None:
+            backup_file(target)
+        fd, temporary = tempfile.mkstemp(prefix=f".{target.name}.mutable-", dir=target.parent)
+        try:
+            write_bytes(fd, data)
+            os.chmod(temporary, stat.S_IMODE(source.stat().st_mode) | 0o600)
+            current = identity_link(target) if owned else snapshot(target, missing_ok=True)
+            if current != before:
+                raise ValueError(f"{target} changed during migration; backup retained")
+            os.replace(temporary, target)
+            sync_directory(target.parent)
+        finally:
+            Path(temporary).unlink(missing_ok=True)
+
+    def release_links(directory):
+        for path in directory.iterdir():
+            if path.name == ".extensions-immutable.json":
+                continue  # Home Manager removes its old bookkeeping link.
+            if managed(path):
+                seed(path.resolve(), path)
+            if path.is_dir() and not path.is_symlink():
+                release_links(path)
+
+    for target, source in defaults["directories"].items():
+        target = Path(target)
+        seed(Path(source), target)
+        if target.is_dir() and not target.is_symlink():
+            release_links(target)
+    # Codium rebuilds this index from the now-user-owned extension directories.
+    if "extensionIndex" in defaults:
+        index = Path(defaults["extensionIndex"])
+        if index.is_file() and (not index.is_symlink() or managed(index)):
+            backup_file(index)
+            index.unlink()
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    marker.touch()
+
+
 def writable_tree(root):
     # Never chmod through a preserved user symlink.
     for directory, dirs, files in os.walk(root, followlinks=False):
@@ -96,7 +171,7 @@ def writable_tree(root):
                 os.chmod(path, stat.S_IMODE(info.st_mode) | stat.S_IWUSR)
 
 
-def kitty_directory(target):
+def writable_directory(target, primary_file=None, backup_directory=None):
     """Convert the legacy directory link, preserving a backup and rollback link."""
     if not target.is_symlink():
         return
@@ -105,13 +180,15 @@ def kitty_directory(target):
     if not target.is_dir():
         raise ValueError(f"{target} is a dangling or non-directory symlink")
     # Reject special files and symlink configs before touching the live path.
-    config_snapshot = snapshot(target / "kitty.conf", missing_ok=True)
+    config_snapshot = snapshot(target / primary_file, missing_ok=True) if primary_file else None
     transaction = Path(tempfile.mkdtemp(prefix=f".{target.name}.migration-", dir=target.parent))
     parked = transaction / "original-link"
     replacement = transaction / "replacement"
     installed = False
     try:
-        backup = Path(tempfile.mkdtemp(prefix=f"{target.name}.backup-", dir=target.parent))
+        backup_root = backup_directory or target.parent
+        backup_root.mkdir(parents=True, exist_ok=True)
+        backup = Path(tempfile.mkdtemp(prefix=f"{target.name}.backup-", dir=backup_root))
         shutil.copytree(target, backup, symlinks=True, dirs_exist_ok=True)
         backup.chmod(0o700)
         sync_tree(backup)
@@ -119,7 +196,7 @@ def kitty_directory(target):
         shutil.copytree(target, replacement, symlinks=True)
         writable_tree(replacement)
         if (not target.is_symlink() or identity_link(target) != (before, destination)
-                or snapshot(target / "kitty.conf", missing_ok=True) != config_snapshot):
+                or (primary_file and snapshot(target / primary_file, missing_ok=True) != config_snapshot)):
             raise ValueError(f"{target} changed during migration; backup retained; retry")
         try:
             os.rename(target, parked)
@@ -174,5 +251,6 @@ if __name__ == "__main__":
         "kitty-declarative": kitty_declarative,
         "tablet": tablet,
         "xournalpp-buttons": xournalpp_buttons,
+        "editor-defaults": editor_defaults,
     }[sys.argv[1]](
         *(Path(argument) for argument in sys.argv[2:]))

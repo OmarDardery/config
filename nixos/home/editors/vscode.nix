@@ -5,7 +5,6 @@ let
     jnoortheen.nix-ide
     editorconfig.editorconfig
   ];
-  command = package: name: if isNixOS then "${package}/bin/${name}" else name;
   # Noctalia must render this file before the theme's first use. Keep the
   # manifest path inside the extension; only the symlink points outside it.
   noctaliaTheme = pkgs.vscode-utils.buildVscodeExtension {
@@ -56,59 +55,57 @@ let
         runHook postInstall
       '';
   };
+  settings = {
+    "editor.lineNumbers" = "relative";
+    "editor.cursorSurroundingLines" = 8;
+    "editor.minimap.enabled" = false;
+    "editor.formatOnSave" = true;
+    "editor.fontFamily" = "'JetBrainsMono Nerd Font', 'JetBrains Mono', monospace";
+    "editor.fontSize" = 14;
+    "files.trimTrailingWhitespace" = true;
+    "files.insertFinalNewline" = true;
+    "terminal.integrated.scrollback" = 10000;
+    "window.titleBarStyle" = "custom";
+    "window.controlsStyle" = "hidden";
+    "window.autoDetectColorScheme" = true;
+    "workbench.colorTheme" = if desktopEnabled then "NoctaliaTheme" else "Default Dark Modern";
+    "workbench.preferredDarkColorTheme" = if desktopEnabled then "NoctaliaTheme" else "Default Dark Modern";
+    "workbench.preferredLightColorTheme" = if desktopEnabled then "NoctaliaLight" else "Default Light Modern";
+    "telemetry.telemetryLevel" = "off";
+    "update.mode" = "none";
+    "nix.enableLanguageServer" = true;
+    "nix.serverPath" = "nixd";
+    "nix.formatterPath" = "nixfmt";
+    "[nix]"."editor.defaultFormatter" = "jnoortheen.nix-ide";
+  };
+  userDefaults = pkgs.linkFarm "codium-user-starter" [{
+    name = "settings.json";
+    path = pkgs.writeText "codium-settings.json" (builtins.toJSON settings);
+  }];
+  extensionDefaults = pkgs.linkFarm "codium-extension-starter" (
+    map (extension: {
+      name = extension.vscodeExtUniqueId
+        + lib.optionalString (!isNixOS && extension.vscodeExtUniqueId == "noctalia.noctalia") "-1.0.0";
+      path = "${extension}/share/vscode/extensions/${extension.vscodeExtUniqueId}";
+    }) (lib.optionals isNixOS editorExtensions ++ lib.optional desktopEnabled noctaliaTheme)
+  );
+  manifest = pkgs.writeText "codium-starter.json" (builtins.toJSON {
+    directories = {
+      "${config.xdg.configHome}/VSCodium/User" = "${userDefaults}";
+      "${config.home.homeDirectory}/.vscode-oss/extensions" = "${extensionDefaults}";
+    };
+    extensionIndex = "${config.home.homeDirectory}/.vscode-oss/extensions/extensions.json";
+  });
 in
 {
-  xdg.configFile."VSCodium/User/extensions.list" = {
+  # The application owns settings, profiles, keybindings and all installed extensions.
+  home.packages = lib.optionals isNixOS [ pkgs.vscodium ];
+  xdg.dataFile."editor-defaults/extensions.list" = {
     enable = !isNixOS;
     text = lib.concatMapStringsSep "\n" (e: "${e.vscodeExtPublisher}.${e.vscodeExtName}") editorExtensions + "\n";
   };
-  home.file.".vscode-oss/extensions/noctalia.noctalia-1.0.0/package.json" = {
-    enable = !isNixOS && desktopEnabled;
-    text = builtins.toJSON {
-      name = "noctalia";
-      publisher = "noctalia";
-      version = "1.0.0";
-      engines.vscode = "^1.70.0";
-      contributes.themes = [
-        { id = "NoctaliaTheme"; label = "NoctaliaTheme"; uiTheme = "vs-dark"; path = "theme.json"; }
-        { id = "NoctaliaLight"; label = "NoctaliaLight"; uiTheme = "vs"; path = "theme.json"; }
-      ];
-    };
-  };
-  home.file.".vscode-oss/extensions/noctalia.noctalia-1.0.0/theme.json" = {
-    enable = !isNixOS && desktopEnabled;
-    source = config.lib.file.mkOutOfStoreSymlink "${config.xdg.stateHome}/noctalia/theme/vscode.json";
-  };
-  programs.vscodium = {
-    enable = true;
-    package = if isNixOS then pkgs.vscodium else null;
-    mutableExtensionsDir = true;
-    profiles.default = {
-      extensions = lib.optionals isNixOS editorExtensions
-        ++ lib.optional (isNixOS && desktopEnabled) noctaliaTheme;
-      userSettings = {
-        "editor.lineNumbers" = "relative";
-        "editor.cursorSurroundingLines" = 8;
-        "editor.minimap.enabled" = false;
-        "editor.formatOnSave" = true;
-        "editor.fontFamily" = "'JetBrainsMono Nerd Font', 'JetBrains Mono', monospace";
-        "editor.fontSize" = 14;
-        "files.trimTrailingWhitespace" = true;
-        "files.insertFinalNewline" = true;
-        "terminal.integrated.scrollback" = 10000;
-        "window.titleBarStyle" = "custom";
-        "window.controlsStyle" = "hidden";
-        "window.autoDetectColorScheme" = true;
-        "workbench.colorTheme" = if desktopEnabled then "NoctaliaTheme" else "Default Dark Modern";
-        "workbench.preferredDarkColorTheme" = if desktopEnabled then "NoctaliaTheme" else "Default Dark Modern";
-        "workbench.preferredLightColorTheme" = if desktopEnabled then "NoctaliaLight" else "Default Light Modern";
-        "telemetry.telemetryLevel" = "off";
-        "update.mode" = "none";
-        "nix.enableLanguageServer" = true;
-        "nix.serverPath" = command pkgs.nixd "nixd";
-        "nix.formatterPath" = command pkgs.nixfmt "nixfmt";
-        "[nix]"."editor.defaultFormatter" = "jnoortheen.nix-ide";
-      };
-    };
-  };
+  home.activation.mutableVSCodium = lib.hm.dag.entryBetween [ "linkGeneration" ] [ "writeBoundary" ] ''
+    run ${pkgs.python3}/bin/python3 ${../../pkgs}/migrate-desktop.py editor-defaults \
+      ${manifest} ${lib.escapeShellArg "${config.xdg.stateHome}/editor-defaults/codium"}
+  '';
 }
