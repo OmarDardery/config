@@ -1,5 +1,6 @@
 { pkgs, ... }:
 {
+  # Bluetooth, Thunar, dconf and portals install their own integration packages.
   environment.systemPackages = with pkgs; [
     (papers.override { supportNautilus = false; })
     file-roller
@@ -7,20 +8,15 @@
     gnome-disk-utility
     seahorse
     sshfs
-    xdg-utils
-    xfconf
     zenity
-    system-config-printer
     adwaita-icon-theme
     adw-gtk3
     bibata-cursors
     glib
-    dconf
     pavucontrol
     brightnessctl
     playerctl
     kdePackages.kdeconnect-kde
-    bluez
   ];
   qt = {
     enable = true;

@@ -8,10 +8,6 @@
   imports = [ inputs.nix-flatpak.nixosModules.nix-flatpak ];
   services.flatpak = {
     enable = true;
-    packages = [
-      "com.orcaslicer.OrcaSlicer"
-      "com.vysp3r.ProtonPlus"
-    ];
     uninstallUnmanaged = false;
     uninstallUnused = false;
     update.auto.enable = true;

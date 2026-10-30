@@ -3,7 +3,6 @@
   environment.systemPackages = with pkgs; [
     inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default
     (callPackage ../../pkgs/zen-browser.nix { zenInput = inputs.zen-browser; })
-    (callPackage ../../pkgs/jetbrains-toolbox.nix { })
     discord
     proton-vpn
     libreoffice
@@ -13,7 +12,6 @@
     mpv
     imv
     gimp
-    simple-scan
     wireshark
   ];
 

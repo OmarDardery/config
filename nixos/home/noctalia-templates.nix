@@ -65,7 +65,6 @@ in
     // {
       post_hook = "pkill -USR2 -x btop || true";
     };
-  opencode = render "${community}/opencode/opencode.json" "${config.xdg.configHome}/opencode/themes/noctalia.json";
   gimp = render "${community}/gimp/gimp.css" "${config.xdg.configHome}/GIMP/${lib.versions.majorMinor pkgs.gimp.version}/gimp.css";
   libreoffice =
     (render "${community}/libreoffice/Theme_Colors.xcu" "${config.xdg.stateHome}/noctalia/libreoffice-theme-staging/Theme_Colors.xcu")

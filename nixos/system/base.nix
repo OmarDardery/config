@@ -19,7 +19,6 @@
       "networkmanager"
       "wheel"
       "dialout"
-      "docker"
       "recording"
       "wireshark"
     ];
@@ -27,6 +26,7 @@
   };
 
   # NixOS installs the login shell; Home Manager writes its dotfiles.
+  programs.nix-ld.enable = true;
   programs.zsh.enable = true;
   # The shared .zshrc initializes completion once.
   programs.zsh.enableGlobalCompInit = false;
@@ -42,7 +42,7 @@
     };
     backupFileExtension = "bak";
     users.${profile.username}.imports = [
-      inputs.self.modules.homeManager.desktop
+      ../home
       ../home/hardware-user.nix
     ];
   };

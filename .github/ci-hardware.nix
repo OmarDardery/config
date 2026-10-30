@@ -1,4 +1,4 @@
-# Evaluation-only fixture, copied into a temporary checkout by tests/ci.sh.
+# Evaluation-only fixture, copied into a temporary checkout by GitHub Actions.
 # This is not the laptop's disk layout and must never be deployed.
 { profile, ... }:
 {

@@ -13,7 +13,6 @@
   # Follow the NixOS non-Nix application integration: expose real files at the
   # standard path, rather than store symlinks that some sandboxes cannot follow.
   # https://wiki.nixos.org/wiki/Fixes_for_non-Nix_applications
-  system.fsPackages = [ pkgs.bindfs ];
   fileSystems."/usr/share/fonts" = {
     # A generation-specific source also makes rebuilds replace the mount;
     # bindfs resolves its source at startup and otherwise retains old fonts.

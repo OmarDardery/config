@@ -1,15 +1,15 @@
 {
+  isNixOS,
+  isLaptop,
   pkgs,
   profile,
   ...
 }:
-let
-  toolchain = import ../../lib/toolchain.nix { inherit pkgs; };
-in
 {
   environment.systemPackages =
     with pkgs;
     [
+      (import ../../pkgs/performance-launchers.nix { inherit pkgs isNixOS isLaptop; }).performanceRun
       kitty
       starship
       zoxide
@@ -52,12 +52,8 @@ in
       nmap
       iperf3
       ethtool
-      opencode
-      platformio-core
       zsh-autosuggestions
       zsh-syntax-highlighting
-      (callPackage ../../pkgs/antigravity-cli.nix { })
-    ]
-    ++ toolchain.runtimes;
+    ];
   environment.sessionVariables.NH_FLAKE = "path:${profile.configRepo}";
 }

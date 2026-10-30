@@ -1,61 +1,65 @@
 # Desktop configuration
 
-Shared Umbriel, Noctalia, Kitty, Zsh, VSCodium and LazyVim configurations across
-Linux distributions, with separate application installation.
+Personal NixOS desktop with Umbriel, Noctalia, Kitty, Zsh, Yazi, Neovim and
+VSCodium. Home Manager also provides the same dotfiles on Debian and Fedora.
 
-| Profile | Home Manager | Application/service installation |
-| --- | --- | --- |
-| NixOS `nixos` | All dotfiles; both editors and their private dependencies | NixOS modules install the desktop applications |
-| Other Linux `oad` / `oad-desktop` | All six configurations, shortcuts and themes | Native packages, Lazy/Mason and Codium own installation |
-
-On other distributions Home Manager installs no applications, editor plugins or
-language tools. Its profile contains only its internal session-variable helper.
-NixOS keeps pinned editor packages/plugins/tooling in Nix. The `oad-desktop` name
-is retained for compatibility; both standalone outputs configure the full desktop.
-
-## Deploy
+## Setup
 
 Edit [nixos/profile.nix](nixos/profile.nix) for your account and checkout path.
 The defaults are `oad`, `/home/oad/config/nixos`, host `nixos`.
 
 ```sh
 cd ~/config
-bash nixos-setup.sh   # Full NixOS system
-# OR, on another distribution:
-bash debian-setup.sh  # Debian Trixie/Sid desktop + dotfiles/editors
-bash fedora-setup.sh  # Conventional Fedora 44+ desktop + dotfiles/editors
+bash nixos-setup.sh
+# Or, on another distribution:
+bash debian-setup.sh
+bash fedora-setup.sh
 ```
 
-On NixOS the installer copies `/etc/nixos/hardware-configuration.nix`, replaces
-its local repository counterpart (backing up changes), and applies the full
-configuration through `sudo nixos-rebuild switch --flake path:…/nixos#nixos`.
-The generated hardware file is ignored by Git and is no longer tracked.
-Review `nixos/hardware.nix` separately on different hardware: it still contains
-this laptop's NVIDIA/PRIME and extra-storage policy.
+NixOS setup copies the machine's generated hardware configuration, builds, then
+switches the system. Review `nixos/hardware.nix` before using another machine:
+it contains this laptop's NVIDIA/PRIME and storage settings.
 
-Debian/Fedora install the browser, desktop and greeter through APT/DNF, then
-apply all shared dotfiles. Editors are native applications too. Reboot to enter the new greeter.
-See [native setup details and upstream repositories](nixos/native/README.md).
-Run `editor-setup` after native installation for editor plugins and notebook tools.
-For a dotfiles-only switch or a build preview, use
-`nixos/bootstrap.sh --help`.
+## Editors
 
-Log out and back in after migration to clear old shell/environment settings.
-On NixOS, Flatpaks move from the user installation to a system-managed
-installation; see [migration notes](nixos/README.md#migration).
+Neovim uses a small [LazyVim starter](https://github.com/LazyVim/starter).
+VSCodium is the regular package with Nix and EditorConfig extensions. Both retain
+the Noctalia theme and Nix formatting/completion.
+
+No Python environments, notebook kernels, scientific libraries, compiler suites,
+debug adapters or AI extensions are provisioned for the editors. Neovim's Python,
+Ruby and Node providers are disabled. Lazy manages its plugins in user data;
+Mason is disabled so opening an editor does not install a language toolchain.
+Add other editor extensions or project dependencies when you need them.
+
+On Debian/Fedora, run `editor-setup` to sync plugins and the two extensions.
+It does not run pip or create a Python environment. System utilities still use
+their normal runtime dependencies; the system is not intended to be Python-free.
+
+## Optional applications
+
+These bundles default off. Enable any you use in `nixos/configuration.nix`:
+
+```nix
+workstation = {
+  gaming.enable = true;       # Steam, Millennium, GameMode, ProtonPlus
+  engineering.enable = true;  # FreeCAD, Logisim, PlatformIO, webOS, OrcaSlicer
+  containers.enable = true;   # WinBoat and socket-activated Docker
+  printing.enable = true;     # Printers, scanners and discovery
+};
+```
+
+Existing Flatpaks, project environments and application data are preserved.
 
 ## Daily use
 
-- `up` / `rebuild`: switch the selected NixOS or Home Manager profile.
-- `update`: update flake inputs, switch configuration, then update Flatpaks.
-- `desktop-apply`: initialize missing app themes and reconcile desktop preferences.
-- `ppt2pdf` / `ppt2txt`, `doc2pdf` / `doc2txt`, `xls2csv`: native LibreOffice helpers.
+- `up` / `rebuild`: apply the selected system or Home Manager profile.
+- `update`: update inputs, apply configuration, then update Flatpaks.
+- `desktop-apply`: initialize missing palettes and apply desktop preferences.
 - `cnf` / `cconf`: edit or enter the configuration directory.
-- `y`: run native Yazi and return to the selected directory.
+- `y`: open Yazi and return to the selected directory.
+- `ppt2pdf`, `doc2pdf`, `xls2csv`: LibreOffice conversion helpers.
 
-For project notebooks: `uv add --dev ipykernel`, then `notebook-kernel` from the
-project directory. Select the named kernel in VSCodium, or use `<leader>mp` in
-LazyVim. Python diagnostics use basic analysis without large inline messages.
-
-[Structure and design](nixos/ARCHITECTURE.md) · [Deployment and migration](nixos/README.md) ·
-[Shortcuts](nixos/SHORTCUTS.md) · [Theming](nixos/THEMING.md) · [Performance](nixos/PERFORMANCE.md)
+[Configuration layout and deployment](nixos/README.md) ·
+[Desktop shortcuts](nixos/SHORTCUTS.md) · [Theming](nixos/THEMING.md) ·
+[Backups](nixos/BACKUPS.md) · [Native setup](nixos/native/README.md)
