@@ -27,7 +27,7 @@ let
       desktopEnabled = true;
     };
     modules = [
-      flake.modules.homeManager.desktop
+      ../home
       { xdg.stateHome = "${alternate.homeDirectory}/state \"quoted\""; }
     ];
   };

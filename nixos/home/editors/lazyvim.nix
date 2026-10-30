@@ -242,24 +242,20 @@ in
     # Nix provides the shared toolchain and Neovim-specific runtime dependencies.
     extraPackages =
       toolchain.languageServers
-      ++ toolchain.runtimes
+      ++ toolchain.editorPackages
       ++ [
-        (import ../../pkgs/editor-tools.nix { inherit pkgs; }).notebookKernel
         toolchain.debugAdapters.python
         toolchain.debugAdapters.lldb
       ]
       ++ (with pkgs; [
-        # nvim-platformio invokes which pio at runtime.
-        platformio-core
+        # PlatformIO itself is in the common editor tool list.
         which
         # Used by plugins rather than by a language: tree-sitter for :checkhealth,
-        # make/wget for build steps that survive in a few specs.
+        # wget for build steps that survive in a few specs.
         tree-sitter
-        gnumake
         wget
         # LazyVim's native Copilot extra uses Neovim 0.12 inline LSP completion.
         copilotLanguageServer
-        opencode
         curl
         lsof
         procps

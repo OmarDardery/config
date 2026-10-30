@@ -1,16 +1,7 @@
 # Shared runtimes, language tools and editor settings.
 # Imported by development modules and project shells.
 { pkgs }:
-{
-  platformioCompiledb = pkgs.writeText "pio-compiledb.py" ''
-    Import("env")
-    from SCons.Script import COMMAND_LINE_TARGETS, Default
-    if "compiledb" not in COMMAND_LINE_TARGETS:
-        env.Tool("compilation_db")
-        db = env.CompilationDatabase("$COMPILATIONDB_PATH")
-        env.AlwaysBuild(db)
-        Default(db)
-  '';
+let
   # Shared by GUI editors and the general development shells.
   runtimes = with pkgs; [
     go
@@ -30,6 +21,24 @@
     python3
     # Node-shebang tools must not depend on Bun's Node-API compatibility layer.
     nodejs
+  ];
+
+in
+{
+  platformioCompiledb = pkgs.writeText "pio-compiledb.py" ''
+    Import("env")
+    from SCons.Script import COMMAND_LINE_TARGETS, Default
+    if "compiledb" not in COMMAND_LINE_TARGETS:
+        env.Tool("compilation_db")
+        db = env.CompilationDatabase("$COMPILATIONDB_PATH")
+        env.AlwaysBuild(db)
+        Default(db)
+  '';
+  inherit runtimes;
+  editorPackages = runtimes ++ [
+    pkgs.platformio-core
+    pkgs.opencode
+    (import ../pkgs/editor-tools.nix { inherit pkgs; }).notebookKernel
   ];
 
   # Foreign Python wheels need these outside Nix's patched library linkage.
@@ -55,11 +64,7 @@
       }";
     in
     {
-      nixpkgs.expr =
-        if isNixOS then
-          "${flakeConfig}.pkgs"
-        else
-          "(builtins.getFlake ${quote "path:${profile.configRepo}"}).homeConfigurations.${quote profile.profileName}.pkgs";
+      nixpkgs.expr = "${flakeConfig}.pkgs";
       formatting.command = [ (if isNixOS then "${pkgs.nixfmt}/bin/nixfmt" else "nixfmt") ];
       options = {
         home_manager.expr =

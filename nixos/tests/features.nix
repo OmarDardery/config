@@ -3,26 +3,27 @@
 let
   inherit (flake.inputs.nixpkgs) lib;
   base = flake.nixosConfigurations.${flake.lib.deployment.hostName};
-  minimal = base.extendModules {
+  features = [ "gaming" "engineering" "containers" "printing" ];
+  withFeatures = enabledFeatures: base.extendModules {
     modules = [ {
-      workstation.gaming.enable = lib.mkForce false;
-      workstation.engineering.enable = lib.mkForce false;
-      workstation.containers.enable = lib.mkForce false;
-      workstation.printing.enable = lib.mkForce false;
+      workstation = lib.genAttrs features (name: {
+        enable = lib.mkForce (builtins.elem name enabledFeatures);
+      });
     } ];
   };
-  full = base.extendModules {
-    modules = [ {
-      workstation.gaming.enable = lib.mkForce true;
-      workstation.engineering.enable = lib.mkForce true;
-      workstation.containers.enable = lib.mkForce true;
-      workstation.printing.enable = lib.mkForce true;
-    } ];
-  };
+  minimal = withFeatures [ ];
+  full = withFeatures features;
   lean = minimal.config;
   enabled = full.config;
   names = c: map lib.getName c.environment.systemPackages;
+  flatpaksFor = name: map (p: p.appId) (withFeatures [ name ]).config.services.flatpak.packages;
   checks = {
+    leanDefaults = builtins.all (name: !base.config.workstation.${name}.enable) features;
+    featureIsolation = flatpaksFor "gaming" == [ "com.vysp3r.ProtonPlus" ]
+      && flatpaksFor "engineering" == [ "com.orcaslicer.OrcaSlicer" ];
+    integrationPackages = builtins.all (package:
+      builtins.length (builtins.filter (p: p == package) lean.environment.systemPackages) == 1
+    ) (with minimal.pkgs; [ bluez dconf xfconf xdg-utils bindfs ]);
     leanServices = !lean.programs.steam.enable
       && !lean.programs.gamemode.enable
       && !lean.virtualisation.docker.enable

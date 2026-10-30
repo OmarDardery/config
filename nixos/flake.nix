@@ -51,8 +51,6 @@
     in
     {
       lib.deployment = profile;
-      # Shared profile composition, also used by evaluation checks.
-      modules = import ./modules;
       packages.${system}.home-manager = home-manager.packages.${system}.home-manager;
       formatter.${system} = pkgs.nixfmt-tree;
       checks.${system} = import ./checks.nix {
@@ -72,7 +70,15 @@
               isLaptop = false;
               desktopEnabled = true;
             };
-            modules = [ inputs.self.modules.homeManager.portable ];
+            modules = [
+              ./home
+              {
+                targets.genericLinux = {
+                  enable = true;
+                  gpu.enable = false;
+                };
+              }
+            ];
           };
         }) [ profile.profileName "${profile.profileName}-desktop" ]
       );
@@ -82,7 +88,10 @@
           isNixOS = true;
           isLaptop = true;
         };
-        modules = [ inputs.self.modules.nixos.workstation ];
+        modules = [
+          ./configuration.nix
+          home-manager.nixosModules.home-manager
+        ];
       };
     };
 }

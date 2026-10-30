@@ -170,18 +170,11 @@ in
         pkgs.symlinkJoin {
           name = "vscodium-with-tools";
           inherit (pkgs.vscodium) version;
-          paths = [ (if isNixOS then pkgs.vscodium.fhs else pkgs.vscodium) ];
+          paths = [ pkgs.vscodium.fhs ];
           nativeBuildInputs = [ pkgs.makeWrapper ];
           postBuild = ''
             wrapProgram "$out/bin/codium" --prefix PATH : ${
-              lib.makeBinPath (
-                toolchain.runtimes
-                ++ [
-                  pkgs.platformio-core
-                  pkgs.opencode
-                  (import ../../pkgs/editor-tools.nix { inherit pkgs; }).notebookKernel
-                ]
-              )
+              lib.makeBinPath toolchain.editorPackages
             }
           '';
           meta.mainProgram = "codium";

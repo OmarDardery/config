@@ -10,7 +10,12 @@
   only in a temporary checkout; the laptop's ignored hardware file is untouched.
   NVIDIA/kernel and full system builds remain explicit checks outside this workflow.
 - Optional bundles keep gaming, engineering, containers and printing out of the
-  default system. Direct module imports replace the flake-parts registration layer.
+  default system. Direct imports from `flake.nix` and `home/default.nix` replace
+  registration and forwarding modules. Each optional bundle owns its services,
+  packages and Flatpaks.
+- Bluetooth, dconf, Thunar, portals and filesystem modules provide their own
+  integration packages. Shared editor tools and GTK settings have one definition;
+  byte-identical wallpaper filenames share one file.
 - With the containers bundle enabled, Docker starts through its socket when WinBoat or a development client needs it.
   Containers do not automatically start at boot until Docker is activated. Set
   `virtualisation.docker.enableOnBoot = true` if boot-time containers are needed.

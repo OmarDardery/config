@@ -1,6 +1,7 @@
 # Configuration and deployment
 
-Plain NixOS and Home Manager modules are composed explicitly in `modules/default.nix`. `home/` contains dotfile/editor implementations; `system/` contains
+The flake imports the NixOS host and shared `home/default.nix` directly.
+`home/` contains dotfile/editor implementations; `system/` contains
 native NixOS integration; `system/applications/` installs general applications.
 See [ARCHITECTURE.md](ARCHITECTURE.md) for ownership boundaries and design decisions,
 and [IMPROVEMENTS.md](IMPROVEMENTS.md) for the prioritized follow-up review.
@@ -53,11 +54,12 @@ Existing checkouts are never pulled, staged or reset by deployment scripts.
 
 | Files | Responsibility |
 | --- | --- |
-| `modules/default.nix` | Shared home composition and NixOS entry point |
+| `home/default.nix` | Shared home settings and explicit dotfile/editor imports |
 | `home/` | Dotfiles, editors and their private tools |
 | `system/default.nix` | Explicit system imports |
 | `system/applications/default.nix` | Core application imports |
-| `system/features.nix` | Optional gaming, engineering, containers and printing bundles |
+| `system/features.nix` | Optional bundle switches and imports |
+| `system/{gaming,engineering,containers,printing}.nix` | Bundle packages, services and Flatpaks |
 | `system/greeter.nix` | Official Noctalia Greeter NixOS module |
 | `system/base.nix` | Account, boot, locale and integrated Home Manager |
 | `system/networking.nix` | NetworkManager, Tailscale and firewall |

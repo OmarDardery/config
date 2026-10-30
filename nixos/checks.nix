@@ -152,7 +152,7 @@ let
         isLaptop = false;
       };
       modules = [
-        inputs.self.modules.homeManager.desktop
+        ./home
         {
           xdg.configHome = "/fixture home \"quoted\"/config \"custom\"";
           xdg.cacheHome = "/fixture home \"quoted\"/cache \"custom\"";

@@ -5,18 +5,26 @@
   inputs,
   profile,
   isLaptop,
+  isNixOS,
   ...
 }:
+let
+  steam = import ../pkgs/steam.nix {
+    inherit pkgs;
+    millenniumInput = inputs.millennium;
+    desktopScale = if isLaptop then (import ../lib/display.nix).laptopScale else null;
+    colorsFile = "${profile.homeDirectory}/.local/state/noctalia/theme/steam.css";
+  };
+  launchers = import ../pkgs/performance-launchers.nix { inherit pkgs isNixOS isLaptop; };
+in
 lib.mkIf config.workstation.gaming.enable {
+  environment.systemPackages = [ steam.setup steam.millennium launchers.gameRun ];
+  environment.sessionVariables.STEAM_EXTRA_COMPAT_TOOLS_PATHS = "$HOME/.steam/root/compatibilitytools.d";
+  services.flatpak.packages = [ "com.vysp3r.ProtonPlus" ];
+
   programs.steam = {
     enable = true;
-    package =
-      (import ../pkgs/steam.nix {
-        inherit pkgs;
-        millenniumInput = inputs.millennium;
-        desktopScale = if isLaptop then (import ../lib/display.nix).laptopScale else null;
-        colorsFile = "${profile.homeDirectory}/.local/state/noctalia/theme/steam.css";
-      }).steam;
+    package = steam.steam;
     remotePlay.openFirewall = false;
     localNetworkGameTransfers.openFirewall = false;
   };

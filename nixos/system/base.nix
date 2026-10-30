@@ -41,7 +41,7 @@
     };
     backupFileExtension = "bak";
     users.${profile.username}.imports = [
-      inputs.self.modules.homeManager.desktop
+      ../home
       ../home/hardware-user.nix
     ];
   };
