@@ -34,7 +34,26 @@ def tablet(target, defaults):
     if profile is None:
         current["Profiles"].append(expected)
     else:
-        profile.setdefault("Bindings", {})["AuxButtons"] = expected["Bindings"]["AuxButtons"]
+        area = profile.get("AbsoluteModeSettings", {})
+        if area.get("Display") == {
+            "Width": 1707, "Height": 1067, "X": 853.5, "Y": 533.5, "Rotation": 0
+        }:
+            # Only repair the old 150%-scale seed, not a user-calibrated display.
+            if area.get("Tablet") == {
+                "Width": 177.8, "Height": 111.095, "X": 88.9, "Y": 55.5475, "Rotation": 0
+            } and area.get("LockAspectRatio") is False:
+                area["Tablet"] = expected["AbsoluteModeSettings"]["Tablet"]
+                area["LockAspectRatio"] = True
+            area["Display"] = expected["AbsoluteModeSettings"]["Display"]
+
+        bindings = profile.setdefault("Bindings", {})
+        legacy_buttons = expected["Bindings"]["AuxButtons"][:-1] + [{
+            "Path": "OpenTabletDriver.Desktop.Binding.KeyBinding",
+            "Settings": [{"Property": "Key", "Value": "F6"}],
+            "Enable": True,
+        }]
+        if "AuxButtons" not in bindings or bindings["AuxButtons"] == legacy_buttons:
+            bindings["AuxButtons"] = expected["Bindings"]["AuxButtons"]
     if original is None or json.loads(original[0]) != current:
         replace(target, original, (json.dumps(current, indent=2) + "\n").encode(), preserve_mode=True)
 

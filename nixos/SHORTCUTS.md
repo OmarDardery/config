@@ -34,6 +34,7 @@ The bar shows essential status; occasional tools remain in panels and shortcuts.
 | Mod+Alt+E | Emoji picker |
 | Mod+Alt+G / Mod+Alt+M / Mod+Alt+O | Games / phone / Pomodoro |
 | Mod+Shift+D / Mod+Shift+M | Display configuration / laptop HDMI mirror |
+| Mod+Ctrl+Alt+T | OpenTabletDriver settings (laptop) |
 | Mod+Shift+P | Turn displays off |
 | Mod+Escape | Toggle shortcut passthrough for the focused app |
 | Mod+Ctrl+Shift+R | Reload Umbriel configuration |
@@ -50,8 +51,7 @@ The power button locks first. `Ctrl+Alt+Delete` quits the compositor session.
 | Mod+Left/Right or H/L | Focus horizontally |
 | Mod+J/K or Mod+WheelDown/Up | Focus rows or tabs |
 | Mod+Up/Down / Mod+Tab | Previous-next workspace / previous workspace |
-| Mod+1/2/3 / Mod+Ctrl+1/2/3 | Web/Focus/Media / move column there |
-| Mod+4…9 / Mod+Ctrl+4…9 | Select an additional workspace / move column there |
+| Mod+1…9 / Mod+Ctrl+1…9 | Select a numbered workspace / move column there |
 | Mod+Ctrl+arrows or H/J/K/L | Move columns or rows/tabs |
 | Mod+Shift+arrows | Focus another monitor |
 | Mod+Ctrl+Shift+arrows | Move column to another monitor |
@@ -93,6 +93,21 @@ Press **Mod+Shift+S**, release it, then:
 | F1 / Escape | Cheatsheet / cancel the shortcut group |
 
 The group exits after an action. Invoke it again to stop/save a recording.
+
+## XP-Pen Deco mini7
+
+The eight express keys, in OpenTabletDriver's order:
+
+| Keys | Action |
+| --- | --- |
+| 1 / 2 | Zoom in / out (`Ctrl+Equal` / `Ctrl+Minus`) |
+| 3 / 4 | Up / down |
+| 5 / 6 | Paste / copy |
+| 7 / 8 | Undo / redo (`Ctrl+Z` / `Ctrl+Shift+Z`) |
+
+Both pen buttons remain native stylus buttons. In Xournal++ preferences, assign
+them to Eraser and Hand for writing; applications keep their own button actions.
+Custom OpenTabletDriver bindings are preserved on subsequent rebuilds.
 
 ## Kitty
 

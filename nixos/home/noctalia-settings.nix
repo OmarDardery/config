@@ -283,8 +283,7 @@
     workspaces = {
       style = "minimal";
       show_labels = true;
-      label_source = "name";
-      max_label_chars = 6;
+      label_source = "id";
       show_icons = false;
     };
     media = {

@@ -100,15 +100,15 @@ changing an already correct remote URL is not a fix.
 
 ## Everyday desktop
 
-The bar keeps the launcher, named workspaces, clock, media and essential status.
+The bar keeps the launcher, numbered workspaces, clock, media and essential status.
 Clipboard, capture, phone, VPN, Pomodoro and Nix updates remain available through
 shortcuts and panels. The bottom bar stays visible; the quieter right dock reveals
 on hover. English/Arabic input status remains visible.
 
-Web, Focus and Media are persistent spaces on each output; extra workspaces remain
-dynamic. `Mod+1/2/3` selects them by name, and `Mod+Ctrl+1/2/3` moves a column there.
-Browsers/chat open in Web, documents/editors in Focus, and video/Steam in Media.
-Windows can still be moved afterward. `Mod+D` retains the dwindle/scrolling toggle.
+Workspaces are dynamic and numbered. `Mod+1…9` selects a workspace, and
+`Mod+Ctrl+1…9` moves a column there. Applications open on the current workspace;
+there are no per-application workspace assignments. `Mod+D` retains the
+dwindle/scrolling toggle.
 
 - `Mod+grave`: summon a terminal scratchpad, launching Kitty when empty.
 - `Mod+Ctrl+Return`: summon a calculator scratchpad.
@@ -133,6 +133,37 @@ workspaces. `Mod+Shift+M` retains explicit projector mirroring. Audio uses
 WirePlumber's native device/volume restoration; choose the preferred output and
 microphone once in Control Center when first connecting a device.
 
-Apply and log out/back in for workspace inventories, scratchpads and lid policy.
+Apply and log out/back in for workspace, scratchpad and lid-policy changes.
 Test physical hotplug and suspend/resume on the laptop; remote evaluation cannot
 exercise its displays, headset or GPU wake behaviour.
+
+## XP-Pen Deco mini7
+
+The laptop uses its existing OpenTabletDriver service in Artist Mode, which
+delivers pen pressure and native stylus buttons to Wayland applications. The seed
+maps to the laptop panel at 1600×1000 logical pixels, derived from the shared 160%
+display scale. Its centered active area matches the panel's 16:10 aspect ratio;
+pressure and tilt remain enabled, with no additional smoothing filters.
+
+`Mod+Ctrl+Alt+T` opens the driver settings. The express keys provide zoom,
+navigation, paste/copy and undo/redo; see [SHORTCUTS.md](SHORTCUTS.md). Xournal++
+already enables pressure sensitivity by default. Set the two stylus-button
+actions in its preferences to Eraser and Hand if desired.
+
+Rebuilds repair the recognizable old 1707×1067 mapping and previous F6 express key,
+backing up the original settings before changing them. Custom display/tablet
+areas, output modes, pressure settings, filters and express-key bindings survive.
+Use the driver GUI to select another screen or calibrate a personal active area.
+OpenTabletDriver owns the coordinate mapping; leave Umbriel's tablet mapping at
+its defaults to avoid applying that transform twice.
+
+OpenTabletDriver 0.6.7 snapshots the output layout at startup. After connecting,
+disconnecting or rearranging displays, lift the pen and restart its user service:
+
+```sh
+systemctl --user restart opentabletdriver.service
+```
+
+Restart the service after applying these defaults, or log out/in. Check all four
+screen corners, varying stroke pressure and both pen buttons in Xournal++; these
+require the physical tablet.

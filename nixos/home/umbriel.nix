@@ -112,23 +112,6 @@ in
         back_and_forth = true;
         empty_above = false;
       };
-      workspace = [
-        {
-          name = "Web";
-          layout = {
-            mode = "scrolling";
-            scrolling.default_extent_fraction = 1.0;
-          };
-        }
-        {
-          name = "Focus";
-          layout.mode = "dwindle";
-        }
-        {
-          name = "Media";
-          layout.mode = "dwindle";
-        }
-      ];
       scratchpad = [
         { name = "stash"; }
         {
@@ -414,16 +397,17 @@ in
         lib.concatMap (n: [
           {
             name = "Mod+${toString n}";
-            value = "workspace-switch ${if n <= 3 then builtins.elemAt [ "Web" "Focus" "Media" ] (n - 1) else toString n}";
+            value = "workspace-switch ${toString n}";
           }
           {
             name = "Mod+Ctrl+${toString n}";
-            value = "column-move-to-workspace ${if n <= 3 then builtins.elemAt [ "Web" "Focus" "Media" ] (n - 1) else toString n}";
+            value = "column-move-to-workspace ${toString n}";
           }
         ]) (lib.range 1 9)
       )
       // lib.optionalAttrs isLaptop {
         "Mod+Shift+M" = once "spawn mirror-laptop";
+        "Mod+Ctrl+Alt+T" = once "spawn otd-gui";
       };
       window_rule = [
         {
@@ -441,18 +425,6 @@ in
           default_focused = true;
         }
         {
-          match.app_id = "^(codium|Codium|VSCodium|libreoffice.*|org\\.gnome\\.Papers|com\\.github\\.xournalpp\\.xournalpp)$";
-          default_workspace = "Focus";
-        }
-        {
-          match.app_id = "^(mpv|steam|steam_app_.*)$";
-          default_workspace = "Media";
-        }
-        {
-          match.app_id = "^(firefox|firefox-esr|org\\.mozilla\\.firefox|discord|Discord)$";
-          default_workspace = "Web";
-        }
-        {
           match.app_id = "^(kitty|scratchpad-terminal)$";
           blur = true;
           blur_optimized = false;
@@ -463,7 +435,6 @@ in
         }
         {
           match.app_id = "^zen";
-          default_workspace = "Web";
           blur = true;
           shadow = false;
         }

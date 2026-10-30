@@ -10,15 +10,8 @@
       },
       "Filters": [],
       "AbsoluteModeSettings": {
-        "Display": {
-          "Width": 1707,
-          "Height": 1067,
-          "X": 853.5,
-          "Y": 533.5,
-          "Rotation": 0
-        },
         "Tablet": {
-          "Width": 177.8,
+          "Width": 177.752,
           "Height": 111.095,
           "X": 88.9,
           "Y": 55.5475,
@@ -26,7 +19,7 @@
         },
         "EnableClipping": true,
         "EnableAreaLimiting": false,
-        "LockAspectRatio": false
+        "LockAspectRatio": true
       },
       "RelativeModeSettings": {
         "XSensitivity": 10,
@@ -151,11 +144,11 @@
             "Enable": true
           },
           {
-            "Path": "OpenTabletDriver.Desktop.Binding.KeyBinding",
+            "Path": "OpenTabletDriver.Desktop.Binding.MultiKeyBinding",
             "Settings": [
               {
-                "Property": "Key",
-                "Value": "F6"
+                "Property": "Keys",
+                "Value": "Control+Shift+Z"
               }
             ],
             "Enable": true
