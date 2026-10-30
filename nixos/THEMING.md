@@ -21,13 +21,13 @@ smooth workspace slides and rigid pointer dragging. Move and resize use
 the same spring to keep tiled reflows aligned. The scratchpad adds a blurred,
 dimmed backdrop. Noctalia animates its own panels; compositor layer animations
 stay at their upstream default to avoid animating the shell twice. Wallpaper
-changes choose between fade, disc and melt, while the lockscreen uses fade/zoom.
+changes and the lockscreen use short fades.
 This is native transparency and blur rather than a screen-refraction shader.
 
 After merging, pull, rebuild and reboot. The graphical login service runs
 `desktop-apply` automatically to reconcile saved shell overrides (with a backup).
-It also clears old per-monitor bar/dock opacity overrides, which previously
-survived reconciliation and could make glass surfaces opaque. Monitor positions,
+It also clears old per-monitor bar layout, opacity and dock magnification
+overrides so the updated defaults apply consistently. Monitor positions,
 enabled states, custom bars, wallpaper, palette and light/dark choices survive.
 The shell blur threshold is 0.1 so the translucent surfaces still receive blur.
 Validate on the host:
@@ -38,7 +38,7 @@ umbriel config validate -c ~/.config/umbriel/config.toml
 ```
 
 Run `desktop-apply` in a graphical session to initialize missing palette files.
-On a slower GPU, reduce `appearance.blur.passes` to 2 in `home/umbriel.nix`.
+Blur uses two passes in `home/umbriel.nix`.
 **Mod+O** opens overview,
 **Mod+Ctrl+Space** reveals the scratchpad, and **Mod+A** opens the floating
 control center.
@@ -46,8 +46,9 @@ control center.
 ## Sharp rendering with a readable UI
 
 `lib/display.nix` sets the laptop UI scale to 1.6. The panel still runs at
-2560×1600 at 165 Hz; the HDMI display stays at 1920×1080 and 100%. Its position
-follows the scaled laptop width so changing the scale does not leave a gap.
+2560×1600 at 165 Hz; HDMI uses the connected display's preferred mode and 100%
+scaling. Its position follows the scaled laptop width so changing the scale does
+not leave a gap.
 
 Native Wayland applications receive the output scale. Xwayland keeps
 `xwayland_native_resolution = true` so games retain the panel's physical
