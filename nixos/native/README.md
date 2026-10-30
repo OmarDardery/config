@@ -45,9 +45,9 @@ lock file. A fresh real-machine login remains necessary to verify graphics/PAM.
 
 ## Native editors
 
-Run `editor-setup` after logging in to the newly configured account. It creates a
-native Python virtual environment for notebook/provider tools, installs Codium's
-configured extension IDs, and asks Lazy to sync plugins and register Molten.
+Run `editor-setup` after logging in to the newly configured account. It syncs a
+small set of editor plugins and Codium extensions. It does not create Python
+environments, register kernels or install notebook libraries.
 It never runs during a Home Manager activation. Missing gallery extensions are
 reported for manual installation from publisher-provided VSIX files.
 
@@ -56,10 +56,9 @@ otherwise it installs Neovim's official v0.12.6 Linux archive in the user's nati
 application directory, verifying its recorded SHA-256. This fallback is outside
 Nix and preserves any replaced user-local launcher. Update that fallback through
 the native installer; Nix does not update it. VSCodium uses the signed repository
-linked by its installation guide. Common compilers, Node and ImageMagick are
-installed by APT/DNF; Lazy/Mason and native extensions own editor plugins/tools.
-Other optional native tools such as OpenCode, nixd and nixfmt can be installed
-separately when needed. The dotfile profile itself never installs them.
+linked by its installation guide. Compilers and language runtimes are not installed by the desktop setup.
+Install nixd/nixfmt or other language tools through the native package manager
+when needed; Mason is disabled. The dotfile profile itself never installs them.
 
 ## Sources and updates
 

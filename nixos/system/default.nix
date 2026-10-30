@@ -6,7 +6,6 @@
     ./networking.nix
     ./nix.nix
     ./performance.nix
-    ./development.nix
     ./features.nix
     ./desktop.nix
     ./greeter.nix

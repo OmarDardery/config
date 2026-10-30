@@ -37,8 +37,7 @@ noctalia config validate ~/.config/noctalia/config.toml
 umbriel config validate -c ~/.config/umbriel/config.toml
 ```
 
-The locked inputs' full rendering/config check is
-`nix build ./nixos#checks.x86_64-linux.theme-rendering` from the repository root.
+Run `desktop-apply` in a graphical session to initialize missing palette files.
 On a slower GPU, reduce `appearance.blur.passes` to 2 in `home/umbriel.nix`.
 **Mod+O** opens overview,
 **Mod+Ctrl+Space** reveals the scratchpad, and **Mod+A** opens the floating

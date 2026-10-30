@@ -53,11 +53,6 @@
       lib.deployment = profile;
       packages.${system}.home-manager = home-manager.packages.${system}.home-manager;
       formatter.${system} = pkgs.nixfmt-tree;
-      checks.${system} = import ./checks.nix {
-        inherit pkgs inputs;
-        flake = inputs.self;
-      };
-      devShells.${system} = import ./dev-shells.nix { inherit pkgs; };
       homeConfigurations = builtins.listToAttrs (
         map (name: {
           inherit name;

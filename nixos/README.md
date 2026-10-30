@@ -1,233 +1,79 @@
-# Configuration and deployment
+# Configuration notes
 
-The flake imports the NixOS host and shared `home/default.nix` directly.
-`home/` contains dotfile/editor implementations; `system/` contains
-native NixOS integration; `system/applications/` installs general applications.
-See [ARCHITECTURE.md](ARCHITECTURE.md) for ownership boundaries and design decisions,
-and [IMPROVEMENTS.md](IMPROVEMENTS.md) for the prioritized follow-up review.
+`flake.nix` imports this host and `home/default.nix` directly. This is a personal
+system configuration: there are no development shells, custom test framework or
+language-toolchain catalogue.
 
-## Profiles
+| Location | Purpose |
+| --- | --- |
+| `profile.nix` | Account, host and checkout location |
+| `configuration.nix` | Host entry point and optional application choices |
+| `hardware-configuration.nix` | Generated locally, ignored by Git |
+| `hardware.nix` | Laptop GPU, peripherals and storage |
+| `system/` | Boot, desktop, networking, backups and optional bundles |
+| `system/applications/` | Everyday applications and desktop services |
+| `home/` | Shared dotfiles and small editor preferences |
+| `pkgs/` | Desktop helpers and necessary package overrides |
+| `native/` | Debian/Fedora application installation |
 
-Set identity, output names and checkout path in `profile.nix`. The examples use
-its shipped defaults. Identity is explicit and is not inferred from environment
-variables during evaluation. Keep `home.stateVersion` and `system.stateVersion`
-at their existing values.
+The direct structure takes inspiration from
+[Misterio77's minimal starter](https://github.com/Misterio77/nix-starter-configs/tree/main/minimal).
+Neovim follows the [LazyVim starter](https://github.com/LazyVim/starter), with Nix
+support and the existing desktop palette instead of a preinstalled language suite.
 
-```sh
-# NixOS: copy local hardware, then switch the full configuration.
-bash nixos-setup.sh
+## Applying changes
 
-# Another distribution: all dotfiles, without installing applications.
-nix build path:./nixos#homeConfigurations.oad.activationPackage
-
-# Compatibility selector for the same full native desktop configuration.
-nix build path:./nixos#homeConfigurations.oad-desktop.activationPackage
-```
-
-`bootstrap.sh` checks identity/architecture and builds before activation. On NixOS
-it first copies `/etc/nixos/hardware-configuration.nix` to the ignored repository
-file, saving a changed predecessor in `~/.local/state/config-backups`. The source
-in `/etc/nixos` is left intact. Full activation uses `sudo nixos-rebuild switch`.
-Always use a `path:` reference: Git flake references omit ignored hardware files.
-Copy the hardware file before direct NixOS evaluation or `flake check` on a fresh
-checkout. `hardware.nix` still contains separate laptop-specific GPU/PRIME and
-extra-storage settings; adapt those when changing hardware.
+Use `path:` flake references so the ignored local hardware file participates.
+The setup script copies it from `/etc/nixos`, backing up a changed predecessor:
 
 ```sh
 bash nixos/bootstrap.sh --repo-dir "$PWD" --build-only
 bash nixos-setup.sh
-# Complete native desktop installation on another distribution:
-bash debian-setup.sh
-# OR
-bash fedora-setup.sh
-# All dotfiles on an existing Nix-enabled Linux installation:
+```
+
+Do not change `system.stateVersion` or `home.stateVersion` as part of an upgrade.
+On another machine, adapt `profile.nix`, review `hardware.nix` and provide that
+machine's generated hardware configuration.
+
+For an existing Debian/Fedora installation with Nix and native applications:
+
+```sh
 bash nixos/bootstrap.sh --repo-dir "$PWD" --activate --backup-extension bak
 ```
 
-The distribution installers live in `native/`, install APT/DNF applications,
-apply the desktop Home Manager profile, and configure native greetd and a desktop
-initialization unit. They enable the greeter for next boot after successful home
-activation. See [native setup](native/README.md) for supported releases and details.
-Existing checkouts are never pulled, staged or reset by deployment scripts.
+Standalone `oad` and `oad-desktop` outputs retain the same full dotfile scope.
+They install no applications. Their names follow `profile.nix`.
 
-## Ownership
+## Editors and project tools
 
-| Files | Responsibility |
-| --- | --- |
-| `home/default.nix` | Shared home settings and explicit dotfile/editor imports |
-| `home/` | Dotfiles, editors and their private tools |
-| `system/default.nix` | Explicit system imports |
-| `system/applications/default.nix` | Core application imports |
-| `system/features.nix` | Optional bundle switches and imports |
-| `system/{gaming,engineering,containers,printing}.nix` | Bundle packages, services and Flatpaks |
-| `system/greeter.nix` | Official Noctalia Greeter NixOS module |
-| `system/base.nix` | Account, boot, locale and integrated Home Manager |
-| `system/networking.nix` | NetworkManager, Tailscale and firewall |
-| `system/nix.nix` | Nix build limits, cache and garbage collection |
-| `system/performance.nix` | Kernel, LAVD, power profiles and zram |
-| `hardware-configuration.nix` | Ignored local hardware generated by NixOS |
-| `hardware.nix` | Laptop-specific NVIDIA/PRIME and extra-storage policy |
-| `native/` | Native application installation on other distributions |
-| `pkgs/` | Packaging and executable helpers |
-| `assets/` | Wallpapers, CSS and tablet seed |
+NixOS installs regular VSCodium and Neovim with only Nix tooling. LazyVim downloads
+its plugins on first use; those plugins are managed by Lazy rather than a second
+Nix package catalogue. Mason and Neovim's language providers are disabled.
+VSCodium permits manually installed extensions. Neither editor gets a Python
+virtual environment, Jupyter kernel, language extras, compiler suite or debugger
+from this configuration.
 
-On NixOS, Home Manager installs the editors and their private dependencies; system
-modules install the other applications. On other distributions, Home Manager
-writes configuration only: no application binaries, editor plugins or language
-tools are installed into the profile. Supported generators use `package = null`.
-The native Neovim setup uses Lazy/Mason; VSCodium uses its native extension gallery
-and PATH-resolved tools. Both standalone selectors configure all six applications.
-No Home Manager services or timers own desktop processes.
+Use each project's own environment for language packages. `editor-setup` on other
+distributions only syncs editor plugins and the small extension list. Old manually
+created `editor-python` environments and user-installed extensions are not erased;
+remove them yourself if you no longer use them. Managed notebook configuration
+and kernels disappear when Home Manager applies the new generation.
 
-NixOS and integrated Home Manager share a package set. Noctalia/Umbriel retain
-upstream's independent package sets for native dependencies and caches. Fonts,
-GTK/Qt libraries, portals, drivers, login services and desktop applications are
-installed outside Home Manager.
+## Desktop and maintenance
 
-## Optional NixOS bundles
+Home Manager writes preferences. NixOS or the native distribution owns desktop
+services, portals and applications. `desktop-apply` runs at graphical login;
+activation does not need a running compositor or network downloads.
 
-Set `workstation.gaming.enable`, `workstation.engineering.enable`,
-`workstation.containers.enable` or `workstation.printing.enable` in
-`configuration.nix`. All default to false. See [bundle contents](ARCHITECTURE.md#lean-defaults-and-optional-bundles).
-Disabling a bundle preserves user data and existing Flatpaks. Language runtimes
-remain available inside editor wrappers and `nix develop` shells.
+Optional bundles own their packages, services and Flatpaks. Disabling one does
+not erase application data. Existing Flatpaks are retained, and fonts remain
+available through the read-only `/usr/share/fonts` mount.
 
-## Terminal and gaming integration
+Backups use `/mnt/storage/backup`; see [BACKUPS.md](BACKUPS.md) for recovery and
+password storage. Docker is socket-activated when the containers bundle is enabled.
+The NVIDIA/kernel pair, state versions and storage policy are unchanged.
 
-Kitty loads its native shell integration. Idle prompts close without confirmation;
-active commands still trigger confirmation. Open a new terminal after changing
-shell integration or login environment settings.
-
-With the gaming bundle enabled, Steam's 64-bit Linux client does not make a 64-bit-only host supported. Keep the
-32-bit host graphics/runtime support required by games and Steam helpers. The
-[official NixOS Steam module](https://github.com/NixOS/nixpkgs/blob/nixos-26.05/nixos/modules/programs/steam.nix)
-already enables that support; do not duplicate it in the laptop hardware file or
-force it off. See [Valve's runtime discussion](https://github.com/ValveSoftware/steam-for-linux/issues/13015).
-Millennium uses pinned bootstrap libraries; Steam retains its native runtime.
-
-## Font and cursor troubleshooting
-
-Steam's client container needs cursor themes at their actual store paths. Its
-wrapper adds the installed Bibata and Adwaita directories to `XCURSOR_PATH`.
-Fully exit Steam before relaunching after a rebuild; log in again if the session
-still has old cursor environment variables.
-
-NixOS owns fonts in `system/applications/fonts.nix`. A read-only `bindfs` mount
-exposes resolved font files at `/usr/share/fonts`, following the
-[NixOS non-Nix application integration](https://wiki.nixos.org/wiki/Fixes_for_non-Nix_applications).
-Home Manager does not install fonts or manage fontconfig. Debian/Fedora retain
-their native font integration.
-
-At rebuild/login, the system-defined `flatpak-font-cache` user service refreshes
-caches inside both user and system Flatpaks after font-set changes and app updates.
-Successful refreshes are remembered, and failures are
-retried at the next service start. It runs as the logged-in user and only invokes `fc-cache`;
-application data and sandbox permissions are preserved. Reopen affected apps
-after rebuilding; logging in again also starts the service. Check failures with:
-
-```sh
-journalctl --user -u flatpak-font-cache -b
-```
-
-If boxes remain, inspect the font selected inside the sandbox:
-
-```sh
-flatpak run --command=fc-match com.vysp3r.ProtonPlus sans-serif
-```
-
-## Editors and notebooks
-
-On NixOS, LazyVim supplies pinned plugins, parsers, language servers, adapters and
-runtimes through its wrapper; VSCodium retains its FHS launcher for PlatformIO.
-On other distributions, native Neovim/VSCodium are configured without Nix
-wrappers or store paths for tools. Lazy/Mason install Neovim plugins/tools and
-Codium installs its extensions. Run `editor-setup` once after applying dotfiles to
-prepare native notebook dependencies, plugins and extensions. Extensions not
-available from the native gallery are reported for manual publisher-VSIX setup.
-The managed custom Noctalia theme is ordinary extension metadata and a palette
-link; it does not install VSCodium through Nix.
-
-```sh
-uv add --dev ipykernel
-notebook-kernel
-```
-
-The helper registers the nearest project's `.venv`, preserves its interpreter
-path and never installs project dependencies. In VSCodium select **Select Another
-Kernel → Jupyter Kernels → Python (project .venv)**. Existing saved Python
-interpreter selections may need **Python: Select Interpreter** once; the default
-`.venv` hint does not override a cached selection. In LazyVim use `<leader>mp` for
-the project kernel or `<leader>mi` for the editor fallback (Nix Python on NixOS,
-`editor-python` on other distributions).
-
-Python analysis is basic and limited to open files. Ruff remains enabled.
-Neovim keeps diagnostic signs/underlines; `<leader>cd` and `<leader>xx` show
-details and `<leader>uv` toggles inline text. Xournal++ is installed by the NixOS
-application module for tablet notes and PDF annotation.
-
-## Desktop state
-
-Noctalia preferences are TOML generated from Nix; wallpaper, palette algorithm and
-mode remain writable runtime choices. `desktop-apply` seeds only missing app
-palettes, builds Bat's cache with the installed native Bat, and reconciles managed
-preferences. NixOS runs it at graphical login. The native installers also enable it at graphical login on Debian/Fedora; run
-it explicitly to apply changed desktop preferences in an existing session.
-It also reapplies the managed Thunar volume preferences when native xfconf is
-available. It is never a Home Manager activation hook. The greeter's wallpaper/color sync
-remains Noctalia's **Security → Noctalia Greeter → Auto-Sync / Sync Now** feature.
-
-## Migration
-
-Apply from a TTY or another session when moving away from old Home Manager-owned
-session services; Home Manager may stop removed units during migration. Log in
-again to clear old environment variables. The new generation links dotfiles and
-removes obsolete managed package links; it does not uninstall native packages or
-purge untracked home files. Back up unmanaged conflicts with bootstrap's
-`--backup-extension bak` on standalone Home Manager.
-
-On NixOS, Flatpaks move to the native NixOS nix-flatpak module and a system
-installation. Existing user Flatpaks and their data are not removed automatically.
-After the first successful update, inspect duplicates with:
-
-```sh
-flatpak list --user --app
-flatpak list --system --app
-```
-
-After verifying the system copies work, optionally uninstall only duplicate user
-apps without `--delete-data`. No blanket cleanup is enabled. NVIDIA GL extensions
-follow the loaded driver through Flatpak; reboot after changing drivers before
-updating those extensions.
-
-The `up` and `update` commands on standalone Linux use the selected Home Manager
-profile, including `oad-desktop`. The pinned manager CLI runs through `nix run`;
-no global manager package is installed. Native system/application updates stay
-with the distribution. On NixOS, `update` retains `nh os switch` and activation
-logs, followed by Flatpak updates. `update`, `up`/`rebuild` and `nbuild` restore a
-missing local hardware file from `/etc/nixos` before evaluating the host, and
-preserve an existing nonempty file.
-
-## Backups and containers
-
-Home backups target `/mnt/storage/backup`; see [BACKUPS.md](BACKUPS.md) for the
-first-backup and restore checks. Its password is generated once at runtime and
-preserved across rebuilds. With `workstation.containers.enable = true`,
-Docker starts on demand through its socket. Containers requiring unattended boot startup need
-`virtualisation.docker.enableOnBoot = true`.
-
-## Checks
-
-```sh
-nix flake check path:./nixos --no-build --no-write-lock-file
-nix build path:./nixos#checks.x86_64-linux.portability
-```
-
-The `features` check exercises minimal and fully enabled bundles. Checks cover all profiles and an alternate identity, package/service boundaries,
-native command routing, editor settings, desktop initialization, file migration,
-plugins and updater behavior. The NVIDIA module and greeter are separate build
-checks because evaluation cannot catch compilation failures. Actual display,
-GPU/suspend, greeter and VSCodium GUI behavior need real-machine testing.
-
-GitHub Actions runs `bash nixos/tests/ci.sh` on Nix changes. It copies the flake
-into a temporary directory and substitutes an evaluation-only hardware fixture;
-it never deploys that fixture or edits the local generated hardware file.
+GitHub Actions performs ordinary Nix evaluation against disposable hardware and
+both standalone home outputs. It never activates or deploys that hardware.
+For a real machine, build the system before switching and test login/suspend
+when changing graphics or display-manager settings.

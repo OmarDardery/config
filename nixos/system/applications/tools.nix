@@ -52,10 +52,8 @@
       nmap
       iperf3
       ethtool
-      opencode
       zsh-autosuggestions
       zsh-syntax-highlighting
-      (callPackage ../../pkgs/antigravity-cli.nix { })
     ];
   environment.sessionVariables.NH_FLAKE = "path:${profile.configRepo}";
 }

@@ -26,6 +26,7 @@
   };
 
   # NixOS installs the login shell; Home Manager writes its dotfiles.
+  programs.nix-ld.enable = true;
   programs.zsh.enable = true;
   # The shared .zshrc initializes completion once.
   programs.zsh.enableGlobalCompInit = false;

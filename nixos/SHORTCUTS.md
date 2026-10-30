@@ -6,8 +6,7 @@ or Arabic input. Power actions are available from the session menu.
 
 Open `Mod+O` and type to launch applications directly from the overview.
 
-The bottom bar and right-hand dock hide on occupied workspaces and reveal at the
-screen edge without reserving window space. Hover Screen Toolkit in the bar to
+The bottom bar stays visible and reserves space; the right-hand dock reveals on hover. Hover Screen Toolkit in the bar to
 expand clipboard, phone and Pomodoro; their shortcuts work while collapsed.
 
 ## Apps and shell
@@ -113,7 +112,8 @@ Kitty uses Ctrl+Shift, keeping terminal commands separate from desktop controls.
 Kitty's command palette exposes remaining built-in actions. Settings and
 shortcuts belong in `home/kitty.nix`; colours come from Noctalia's generated palette.
 
-Project notebooks: `<leader>mp` registers and starts the nearest project `.venv`;
-`notebook-kernel` registers the same environment for VSCodium/Jupyter. The project
-must contain `ipykernel`. Diagnostics: `<leader>cd` opens details, `<leader>xx` opens
-the diagnostic list, and `<leader>uv` toggles inline text.
+## Editors
+
+Both editors start with Nix support and the desktop theme. Use LazyVim's built-in
+which-key menu for navigation; install language tools and extensions as needed.
+Notebook and custom AI/debugger shortcuts are no longer part of this config.

@@ -39,7 +39,7 @@ The full system build also covers xpadneo.
 
 ```sh
 cd ~/config/nixos
-nix build 'path:.#checks.x86_64-linux.nvidia-open' --no-link
+sudo nixos-rebuild build --flake path:.#nixos
 nix build 'path:.#nixosConfigurations.nixos.config.system.build.toplevel' --no-link
 nh os switch
 ```
@@ -51,7 +51,7 @@ A custom kernel/cache is an optional experiment. Pin the source, verify the
 cache's current provenance, retain a bootable stock generation, and build all
 external modules before trying it. Avoid global CPU-specific compiler flags,
 which expand rebuilds and prevent ordinary binary-cache reuse. See
-[IMPROVEMENTS.md](IMPROVEMENTS.md) for the current follow-up priorities.
+[README.md](README.md) for deployment notes.
 
 ## Verify and compare
 

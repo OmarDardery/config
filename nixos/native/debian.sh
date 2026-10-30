@@ -38,10 +38,9 @@ native_install_file "$work/vscodium.sources" /etc/apt/sources.list.d/vscodium.so
 sudo apt-get update
 sudo apt-get install -y \
   nix-bin nix-setup-systemd git git-lfs gh zsh zsh-autosuggestions zsh-syntax-highlighting kitty firefox-esr codium neovim \
-  build-essential clangd clang-format cmake pkg-config nodejs npm golang-go rustc cargo imagemagick \
   thunar thunar-archive-plugin thunar-volman tumbler file-roller gvfs-backends gvfs-fuse \
   mpv imv papers libreoffice xournalpp flatpak \
-  python3 python3-venv python3-tomlkit jq ripgrep fd-find bat btop fzf direnv zoxide \
+  python3 python3-tomlkit jq ripgrep fd-find bat btop fzf direnv zoxide \
   unzip zip 7zip xdg-user-dirs xdg-utils xdg-desktop-portal-gtk \
   pipewire-audio wireplumber pulseaudio-utils playerctl brightnessctl \
   wl-clipboard grim slurp swappy ffmpeg tesseract-ocr qrencode zbar-tools \

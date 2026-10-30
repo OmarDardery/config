@@ -30,7 +30,7 @@
     # NVIDIA driver and PRIME offload policy.
     nvidia = {
       # Version/hashes from NixOS/nixpkgs@a73abadb83fd64aee8abce72cc56811a178c1905.
-      # Build checks.nvidia-open before changing this kernel/driver pair.
+      # Build the system before changing this kernel/driver pair.
       package = config.boot.kernelPackages.nvidiaPackages.mkDriver {
         version = "615.78.08";
         sha256_64bit = "sha256-Pj9t3cLudnoIGFMAr3vjyyhuznZpjS3eNSRZl4LQf/4=";

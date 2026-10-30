@@ -73,7 +73,7 @@ native_apply() {
     exit 1
   fi
   sudo systemctl set-default graphical.target
-  printf '\n%s\n' 'Run editor-setup after login to install native editor plugins and notebook dependencies.'
+  printf '\n%s\n' 'Run editor-setup after login to install editor plugins and the Nix/EditorConfig extensions.'
   printf '\n%s\n' 'Setup complete. Reboot and select Umbriel in Noctalia Greeter.' \
     'The current graphical session was left running. Wallpaper/color auto-sync runs from Noctalia after login.' \
     'GPU drivers, firmware and existing network configuration remain distribution-managed.'

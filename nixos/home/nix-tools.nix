@@ -1,5 +1,6 @@
 # Nix tooling and deployment aliases for both backends.
 {
+  pkgs,
   profile,
   isNixOS,
   isLaptop,
@@ -30,11 +31,7 @@ in
   };
   home.file.".local/bin/office-convert" = {
     executable = true;
-    text = "#!/usr/bin/env python3\n" + builtins.readFile ../pkgs/office-convert.py;
-  };
-  home.file.".local/bin/notebook-kernel" = {
-    executable = true;
-    text = "#!/usr/bin/env python3\n" + builtins.readFile ../pkgs/notebook-kernel.py;
+    text = "#!${if isNixOS then "${pkgs.python3}/bin/python3" else "/usr/bin/env python3"}\n" + builtins.readFile ../pkgs/office-convert.py;
   };
   home.sessionVariables.NH_FLAKE = "path:${profile.configRepo}";
   home.shellAliases = {
@@ -47,7 +44,6 @@ in
       else
         "nix build ${lib.escapeShellArg "path:${profile.configRepo}#homeConfigurations.${profile.profileName}.activationPackage"}";
     neval = "nix flake check ${repository} --no-build --no-write-lock-file";
-    ncheck = "nix flake check ${repository} --no-write-lock-file";
     nupdate = "nix flake update --flake ${repository}";
     nfmt = "(cd ${directory} && nix fmt --no-write-lock-file)";
     cnf = "\${EDITOR:-nvim} ${directory}";

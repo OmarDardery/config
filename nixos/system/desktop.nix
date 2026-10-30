@@ -12,6 +12,7 @@
     inputs.umbriel.nixosModules.default
   ];
   programs.umbriel.enable = true;
+  environment.sessionVariables.XKB_CONFIG_ROOT = "${pkgs.xkeyboard-config}/share/X11/xkb";
   # The upstream Umbriel module supplies its portal and the GTK file chooser.
   xdg.portal = {
     enable = true;

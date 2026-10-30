@@ -123,7 +123,4 @@ in
     package = null;
     settings.color_theme = if desktopEnabled then "noctalia" else "Default";
   };
-  xdg.configFile."opencode/tui.json".text = builtins.toJSON {
-    theme = if desktopEnabled then "noctalia" else "system";
-  };
 }
