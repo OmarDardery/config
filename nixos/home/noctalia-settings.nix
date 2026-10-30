@@ -4,23 +4,36 @@
     behavior_order = [
       "lock"
       "screen-off"
+      "suspend"
     ];
+    pre_action_fade_seconds = 1.0;
     behavior = {
       lock = {
         enabled = true;
         timeout = 600;
         action = "lock";
       };
+      suspend = {
+        enabled = false; # The laptop power hook enables this on battery only.
+        timeout = 1200;
+        action = "lock_and_suspend";
+      };
       screen-off = {
         enabled = true;
-        timeout = 660;
+        timeout = 900;
         action = "screen_off";
       };
     };
   };
+  battery.warning_threshold = 15;
+  audio = {
+    enable_volume_sounds = false;
+    enable_screenshot_sounds = false;
+    sound_volume = 0.25;
+  };
   bar = {
     default = {
-      background_opacity = 0.46;
+      background_opacity = 0.70;
       border = "outline_variant";
       border_width = 1.0;
       capsule = false;
@@ -30,12 +43,10 @@
       concave_edge_corners = false;
       end = [
         "group:activity"
-        "group:tools"
         "tray"
         "privacy"
         "notifications"
         "group:status"
-        "session"
       ];
       margin_edge = 10;
       margin_ends = 16;
@@ -51,7 +62,6 @@
       start = [
         "launcher"
         "workspaces"
-        "nix-monitor"
       ];
       capsule_group = [
         {
@@ -67,24 +77,6 @@
           border_width = 1.0;
         }
         {
-          id = "tools";
-          accordion = true;
-          accordion_direction = "start";
-          enabled = true;
-          fill = "surface_container";
-          foreground = "on_surface";
-          members = [
-            "screen-toolkit"
-            "clipboard"
-            "phone-connect"
-            "tailscale"
-            "pomodoro"
-          ];
-          opacity = 0.20;
-          padding = 6.0;
-          radius = 12.0;
-        }
-        {
           accordion = false;
           enabled = true;
           fill = "surface_container";
@@ -92,10 +84,8 @@
           id = "status";
           members = [
             "network"
-            "bluetooth"
             "volume"
             "keyboard_layout"
-            "power_profile"
             "battery"
             "control-center"
           ];
@@ -134,7 +124,7 @@
   };
   dock = {
     enabled = true;
-    background_opacity = 0.52;
+    background_opacity = 0.65;
     border = "outline_variant";
     border_width = 1.0;
     icon_size = 32;
@@ -142,7 +132,7 @@
     radius = 22;
     concave_edge_corners = false;
     magnification = true;
-    magnification_scale = 1.35;
+    magnification_scale = 1.15;
     show_dots = true;
     active_monitor_only = true;
     position = "right";
@@ -151,10 +141,19 @@
   };
   notification = {
     follow_focused_output = true;
-    max_visible = 3;
-    background_opacity = 0.82;
+    max_visible = 2;
+    position = "top_right";
+    layer = "top";
+    history_retention_hours = 72;
+    background_opacity = 0.92;
     offset_x = 12;
-    offset_y = 8;
+    offset_y = 12;
+    filter.discord = {
+      match = "discord";
+      play_sound = false;
+      override_duration = 5000;
+      allow_permanent = false;
+    };
   };
   osd = {
     position = "top_center";
@@ -162,8 +161,8 @@
     background_opacity = 0.78;
   };
   lockscreen = {
-    transition = [ "fade" "zoom" ];
-    transition_duration = 650.0;
+    transition = [ "fade" ];
+    transition_duration = 250.0;
   };
   lockscreen_widgets = {
     enabled = false;
@@ -230,7 +229,7 @@
     };
     animation = {
       enabled = true;
-      speed = 1.0;
+      speed = 1.15;
     };
     shadow = {
       alpha = 0.35;
@@ -273,8 +272,8 @@
   };
   wallpaper = {
     transition_on_startup = true;
-    transition = [ "fade" "disc" "melt" ];
-    transition_duration = 1100.0;
+    transition = [ "fade" ];
+    transition_duration = 500.0;
     directory = "~/Pictures/Wallpapers";
   };
   widget = {
@@ -284,10 +283,12 @@
     workspaces = {
       style = "minimal";
       show_labels = true;
+      label_source = "name";
+      max_label_chars = 6;
       show_icons = false;
     };
     media = {
-      max_length = 140;
+      max_length = 40;
       hide_artist = true;
       hide_when_no_media = true;
       title_scroll = "on_hover";

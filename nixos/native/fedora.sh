@@ -28,7 +28,7 @@ native_install_file "$work/vscodium.repo" /etc/yum.repos.d/vscodium.repo 644 roo
 sudo dnf install -y \
   nix nix-daemon git git-lfs gh zsh zsh-autosuggestions zsh-syntax-highlighting kitty firefox codium neovim \
   Thunar thunar-archive-plugin thunar-volman tumbler file-roller gvfs-smb gvfs-mtp \
-  mpv imv papers libreoffice xournalpp flatpak \
+  mpv imv papers libreoffice xournalpp gnome-calculator flatpak \
   python3 python3-tomlkit jq ripgrep fd-find bat btop fzf direnv zoxide yazi starship \
   unzip zip 7zip xdg-user-dirs xdg-utils xdg-desktop-portal-gtk \
   pipewire pipewire-pulseaudio wireplumber pulseaudio-utils playerctl brightnessctl \

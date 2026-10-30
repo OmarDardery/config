@@ -97,3 +97,42 @@ flatpak update
 This repairs repository objects; it does not delete application data. Persistent
 missing-ref warnings require checking Flathub availability and remote metadata;
 changing an already correct remote URL is not a fix.
+
+## Everyday desktop
+
+The bar keeps the launcher, named workspaces, clock, media and essential status.
+Clipboard, capture, phone, VPN, Pomodoro and Nix updates remain available through
+shortcuts and panels. The bottom bar stays visible; the quieter right dock reveals
+on hover. English/Arabic input status remains visible.
+
+Web, Focus and Media are persistent spaces on each output; extra workspaces remain
+dynamic. `Mod+1/2/3` selects them by name, and `Mod+Ctrl+1/2/3` moves a column there.
+Browsers/chat open in Web, documents/editors in Focus, and video/Steam in Media.
+Windows can still be moved afterward. `Mod+D` retains the dwindle/scrolling toggle.
+
+- `Mod+grave`: summon a terminal scratchpad, launching Kitty when empty.
+- `Mod+Ctrl+Return`: summon a calculator scratchpad.
+- `Mod+Ctrl+P`: start presentation mode (DND and idle inhibition).
+- `Mod+Ctrl+Shift+P`: end presentation mode (notifications and idle actions resume).
+- `Mod+Alt+U`: open Nix Monitor. Other plugin shortcuts are unchanged.
+
+The generic scratchpad shortcuts now target `stash`. Presentation controls set
+explicit on/off states; end mode resumes idle actions even if caffeine was enabled
+manually before presenting.
+
+On this laptop, Noctalia's existing power hooks select balanced on AC and
+power-saver on battery. Idle lock/screen-off are 10/15 minutes on AC and 5/6 minutes
+on battery; battery suspend locks first after 20 minutes. Presentation mode and
+normal Wayland idle inhibitors prevent these idle actions. Manual power-profile
+choices last until the next power-source change or `desktop-apply`.
+
+Closing the lid suspends when undocked; with an external display, logind leaves the
+docked session running. HDMI uses the connected display's preferred mode at 100%
+scaling to the right of the 160% laptop panel. Native output hotplug restores
+workspaces. `Mod+Shift+M` retains explicit projector mirroring. Audio uses
+WirePlumber's native device/volume restoration; choose the preferred output and
+microphone once in Control Center when first connecting a device.
+
+Apply and log out/back in for workspace inventories, scratchpads and lid policy.
+Test physical hotplug and suspend/resume on the laptop; remote evaluation cannot
+exercise its displays, headset or GPU wake behaviour.

@@ -6,14 +6,17 @@ or Arabic input. Power actions are available from the session menu.
 
 Open `Mod+O` and type to launch applications directly from the overview.
 
-The bottom bar stays visible and reserves space; the right-hand dock reveals on hover. Hover Screen Toolkit in the bar to
-expand clipboard, phone and Pomodoro; their shortcuts work while collapsed.
+The bottom bar stays visible and reserves space. The right dock reveals on hover.
+The bar shows essential status; occasional tools remain in panels and shortcuts.
 
 ## Apps and shell
 
 | Shortcut | Action |
 | --- | --- |
 | Mod+T / Mod+B / Mod+E | Kitty / Zen / Thunar |
+| Mod+grave / Mod+Ctrl+Return | Terminal / calculator scratchpad |
+| Mod+Ctrl+P / Mod+Ctrl+Shift+P | Start / end presentation mode |
+| Mod+Alt+U | Nix Monitor panel |
 | Mod+Shift+E | Yazi directly in Kitty |
 | Mod+I / Mod+Ctrl+E | VSCodium / edit the Nix configuration tree |
 | Mod+Space | App launcher, search and calculator |
@@ -47,7 +50,8 @@ The power button locks first. `Ctrl+Alt+Delete` quits the compositor session.
 | Mod+Left/Right or H/L | Focus horizontally |
 | Mod+J/K or Mod+WheelDown/Up | Focus rows or tabs |
 | Mod+Up/Down / Mod+Tab | Previous-next workspace / previous workspace |
-| Mod+1…9 / Mod+Ctrl+1…9 | Switch workspace / move column there |
+| Mod+1/2/3 / Mod+Ctrl+1/2/3 | Web/Focus/Media / move column there |
+| Mod+4…9 / Mod+Ctrl+4…9 | Select an additional workspace / move column there |
 | Mod+Ctrl+arrows or H/J/K/L | Move columns or rows/tabs |
 | Mod+Shift+arrows | Focus another monitor |
 | Mod+Ctrl+Shift+arrows | Move column to another monitor |

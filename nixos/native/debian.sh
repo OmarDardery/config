@@ -39,7 +39,7 @@ sudo apt-get update
 sudo apt-get install -y \
   nix-bin nix-setup-systemd git git-lfs gh zsh zsh-autosuggestions zsh-syntax-highlighting kitty firefox-esr codium neovim \
   thunar thunar-archive-plugin thunar-volman tumbler file-roller gvfs-backends gvfs-fuse \
-  mpv imv papers libreoffice xournalpp flatpak \
+  mpv imv papers libreoffice xournalpp gnome-calculator flatpak \
   python3 python3-tomlkit jq ripgrep fd-find bat btop fzf direnv zoxide \
   unzip zip 7zip xdg-user-dirs xdg-utils xdg-desktop-portal-gtk \
   pipewire-audio wireplumber pulseaudio-utils playerctl brightnessctl \

@@ -24,7 +24,7 @@
       bold_font = "auto";
       italic_font = "auto";
       bold_italic_font = "auto";
-      background_opacity = "0.84";
+      background_opacity = "0.94";
       dynamic_background_opacity = true;
       cursor_trail = 1;
       enable_audio_bell = false;

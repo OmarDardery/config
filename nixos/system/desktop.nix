@@ -73,6 +73,9 @@
   services.logind.settings.Login = {
     HandlePowerKey = "ignore";
     HandlePowerKeyLongPress = "ignore";
+    HandleLidSwitch = "suspend";
+    HandleLidSwitchExternalPower = "suspend";
+    HandleLidSwitchDocked = "ignore";
   };
 
   # One audio stack for the greeter and desktop, including PulseAudio clients.
