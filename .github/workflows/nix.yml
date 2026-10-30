@@ -40,3 +40,7 @@ jobs:
           compositor=$(nix build --no-link --print-out-paths --no-write-lock-file "$flake#nixosConfigurations.$host.config.programs.umbriel.package")
           settings=$(nix build --no-link --print-out-paths --no-write-lock-file "$flake#nixosConfigurations.$host.config.home-manager.users.$profile_user.xdg.configFile.\"umbriel/config.toml\".source")
           "$compositor/bin/umbriel" config validate -c "$settings"
+          system=$(nix eval --raw "$flake#lib.deployment.system" --no-write-lock-file)
+          shell_package=$(nix build --no-link --print-out-paths --impure --expr "(builtins.getFlake \"$flake\").inputs.noctalia.packages.$system.default")
+          shell_settings=$(nix build --no-link --print-out-paths --no-write-lock-file "$flake#nixosConfigurations.$host.config.home-manager.users.$profile_user.xdg.configFile.\"noctalia/config.toml\".source")
+          "$shell_package/bin/noctalia" config validate "$shell_settings"

@@ -4,6 +4,7 @@
   pkgs,
   lib,
   config,
+  isLaptop,
   ...
 }:
 let
@@ -24,7 +25,7 @@ in
     enable = true;
     package = null;
     systemd.enable = false;
-    # The native executable validates generated files in the theme-rendering check.
+    # CI validates the generated configuration with the pinned executable.
     checkConfig = false;
     settings = lib.recursiveUpdate settings {
       # Later sources win; the patched Nix plugins override Git catalog copies.
@@ -48,6 +49,12 @@ in
           enabled = true;
         }
       ];
+      hooks = lib.optionalAttrs isLaptop {
+        started = "${lib.escapeShellArg "${config.home.homeDirectory}/.local/bin/desktop-power"} detect --refresh";
+        battery_discharging = "${lib.escapeShellArg "${config.home.homeDirectory}/.local/bin/desktop-power"} detect";
+        battery_charging = "${lib.escapeShellArg "${config.home.homeDirectory}/.local/bin/desktop-power"} detect";
+        battery_plugged = "${lib.escapeShellArg "${config.home.homeDirectory}/.local/bin/desktop-power"} detect";
+      };
       plugin_settings = {
         "avivbintangaringga/nix-monitor" = {
           update_command = config.home.shellAliases.update;
@@ -78,6 +85,11 @@ in
         ${lib.escapeShellArg "${config.xdg.configHome}/noctalia/config.toml"} "$@"
     '';
   };
+  home.file.".local/bin/desktop-power" = {
+    enable = isLaptop;
+    executable = true;
+    text = "#!/usr/bin/env bash\n" + builtins.readFile ../pkgs/desktop-power.sh;
+  };
   home.file.".local/bin/desktop-apply" = {
     executable = true;
     text = ''
@@ -97,8 +109,18 @@ in
           --reset 'bar.default.monitor.*.auto_hide' \
           --reset 'bar.default.monitor.*.smart_auto_hide' \
           --reset 'bar.default.monitor.*.reserve_space' \
-          --reset 'dock.monitor.*.background_opacity'
+          --reset 'dock.monitor.*.background_opacity' \
+          --reset 'bar.default.monitor.*.start' \
+          --reset 'bar.default.monitor.*.end' \
+          --reset 'bar.default.monitor.*.capsule_group' \
+          --reset 'dock.monitor.*.magnification_scale'
       fi
+      ${lib.optionalString isLaptop ''
+        # Activation and palette seeding also work before the shell has started.
+        if noctalia msg status >/dev/null 2>&1; then
+          ${lib.escapeShellArg "${config.home.homeDirectory}/.local/bin/desktop-power"} detect --refresh
+        fi
+      ''}
       if command -v bat >/dev/null 2>&1; then bat cache --build; fi
       if command -v xfconf-query >/dev/null 2>&1; then
         xfconf-query -c thunar -p /misc-volume-management --create --type bool --set true

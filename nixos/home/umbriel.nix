@@ -110,8 +110,19 @@ in
       };
       workspaces = {
         back_and_forth = true;
-        empty_above = true;
+        empty_above = false;
       };
+      scratchpad = [
+        { name = "stash"; }
+        {
+          name = "terminal";
+          spawn_when_empty = "kitty --class scratchpad-terminal";
+        }
+        {
+          name = "calculator";
+          spawn_when_empty = "gnome-calculator";
+        }
+      ];
       layout = {
         mode = "dwindle";
         gap = 10;
@@ -135,12 +146,12 @@ in
       appearance = {
         prefer_no_csd = true;
         border_width = 1;
-        outer_border_width = 1;
-        corner_radius = 20;
-        drag_opacity = 0.9;
+        outer_border_width = 0;
+        corner_radius = 16;
+        drag_opacity = 0.95;
         blur = {
           enabled = true;
-          passes = 3;
+          passes = 2;
           radius = 6;
           noise = 0.015;
           brightness = 1.0;
@@ -149,7 +160,7 @@ in
         };
         shadow = {
           enabled = true;
-          softness = 36;
+          softness = 28;
           offset_x = 0;
           offset_y = 8;
         };
@@ -165,10 +176,10 @@ in
       animation = {
         enabled = true;
         # Keep move/resize timelines identical so tiles stay aligned during reflow.
-        curve = "spring:1,800";
+        curve = "spring:1,1100";
         windows_in = {
           style = "popin";
-          curve = "spring:1,900";
+          curve = "spring:1,1200";
           scale = 0.96;
         };
         windows_out = {
@@ -178,11 +189,11 @@ in
         };
         workspaces = {
           style = "slide";
-          curve = "spring:1,700";
+          curve = "spring:1,1000";
         };
         overview = {
-          curve = "spring:1,700";
-          workspace_curve = "spring:1,800";
+          curve = "spring:1,1000";
+          workspace_curve = "spring:1,1100";
         };
         windows_drag.physics = false;
         border.curve = "spring:1,1000";
@@ -202,6 +213,11 @@ in
       keybinds = {
         "Mod+Shift+Escape" = once "cheatsheet-open";
         "Mod+T" = once "spawn kitty";
+        "Mod+grave" = once "scratchpad-toggle terminal";
+        "Mod+Ctrl+Return" = once "scratchpad-toggle calculator";
+        "Mod+Ctrl+P" = once "spawn noctalia msg notification-dnd-set on && noctalia msg caffeine-enable";
+        "Mod+Ctrl+Shift+P" = once "spawn noctalia msg caffeine-disable && noctalia msg notification-dnd-set off";
+        "Mod+Alt+U" = once "spawn noctalia msg panel-toggle avivbintangaringga/nix-monitor:panel";
         "Mod+Space" = once "spawn noctalia msg panel-toggle launcher";
         "Alt+Tab" = once "spawn noctalia msg window-switcher hold";
         "Mod+B" = once "spawn ${if isNixOS then "zen" else "desktop-browser"}";
@@ -359,10 +375,10 @@ in
         "Mod+Period" = "window-consume-or-expel-right";
         "Mod+Ctrl+Comma" = "window-consume-from-left";
         "Mod+Ctrl+Period" = "window-consume-from-right";
-        "Mod+Shift+Space" = once "window-move-to-scratchpad";
-        "Mod+Ctrl+Space" = once "scratchpad-toggle";
-        "Mod+Alt+Space" = once "window-restore-from-scratchpad";
-        "Mod+Alt+Tab" = once "scratchpad-focus-next";
+        "Mod+Shift+Space" = once "window-move-to-scratchpad stash";
+        "Mod+Ctrl+Space" = once "scratchpad-toggle stash";
+        "Mod+Alt+Space" = once "window-restore-from-scratchpad stash";
+        "Mod+Alt+Tab" = once "scratchpad-focus-next stash";
         "Mod+Alt+1" = once "workspace-set-layout dwindle";
         "Mod+Alt+2" = once "workspace-set-layout scrolling";
         "Mod+D" = once "workspace-set-layout toggle dwindle scrolling";
@@ -391,10 +407,25 @@ in
       )
       // lib.optionalAttrs isLaptop {
         "Mod+Shift+M" = once "spawn mirror-laptop";
+        "Mod+Ctrl+Alt+T" = once "spawn otd-gui";
       };
       window_rule = [
         {
-          match.app_id = "^kitty$";
+          match.app_id = "^scratchpad-terminal$";
+          default_scratchpad = "terminal";
+          default_focused = true;
+          default_floating_size_px = {
+            width = 1000;
+            height = 620;
+          };
+        }
+        {
+          match.app_id = "^(org\\.gnome\\.Calculator|gnome-calculator)$";
+          default_scratchpad = "calculator";
+          default_focused = true;
+        }
+        {
+          match.app_id = "^(kitty|scratchpad-terminal)$";
           blur = true;
           blur_optimized = false;
         }
@@ -469,7 +500,8 @@ in
           ];
         };
         "HDMI-A-1" = {
-          mode = "1920x1080@60";
+          # Let each monitor/projector choose its preferred resolution and refresh.
+          enabled = true;
           scale = 1.0;
           position = [
             (builtins.ceil (2560 / display.laptopScale))
