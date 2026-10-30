@@ -147,8 +147,12 @@ pressure and tilt remain enabled, with no additional smoothing filters.
 
 `Mod+Ctrl+Alt+T` opens the driver settings. The express keys provide zoom,
 navigation, paste/copy and undo/redo; see [SHORTCUTS.md](SHORTCUTS.md). Xournal++
-already enables pressure sensitivity by default. Set the two stylus-button
-actions in its preferences to Eraser and Hand if desired.
+already enables pressure sensitivity by default. Activation assigns Eraser and
+Hand to missing/"No action" stylus-button mappings, preserving other tool choices
+and backing up changed settings. Close Xournal++ before rebuilding so this can
+apply; it skips the running application. Hold a pen button while touching/moving
+on the page to use its temporary tool; releasing restores the previous tool.
+These mappings are separate from the mouse-button and physical eraser settings.
 
 Rebuilds repair the recognizable old 1707×1067 mapping and previous F6 express key,
 backing up the original settings before changing them. Custom display/tablet

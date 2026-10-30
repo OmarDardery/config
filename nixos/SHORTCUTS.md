@@ -105,9 +105,11 @@ The eight express keys, in OpenTabletDriver's order:
 | 5 / 6 | Paste / copy |
 | 7 / 8 | Undo / redo (`Ctrl+Z` / `Ctrl+Shift+Z`) |
 
-Both pen buttons remain native stylus buttons. In Xournal++ preferences, assign
-them to Eraser and Hand for writing; applications keep their own button actions.
-Custom OpenTabletDriver bindings are preserved on subsequent rebuilds.
+Both pen buttons remain native stylus buttons. Xournal++'s unset stylus actions
+are seeded to Eraser and Hand. Hold a button while drawing; release it to return
+to the previous tool. Other tool choices and OpenTabletDriver bindings survive
+rebuilds. Change them in Preferences → Stylus; use Preferences → Input System's
+test area to check whether button events arrive as stylus or mouse input.
 
 ## Kitty
 

@@ -38,4 +38,12 @@ lib.mkIf isLaptop {
     run ${pkgs.python3}/bin/python3 ${../pkgs}/migrate-desktop.py tablet \
       ${lib.escapeShellArg "${config.xdg.configHome}/OpenTabletDriver/settings.json"} ${tabletSettings}
   '';
+  home.activation.xournalppStylusButtons = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    if ${pkgs.procps}/bin/pgrep -u "$UID" -f '(^|/)\.?xournalpp(-wrapped)?([[:space:]]|$)' >/dev/null; then
+      echo "Xournal++ is open; close it before activating stylus-button defaults."
+    else
+      run ${pkgs.python3}/bin/python3 ${../pkgs}/migrate-desktop.py xournalpp-buttons \
+        ${lib.escapeShellArg "${config.xdg.configHome}/xournalpp/settings.xml"}
+    fi
+  '';
 }

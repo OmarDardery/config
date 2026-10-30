@@ -6,6 +6,7 @@ import shutil
 import stat
 import sys
 import tempfile
+import xml.etree.ElementTree as ET
 
 from state_file import identity, replace, snapshot, sync_directory
 
@@ -56,6 +57,32 @@ def tablet(target, defaults):
             bindings["AuxButtons"] = expected["Bindings"]["AuxButtons"]
     if original is None or json.loads(original[0]) != current:
         replace(target, original, (json.dumps(current, indent=2) + "\n").encode(), preserve_mode=True)
+
+
+def xournalpp_buttons(target):
+    original = snapshot(target, missing_ok=True)
+    parser = ET.XMLParser(target=ET.TreeBuilder(insert_comments=True, insert_pis=True))
+    root = ET.fromstring(original[0], parser=parser) if original is not None else ET.Element("settings")
+    if root.tag != "settings":
+        raise ValueError("Unexpected Xournal++ settings root; leaving it unchanged")
+    buttons = root.find("./data[@name='buttonConfig']")
+    if buttons is None:
+        buttons = ET.SubElement(root, "data", name="buttonConfig")
+    changed = False
+    for name, tool in (("stylus", "eraser"), ("stylus2", "hand")):
+        button = buttons.find(f"./data[@name='{name}']")
+        if button is None:
+            button = ET.SubElement(buttons, "data", name=name)
+        action = button.find("./attribute[@name='tool']")
+        if action is None:
+            action = ET.SubElement(button, "attribute", name="tool")
+        if action.get("value", "none") == "none":
+            action.set("type", "string")
+            action.set("value", tool)
+            changed = True
+    if changed:
+        rendered = ET.tostring(root, encoding="utf-8", xml_declaration=True) + b"\n"
+        replace(target, original, rendered, preserve_mode=True)
 
 
 def writable_tree(root):
@@ -143,5 +170,9 @@ def identity_link(path):
 
 
 if __name__ == "__main__":
-    {"kitty-declarative": kitty_declarative, "tablet": tablet}[sys.argv[1]](
+    {
+        "kitty-declarative": kitty_declarative,
+        "tablet": tablet,
+        "xournalpp-buttons": xournalpp_buttons,
+    }[sys.argv[1]](
         *(Path(argument) for argument in sys.argv[2:]))
