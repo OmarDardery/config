@@ -11,16 +11,35 @@ let
     vim.g.loaded_perl_provider = 0
     vim.g.loaded_node_provider = 0
 
-    local available = pcall(require, "lazy")
-    if not available then
-      local path = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-      if not vim.uv.fs_stat(path) then
-        local output = vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable",
-          "https://github.com/folke/lazy.nvim.git", path })
-        if vim.v.shell_error ~= 0 then error(output) end
+    local path = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+    if not vim.uv.fs_stat(path .. "/lua/lazy/init.lua") then
+      vim.api.nvim_echo({ { "Installing LazyVim's plugin manager (30 second timeout)…", "MoreMsg" } }, true, {})
+      vim.cmd.redraw()
+      -- Retain an interrupted clone for recovery, then retry into a fresh path.
+      if vim.uv.fs_stat(path) then
+        vim.uv.fs_rename(path, path .. ".incomplete-" .. vim.fn.getpid())
       end
-      vim.opt.rtp:prepend(path)
+      local temporary = path .. ".bootstrap-" .. vim.fn.getpid()
+      local ok, result = pcall(function()
+        return vim.system({ "git", "clone", "--filter=blob:none", "--branch=stable",
+          "https://github.com/folke/lazy.nvim.git", temporary }, { text = true }):wait(30000)
+      end)
+      if ok and result.code == 0 then
+        ok = vim.uv.fs_rename(temporary, path) ~= nil
+          or vim.uv.fs_stat(path .. "/lua/lazy/init.lua") ~= nil
+      else
+        ok = false
+      end
+      vim.fn.delete(temporary, "rf")
+      if not ok then
+        vim.schedule(function()
+          vim.notify("Could not install lazy.nvim. Using plain Neovim; check your connection and restart.\n"
+            .. tostring(type(result) == "table" and result.stderr or result), vim.log.levels.WARN)
+        end)
+        return
+      end
     end
+    vim.opt.rtp:prepend(path)
     require("lazy").setup({
       lockfile = vim.fn.stdpath("state") .. "/lazy-lock.json",
       spec = {
@@ -29,6 +48,7 @@ let
       },
       checker = { enabled = false },
       rocks = { enabled = false },
+      git = { timeout = 30 },
     })
   '';
   files = {
@@ -47,6 +67,8 @@ let
         { "windwp/nvim-ts-autotag", enabled = false },
         { "mason-org/mason-lspconfig.nvim", enabled = false },
         { "jay-babu/mason-nvim-dap.nvim", enabled = false },
+        -- No downloaded Rust library or compiler needed for completion on NixOS.
+        { "saghen/blink.cmp", opts = { fuzzy = { implementation = "lua" } } },
         { "neovim/nvim-lspconfig", opts = { servers = {
           lua_ls = { enabled = false },
           nixd = { cmd = { "nixd" } },
@@ -121,6 +143,17 @@ let
   }) files);
   manifest = pkgs.writeText "lazyvim-starter.json" (builtins.toJSON {
     directories."${config.xdg.configHome}/nvim" = "${defaults}";
+    # Repair only our exact previous starter; edited or deleted files stay yours.
+    repairs = {
+      "${config.xdg.configHome}/nvim/init.lua" = {
+        sha256 = "5c4a0c19dc24aa834cfa37e875723d08916411206e9238802261a74eb85e64b8";
+        source = "${defaults}/init.lua";
+      };
+      "${config.xdg.configHome}/nvim/lua/plugins/tools.lua" = {
+        sha256 = "6e4844d9330cae59f39a1cfb1e5746b7bb23f83088f7247932140aeeac8e680d";
+        source = "${defaults}/lua/plugins/tools.lua";
+      };
+    };
   });
 in
 {

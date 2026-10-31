@@ -1,4 +1,5 @@
 """Desktop configuration migrations; backups contain the exact original bytes."""
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -87,10 +88,20 @@ def xournalpp_buttons(target):
 
 def editor_defaults(manifest, marker):
     """Release managed files once; subsequent edits and removals belong to the user."""
-    if marker.exists():
-        return
     defaults = json.loads(manifest.read_bytes())
     backups = marker.parent / "backups" / marker.name
+    for name, repair in defaults.get("repairs", {}).items():
+        target = Path(name)
+        if target.is_symlink() or any(parent.is_symlink() for parent in target.parents):
+            continue  # The first migration below handles managed links.
+        original = snapshot(target, missing_ok=True)
+        if original is not None and hashlib.sha256(original[0]).hexdigest() == repair["sha256"]:
+            backup = replace(target, original, Path(repair["source"]).read_bytes(), preserve_mode=True)
+            if backup is not None:
+                backups.mkdir(parents=True, exist_ok=True)
+                backup.rename(backups / backup.name)
+    if marker.exists():
+        return
     store = Path(os.environ.get("NIX_STORE_DIR", "/nix/store")).resolve()
 
     def managed(path):

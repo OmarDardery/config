@@ -58,11 +58,16 @@ under `~/.local/state/editor-defaults/backups/`. Close both editors before
 applying, then reopen them. One-time initialization markers live alongside those
 backups; subsequent activations do not reapply the starter.
 
-LazyVim downloads its plugins on first use. Mason, Tree-sitter compilation and
-Neovim's language providers are disabled in the editable starter. Neither editor
-gets a Python
-virtual environment, Jupyter kernel, language extras, compiler suite or debugger
+LazyVim downloads its plugins on first use. The initial bootstrap shows progress
+and falls back to plain Neovim if its download fails or exceeds 30 seconds; restart
+to retry. Plugin Git operations also have a 30-second timeout. Completion uses Lua,
+so it needs no downloaded native library or Rust compiler. Mason, Tree-sitter
+compilation and Neovim's language providers are disabled in the editable starter.
+Neither editor gets a Python virtual environment, Jupyter kernel, language extras, compiler suite or debugger
 from this configuration.
+
+Activation repairs the exact previous starter with these startup fixes, backing
+it up first. Edited files and deleted files remain untouched.
 
 Use each project's own environment for language packages. `editor-setup` on other
 distributions only syncs editor plugins and the small extension list. Old manually
