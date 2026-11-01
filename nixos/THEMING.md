@@ -111,6 +111,27 @@ for a fixed declarative Base16 theme. Here Noctalia remains the single live colo
 owner, avoiding overlapping GTK, Kitty and editor configuration. No additional
 theming daemon or rebuild-on-wallpaper-change mechanism is installed.
 
+## Liquid Glass compositor effects
+
+Umbriel's Liquid Glass theme adds a static, palette-tinted reflective border,
+a short lens-like window opening/closing shader, and a liquid workspace reveal.
+The shaders are declared in `assets/umbriel-liquid-glass/effects.toml` and
+`home/umbriel.nix`. Noctalia still owns live colors and wallpaper choices,
+while the compositor handles blur and rounded window geometry.
+
+The shell retains its glass panels; the bar, dock, notifications and OSD have
+slightly lower background opacity. The shaders do not globally make opaque
+applications transparent; transparent applications such as Kitty show the
+actual blurred backdrop. Workspace changes use a reveal rather than a sliding
+animation. Drag physics stays disabled, preserving the rigid window feel.
+
+The optional shader cursor halo is off to preserve direct scanout for games.
+After rebuilding, use `umbriel config validate -c ~/.config/umbriel/config.toml`
+and `umbriel effects` to verify the config and shader compilation. The halo
+can be tried with `umbriel msg effect-cursor-set liquid-glass-cursor` and
+disabled with `umbriel msg effect-cursor-reset`. For shaders, limitations,
+and troubleshooting, see `assets/umbriel-liquid-glass/README.md`.
+
 ## Application support
 
 | Apps | Source | Integration |
