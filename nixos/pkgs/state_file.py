@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import stat
 import tempfile
+from typing import Literal, overload
 
 
 def identity(info):
@@ -14,7 +15,15 @@ def identity(info):
             info.st_ctime_ns, info.st_mode)
 
 
-def snapshot(path, *, missing_ok=False):
+@overload
+def snapshot(path: str | Path, *, missing_ok: Literal[False] = False) -> tuple[bytes, tuple]: ...
+
+
+@overload
+def snapshot(path: str | Path, *, missing_ok: Literal[True]) -> tuple[bytes, tuple] | None: ...
+
+
+def snapshot(path: str | Path, *, missing_ok: bool = False) -> tuple[bytes, tuple] | None:
     path = Path(path)
     try:
         fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)

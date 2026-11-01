@@ -51,6 +51,7 @@
     in
     {
       lib.deployment = profile;
+      devShells.${system}.default = import ./dev-shell.nix { inherit pkgs; };
       packages.${system}.home-manager = home-manager.packages.${system}.home-manager;
       formatter.${system} = pkgs.nixfmt-tree;
       homeConfigurations = builtins.listToAttrs (

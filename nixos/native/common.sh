@@ -31,6 +31,8 @@ native_apply() {
   export NIX_REMOTE=daemon
   nixflags=(--extra-experimental-features 'nix-command flakes')
   nix "${nixflags[@]}" store ping --store daemon
+  # repo_dir is supplied by the distribution entry point that sources this file.
+  # shellcheck disable=SC2154
   flake="path:$repo_dir/nixos"
   profile=$(nix "${nixflags[@]}" eval --no-write-lock-file --raw "$flake#lib.deployment.profileName")
   # Bootstrap checks the configured identity and architecture before building.
@@ -45,8 +47,11 @@ native_apply() {
   sudo noctalia-greeter-apply-appearance --setup-system
   greeter_user=$(sudo noctalia-greeter-apply-appearance --print-greeter-user)
   getent passwd "$greeter_user" >/dev/null
+  # sudo reads the privileged source; the redirect is into our user-owned workdir.
+  # shellcheck disable=SC2024
   sudo cat /etc/greetd/config.toml > "$work/greetd.toml"
   if sudo test -f /var/lib/noctalia-greeter/greeter.toml; then
+    # shellcheck disable=SC2024
     sudo cat /var/lib/noctalia-greeter/greeter.toml > "$work/greeter.toml"
   else
     : > "$work/greeter.toml"
