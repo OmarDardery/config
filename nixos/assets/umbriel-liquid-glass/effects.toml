@@ -1,0 +1,23 @@
+# Umbriel GLSL ES 1.00 effects. Imported by home/umbriel.nix.
+# Keep the ambient effects static: no continuous refresh or screen-wide filter.
+[effects.preset.liquid-glass-border]
+kind = "border"
+shader = "border.glsl"
+palette = true
+padding = 12
+animated = false
+
+[effects.preset.liquid-glass-window]
+kind = "animation"
+shader = "window.glsl"
+
+[effects.preset.liquid-glass-workspace]
+kind = "animation"
+shader = "workspace.glsl"
+
+# Optional. Activating a cursor shader disables direct scanout on that output.
+[effects.preset.liquid-glass-cursor]
+kind = "cursor"
+shader = "cursor.glsl"
+palette = true
+radius = 72

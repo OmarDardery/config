@@ -33,7 +33,7 @@
   };
   bar = {
     default = {
-      background_opacity = 0.70;
+      background_opacity = 0.64;
       border = "outline_variant";
       border_width = 1.0;
       capsule = false;
@@ -124,7 +124,7 @@
   };
   dock = {
     enabled = true;
-    background_opacity = 0.65;
+    background_opacity = 0.60;
     border = "outline_variant";
     border_width = 1.0;
     icon_size = 32;
@@ -145,7 +145,7 @@
     position = "top_right";
     layer = "top";
     history_retention_hours = 72;
-    background_opacity = 0.92;
+    background_opacity = 0.86;
     offset_x = 12;
     offset_y = 12;
     filter.discord = {
@@ -158,7 +158,7 @@
   osd = {
     position = "top_center";
     hide_delay_ms = 1000;
-    background_opacity = 0.78;
+    background_opacity = 0.74;
   };
   lockscreen = {
     transition = [ "fade" ];
