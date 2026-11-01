@@ -1,0 +1,41 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: helper tests",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "tests",
+        "-x",
+        "-s"
+      ],
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "preLaunchTask": "dev: setup",
+      "pythonArgs": [
+        "-Xfrozen_modules=off"
+      ]
+    },
+    {
+      "name": "Python: office-convert CLI help",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/nixos/pkgs/office-convert.py",
+      "args": [
+        "--help"
+      ],
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "preLaunchTask": "dev: setup",
+      "pythonArgs": [
+        "-Xfrozen_modules=off"
+      ]
+    }
+  ]
+}

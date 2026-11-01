@@ -32,6 +32,10 @@ Ruby and Node providers are disabled. Lazy manages its plugins in user data;
 Mason is disabled so opening an editor does not install a language toolchain.
 Add other editor extensions or project dependencies when you need them.
 
+To work on this repository, see [DEVELOPMENT.md](DEVELOPMENT.md) for its pinned
+Nix/Bash/Python shell, local Python environment, checks and VSCodium workspace.
+These tools are only loaded for development; they are not installed in the desktop profile.
+
 On Debian/Fedora, run `editor-setup` to sync plugins and the two extensions.
 It does not run pip or create a Python environment. System utilities still use
 their normal runtime dependencies; the system is not intended to be Python-free.

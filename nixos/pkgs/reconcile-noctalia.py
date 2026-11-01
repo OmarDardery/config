@@ -7,6 +7,7 @@ from pathlib import Path
 import tomllib
 
 import tomlkit
+from tomlkit.exceptions import ParseError
 
 from state_file import replace, snapshot
 
@@ -86,7 +87,7 @@ def main():
     args = parser.parse_args()
     try:
         removed, backup = reconcile(args.state, args.desired, apply=args.apply, resets=args.reset, managed=args.managed)
-    except (OSError, ValueError, tomlkit.exceptions.ParseError):
+    except (OSError, ValueError, ParseError):
         parser.exit(1, "Reconciliation failed; inspect state and any retained backup.\n")
     print("Removed keys:" if args.apply else "Would remove keys:")
     for key in removed:
