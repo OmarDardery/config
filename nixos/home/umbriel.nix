@@ -8,6 +8,10 @@
 }:
 let
   display = import ../lib/display.nix;
+  glassEffects = builtins.path {
+    path = ../assets/umbriel-liquid-glass;
+    name = "umbriel-liquid-glass-effects";
+  };
   once = action: {
     inherit action;
     repeat = false;
@@ -73,7 +77,13 @@ in
     package = null;
     settings = {
       # No independent palette: Noctalia owns colors; native defaults before rendering.
+      include.files = [ "${glassEffects}/effects.toml" ];
       include.optional.files = [ "${config.xdg.stateHome}/noctalia/theme/umbriel.toml" ];
+      effects = {
+        border = "liquid-glass-border";
+        max_fps = 60;
+        in_capture = false;
+      };
       general = {
         autostart = [ "noctalia" ]
           ++ lib.optional isLaptop
@@ -145,24 +155,24 @@ in
       };
       appearance = {
         prefer_no_csd = true;
-        border_width = 1;
+        border_width = 2;
         outer_border_width = 0;
-        corner_radius = 16;
+        corner_radius = 20;
         drag_opacity = 0.95;
         blur = {
           enabled = true;
           passes = 2;
-          radius = 6;
-          noise = 0.015;
-          brightness = 1.0;
+          radius = 7;
+          noise = 0.012;
+          brightness = 1.02;
           contrast = 1.0;
-          saturation = 1.15;
+          saturation = 1.12;
         };
         shadow = {
           enabled = true;
-          softness = 28;
+          softness = 32;
           offset_x = 0;
-          offset_y = 8;
+          offset_y = 9;
         };
         tab_bar = {
           style = "indicator";
@@ -178,18 +188,20 @@ in
         # Keep move/resize timelines identical so tiles stay aligned during reflow.
         curve = "spring:1,1100";
         windows_in = {
-          style = "popin";
-          curve = "spring:1,1200";
-          scale = 0.96;
+          effect = "liquid-glass-window";
+          duration_ms = 260;
+          curve = "easeout";
         };
         windows_out = {
-          style = "popin";
-          curve = "spring:1,1200";
-          scale = 0.94;
+          effect = "liquid-glass-window";
+          duration_ms = 220;
+          curve = "easeout";
         };
         workspaces = {
-          style = "slide";
-          curve = "spring:1,1000";
+          style = "reveal";
+          effect = "liquid-glass-workspace";
+          duration_ms = 300;
+          curve = "easeout";
         };
         overview = {
           curve = "spring:1,1000";
