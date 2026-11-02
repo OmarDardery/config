@@ -4,7 +4,6 @@
   lib,
   pkgs,
   inputs,
-  profile,
   ...
 }:
 {
@@ -29,19 +28,7 @@
   services.gnome.at-spi2-core.enable = true;
   services.gnome.gcr-ssh-agent.enable = true;
 
-  # Limit the privileged KMS helper to the recording group.
-  # KMS capture needs CAP_SYS_ADMIN; do not expose the helper to every user.
-  users.groups.recording = { };
-  security.wrappers.gsr-kms-server = {
-    owner = "root";
-    group = "recording";
-    permissions = "u+rx,g+rx,o-rwx";
-    capabilities = "cap_sys_admin+ep";
-    source = lib.getExe' (pkgs.gpu-screen-recorder.override {
-      inherit (config.security) wrapperDir;
-    }) "gsr-kms-server";
-  };
-  # Only the privileged capture helper and access group are host-owned.
+  # Packet capture is restricted to the Wireshark group.
   users.groups.wireshark = { };
   security.wrappers.dumpcap = {
     source = "${pkgs.wireshark-cli}/bin/dumpcap";
@@ -54,6 +41,7 @@
   # greetd's native PAM integration unlocks the user keyring.
   services.gnome.gnome-keyring.enable = true;
 
+  services.flatpak.enable = true;
   services.gvfs.enable = true;
   services.tumbler.enable = true;
   programs.thunar = {
@@ -64,8 +52,6 @@
     ];
   };
 
-  # User units live in applications/services.nix; restrict ports to Tailscale.
-  programs.kdeconnect.enable = false;
   services.upower.enable = true;
   services.fwupd.enable = true;
 

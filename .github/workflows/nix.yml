@@ -40,6 +40,7 @@ jobs:
           nix flake check path:./non-nixos --all-systems --no-build --no-write-lock-file
           nix run "$flake" -- --help
           nix flake check "$flake" --no-build --no-write-lock-file
+          nix eval --impure --json --expr "import ./tests/lean.nix { flake = builtins.getFlake \"$flake\"; }"
           cat > "$work/nixos/local-profile.nix" <<EOF
           { username = "ciuser"; homeDirectory = "/srv/ciuser"; configRepo = "$work"; }
           EOF

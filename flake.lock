@@ -21,63 +21,6 @@
         "type": "github"
       }
     },
-    "millennium": {
-      "inputs": {
-        "millennium-src": "millennium-src",
-        "nixpkgs": "nixpkgs",
-        "nixpkgs-bun": "nixpkgs-bun"
-      },
-      "locked": {
-        "dir": "packages/nix",
-        "lastModified": 1791044936,
-        "narHash": "sha256-+mNY2lHscvVa4KntAxuRMMFYMYxju06avIKyHooM8EE=",
-        "owner": "SteamClientHomebrew",
-        "repo": "Millennium",
-        "rev": "63c3928f0306edd83122c0f5b085a9b1a3d60f55",
-        "type": "github"
-      },
-      "original": {
-        "dir": "packages/nix",
-        "narHash": "sha256-+mNY2lHscvVa4KntAxuRMMFYMYxju06avIKyHooM8EE=",
-        "owner": "SteamClientHomebrew",
-        "repo": "Millennium",
-        "rev": "63c3928f0306edd83122c0f5b085a9b1a3d60f55",
-        "type": "github"
-      }
-    },
-    "millennium-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1790436335,
-        "narHash": "sha256-ghYUa4gPLV/VOflM2zkl/gtdwLWHQpRxG4boQoj4yKM=",
-        "owner": "SteamClientHomebrew",
-        "repo": "Millennium",
-        "rev": "765aa8802f8a4d942ad8ac8323a9e0f233a50fa8",
-        "type": "github"
-      },
-      "original": {
-        "owner": "SteamClientHomebrew",
-        "repo": "Millennium",
-        "rev": "765aa8802f8a4d942ad8ac8323a9e0f233a50fa8",
-        "type": "github"
-      }
-    },
-    "nix-flatpak": {
-      "locked": {
-        "lastModified": 1767983141,
-        "narHash": "sha256-7ZCulYUD9RmJIDULTRkGLSW1faMpDlPKcbWJLYHoXcs=",
-        "owner": "gmodena",
-        "repo": "nix-flatpak",
-        "rev": "440818969ac2cbd77bfe025e884d0aa528991374",
-        "type": "github"
-      },
-      "original": {
-        "owner": "gmodena",
-        "ref": "v0.7.0",
-        "repo": "nix-flatpak",
-        "type": "github"
-      }
-    },
     "nix-index-database": {
       "inputs": {
         "nixpkgs": [
@@ -95,35 +38,6 @@
       "original": {
         "owner": "nix-community",
         "repo": "nix-index-database",
-        "type": "github"
-      }
-    },
-    "nixpkgs": {
-      "locked": {
-        "lastModified": 1790769526,
-        "narHash": "sha256-6j4yqqBUvIbBn29k0y/2jqlv/YJd8CRkTBYhfm5Z/8c=",
-        "rev": "c9fe7d12cd78d1adcd12dd15e24432dde5b155a0",
-        "type": "tarball",
-        "url": "https://releases.nixos.org/nixpkgs/nixpkgs-26.11pre1082837.c9fe7d12cd78/nixexprs.tar.zst?lastModified=1790769526&rev=c9fe7d12cd78d1adcd12dd15e24432dde5b155a0"
-      },
-      "original": {
-        "type": "tarball",
-        "url": "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.zst"
-      }
-    },
-    "nixpkgs-bun": {
-      "locked": {
-        "lastModified": 1790822859,
-        "narHash": "sha256-69xHQhAeMAD2wDXO7T2pcOZIF9Sga2W+JkmY2a11Ops=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "c59305bab2065cfecc4944690d9eedbb56f3a9fa",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "c59305bab2065cfecc4944690d9eedbb56f3a9fa",
         "type": "github"
       }
     },
@@ -241,51 +155,13 @@
         "type": "github"
       }
     },
-    "noctalia-plugins": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1790899504,
-        "narHash": "sha256-p5y3jmEPhyA6gdSmMkNgGNoNBAYd8MzlpUZxLf+X2JY=",
-        "owner": "noctalia-dev",
-        "repo": "community-plugins",
-        "rev": "aa42b35d2e89550bd2d516718f2c29bccddbe0dc",
-        "type": "github"
-      },
-      "original": {
-        "owner": "noctalia-dev",
-        "repo": "community-plugins",
-        "rev": "aa42b35d2e89550bd2d516718f2c29bccddbe0dc",
-        "type": "github"
-      }
-    },
-    "noctalia-templates": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1790982859,
-        "narHash": "sha256-cRN3C8i+dINL2jkKOgsC6Ml73mJOfhmzKrT5NO6DYMo=",
-        "owner": "noctalia-dev",
-        "repo": "community-templates",
-        "rev": "2f2ada3f10a66f9dbeb2136e4d70271ac6072aaf",
-        "type": "github"
-      },
-      "original": {
-        "owner": "noctalia-dev",
-        "repo": "community-templates",
-        "rev": "2f2ada3f10a66f9dbeb2136e4d70271ac6072aaf",
-        "type": "github"
-      }
-    },
     "root": {
       "inputs": {
         "home-manager": "home-manager",
-        "millennium": "millennium",
-        "nix-flatpak": "nix-flatpak",
         "nix-index-database": "nix-index-database",
         "nixpkgs": "nixpkgs_2",
         "noctalia": "noctalia",
         "noctalia-greeter": "noctalia-greeter",
-        "noctalia-plugins": "noctalia-plugins",
-        "noctalia-templates": "noctalia-templates",
         "umbriel": "umbriel",
         "webos-dev-manager": "webos-dev-manager",
         "zen-browser": "zen-browser"

@@ -1,6 +1,5 @@
 # Terminal behavior is declarative; Noctalia writes only the included palette.
 {
-  pkgs,
   lib,
   config,
   profile,
@@ -56,13 +55,4 @@
     extraConfig = "include ${config.xdg.stateHome}/noctalia/theme/kitty.conf";
   };
 
-  # Preserve the former writable configuration before HM takes ownership.
-  xdg.configFile."kitty/kitty.conf".force = true;
-  home.activation.kittyDeclarativeConfig =
-    lib.hm.dag.entryBetween [ "linkGeneration" ] [ "writeBoundary" ]
-      ''
-        run ${pkgs.python3}/bin/python3 ${../pkgs}/migrate-desktop.py kitty-declarative \
-          ${lib.escapeShellArg "${config.xdg.configHome}/kitty/kitty.conf"} \
-          ${config.xdg.configFile."kitty/kitty.conf".source}
-      '';
 }

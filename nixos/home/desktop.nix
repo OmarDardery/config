@@ -8,26 +8,14 @@ let
   display = import ../lib/display.nix;
 in
 {
-  xdg.dataFile."dbus-1/services/org.kde.kdeconnect.service".enable = true;
-  xdg.dataFile."dbus-1/services/org.kde.kdeconnect.service".text = ''
-    [D-BUS Service]
-    Name=org.kde.kdeconnect
-    Exec=/run/current-system/sw/bin/false
-    SystemdService=kdeconnect.service
-  '';
+  services.kdeconnect.enable = true;
+  services.mpris-proxy.enable = true;
   xdg.configFile = {
     # Merge our font DPI without replacing unrelated X resources.
     "X11/Xresources" = {
       enable = isLaptop;
       text = "Xft.dpi: ${toString (96 * display.laptopScale)}\n";
     };
-    "autostart/org.kde.kdeconnect.daemon.desktop".enable = true;
-    "autostart/org.kde.kdeconnect.daemon.desktop".text = ''
-      [Desktop Entry]
-      Type=Application
-      Name=KDE Connect
-      Hidden=true
-    '';
   }
   // lib.genAttrs [ "gtk-3.0/gtk.css" "gtk-4.0/gtk.css" ] (_: {
     text = ''@import url("noctalia.css");'';

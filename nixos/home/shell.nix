@@ -31,11 +31,6 @@ let
     if command -v fzf >/dev/null 2>&1; then
       if [ "$shell_kind" = zsh ]; then source <(fzf --zsh); else eval "$(fzf --bash)"; fi
     fi
-    theme="''${XDG_STATE_HOME:-$HOME/.local/state}/noctalia/theme"
-    [ ! -r "$theme/fzf.sh" ] || . "$theme/fzf.sh"
-    if [ -r "$theme/lazygit.yml" ]; then
-      export LG_CONFIG_FILE="''${XDG_CONFIG_HOME:-$HOME/.config}/lazygit/config.yml,$theme/lazygit.yml"
-    fi
     y() {
       local tmp cwd exit_code=0
       tmp=$(mktemp)
@@ -84,10 +79,10 @@ in
     '';
   };
   xdg.configFile."lazygit/config.yml".text = "{}\n";
-  xdg.configFile."bat/config".text = ("--theme=noctalia\n");
+
   programs.btop = {
     enable = true;
     package = null;
-    settings.color_theme = "noctalia";
+
   };
 }

@@ -14,18 +14,8 @@
       url = "github:noctalia-dev/noctalia-greeter/v1.7.0";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    noctalia-templates = {
-      url = "github:noctalia-dev/community-templates/2f2ada3f10a66f9dbeb2136e4d70271ac6072aaf";
-      flake = false;
-    };
-    millennium.url = "github:SteamClientHomebrew/Millennium/63c3928f0306edd83122c0f5b085a9b1a3d60f55?dir=packages/nix&narHash=sha256-%2BmNY2lHscvVa4KntAxuRMMFYMYxju06avIKyHooM8EE%3D";
-    noctalia-plugins = {
-      url = "github:noctalia-dev/community-plugins/aa42b35d2e89550bd2d516718f2c29bccddbe0dc";
-      flake = false;
-    };
     # Keep the tested action syntax and matching wlroots/portal dependency pins.
     umbriel.url = "github:noctalia-dev/umbriel/b1c3efc407c4cbc8db265bd678eddc13261553c3";
-    nix-flatpak.url = "github:gmodena/nix-flatpak/v0.7.0";
     nix-index-database = {
       url = "github:nix-community/nix-index-database";
       inputs.nixpkgs.follows = "nixpkgs";

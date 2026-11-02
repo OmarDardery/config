@@ -14,7 +14,7 @@
         action = "lock";
       };
       suspend = {
-        enabled = false; # The laptop power hook enables this on battery only.
+        enabled = false;
         timeout = 1200;
         action = "lock_and_suspend";
       };
@@ -112,9 +112,6 @@
         type = "notification";
       }
       {
-        type = "alexander/screen-toolkit:toggle";
-      }
-      {
         type = "caffeine";
       }
     ];
@@ -167,28 +164,7 @@
   lockscreen_widgets = {
     enabled = false;
   };
-  plugin_settings = {
-    "davemhammer/tailscale" = {
-      refresh_interval = 30;
-      notify_on_peer_change = false;
-    };
-    "avivbintangaringga/nix-monitor" = {
-      branch = "nixos-26.05";
-      system_stats_check_mode = "off";
-    };
-  };
-  plugins = {
-    enabled = [
-      "alexander/screen-toolkit"
-      "avivbintangaringga/nix-monitor"
-      "icefish/phone-connect"
-      "thepunkoff/pomodoro"
-      "alexander/game-launcher"
-      "davemhammer/tailscale"
-    ];
-    # Catalogs can be refreshed in Settings; Nix-managed plugins follow the flake pin.
-    auto_update = "none";
-  };
+  plugins.enabled = [ ];
   shell = {
     corner_radius_scale = 1.2;
     font_family = "Inter";
@@ -312,25 +288,8 @@
     battery = {
       display_mode = "graphic";
     };
-    tailscale = {
-      type = "davemhammer/tailscale:status";
-      show_counts = false;
-    };
     control-center = {
       glyph = "settings";
-    };
-    nix-monitor = {
-      show_text = false;
-      type = "avivbintangaringga/nix-monitor:nix-monitor";
-    };
-    screen-toolkit = {
-      type = "alexander/screen-toolkit:widget";
-    };
-    phone-connect = {
-      type = "icefish/phone-connect:bar";
-    };
-    pomodoro = {
-      type = "thepunkoff/pomodoro:widget";
     };
   };
 }

@@ -2,7 +2,6 @@
 {
   pkgs,
   lib,
-  config,
   ...
 }:
 let
@@ -85,85 +84,7 @@ let
       }
     '';
 
-    "lua/plugins/noctalia.lua" = ''
-      local path = ${lib.generators.toLua { } "${config.xdg.stateHome}/noctalia/theme/nvim.lua"}
-      local last_stamp
-
-      local function apply(force)
-        local stat = vim.uv.fs_stat(path)
-        -- Nanoseconds and inode also detect rapid updates and atomic replacement.
-        local stamp = stat and table.concat({ stat.mtime.sec, stat.mtime.nsec, stat.size, stat.ino }, ":") or "missing"
-        if not force and stamp == last_stamp then
-          return
-        end
-        local ok, err = pcall(function()
-          if not stat then
-            vim.cmd.colorscheme("habamax")
-            return
-          end
-          local chunk = assert(loadfile(path))
-          -- The pinned template returns setup(), but also registers SIGUSR1 and
-          -- re-requires "matugen". Isolate its globals and suppress that handler;
-          -- focus checks below own reloads without signalling other instances.
-          local uv = setmetatable({ new_signal = function()
-            return { start = function() end }
-          end }, { __index = vim.uv })
-          local env = setmetatable({
-            vim = setmetatable({ uv = uv }, { __index = vim }),
-            _G = {},
-          }, { __index = _G })
-          setfenv(chunk, env)
-          chunk().setup()
-        end)
-        if ok then
-          last_stamp = stamp
-        else
-          vim.notify("Noctalia theme: " .. tostring(err), vim.log.levels.WARN)
-          if not last_stamp then
-            vim.cmd.colorscheme("habamax")
-          end
-        end
-      end
-
-      return {
-        { "RRethy/base16-nvim", lazy = false, priority = 1000 },
-        {
-          "LazyVim/LazyVim",
-          opts = {
-            colorscheme = function()
-              apply(true)
-              vim.api.nvim_create_autocmd("FocusGained", {
-                group = vim.api.nvim_create_augroup("oad_noctalia_theme", { clear = true }),
-                callback = function() apply(false) end,
-              })
-            end,
-          },
-        },
-      }
-    '';
   };
-  defaults = pkgs.linkFarm "lazyvim-starter" (
-    lib.mapAttrsToList (name: text: {
-      inherit name;
-      path = pkgs.writeText (builtins.baseNameOf name) text;
-    }) files
-  );
-  manifest = pkgs.writeText "lazyvim-starter.json" (
-    builtins.toJSON {
-      directories."${config.xdg.configHome}/nvim" = "${defaults}";
-      # Repair only our exact previous starter; edited or deleted files stay yours.
-      repairs = {
-        "${config.xdg.configHome}/nvim/init.lua" = {
-          sha256 = "5c4a0c19dc24aa834cfa37e875723d08916411206e9238802261a74eb85e64b8";
-          source = "${defaults}/init.lua";
-        };
-        "${config.xdg.configHome}/nvim/lua/plugins/tools.lua" = {
-          sha256 = "6e4844d9330cae59f39a1cfb1e5746b7bb23f83088f7247932140aeeac8e680d";
-          source = "${defaults}/lua/plugins/tools.lua";
-        };
-      };
-    }
-  );
 in
 {
   # Nix supplies the program and Nix tools; Lazy owns every plugin in user data.
@@ -187,8 +108,7 @@ in
     pkgs.nixd
     pkgs.nixfmt
   ];
-  home.activation.mutableLazyVim = lib.hm.dag.entryBetween [ "linkGeneration" ] [ "writeBoundary" ] ''
-    run ${pkgs.python3}/bin/python3 ${../../pkgs}/migrate-desktop.py editor-defaults \
-      ${manifest} ${lib.escapeShellArg "${config.xdg.stateHome}/editor-defaults/lazyvim"}
-  '';
+  xdg.configFile = lib.mapAttrs' (
+    name: text: lib.nameValuePair "nvim/${name}" { inherit text; }
+  ) files;
 }

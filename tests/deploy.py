@@ -27,9 +27,8 @@ elif name == 'nix':
     elif 'update' in args and os.environ.get('TEST_UPDATE_FAIL'): sys.exit(43)
     elif 'build' in args:
         if os.environ.get('TEST_BUILD_FAIL'): sys.exit(42)
-        pathlib.Path(args[args.index('--out-link')+1]).symlink_to(root/'output')
-elif name == 'activate':
-    with (root/'events').open('a') as f: f.write(json.dumps(['backup',os.environ.get('HOME_MANAGER_BACKUP_EXT')])+'\n')
+elif name == 'sudo':
+    if os.environ.get('TEST_SWITCH_FAIL'): sys.exit(4)
 '''
 
 
@@ -53,8 +52,6 @@ class Deployment(unittest.TestCase):
         self.script.write_text((ROOT/'scripts/apply.sh').read_text().replace('/etc/NIXOS',str(self.marker)))
         for name in ['id','uname','git','nix','sudo']:
             path=self.bin/name; path.write_text(f'#!{sys.executable}\n'+MOCK); path.chmod(0o755)
-        (self.base/'output').mkdir()
-        path=self.base/'output/activate'; path.write_text(f'#!{sys.executable}\n'+MOCK); path.chmod(0o755)
         self.repo=self.home/'config'
 
     def apply(self,*args,success=True):
@@ -74,23 +71,24 @@ class Deployment(unittest.TestCase):
         self.assertIn('non-nixos', self.apply(success=False).stderr)
         self.assertFalse(self.events('git')); self.assertFalse(self.events('nix'))
 
-    def test_nixos_builds_then_switches(self):
+    def test_nixos_uses_one_standard_rebuild_and_path_flake(self):
         self.marker.touch(); self.apply()
         self.assertEqual((self.repo/'nixos/hardware-configuration.nix').read_text(),self.hardware.read_text())
-        self.assertFalse(self.events('activate'))
         self.assertEqual(self.events('sudo')[0][1:3],['nixos-rebuild','switch'])
-        sequence=[e[0] for e in self.events()]
-        self.assertLess(sequence.index('nix'),sequence.index('sudo'))
+        self.assertFalse(self.builds())
+        self.assertIn(f'path:{self.repo}#nixos', self.events('sudo')[0])
+        self.assertIn('--depth', self.events('git')[0])
 
     def test_build_failure_stops_activation(self):
         self.marker.touch(); self.env['TEST_BUILD_FAIL']='1'
-        self.assertEqual(self.apply(success=False).returncode,42)
-        self.assertFalse(self.events('sudo')); self.assertFalse(self.events('activate'))
+        self.assertEqual(self.apply('--build-only',success=False).returncode,42)
+        self.assertFalse(self.events('sudo'))
 
     def test_build_only(self):
         self.marker.touch()
         self.apply('--build-only')
-        self.assertFalse(self.events('activate')); self.assertFalse(self.events('sudo'))
+        self.assertFalse(self.events('sudo'))
+        self.assertIn('--no-link', self.builds()[0])
 
     def test_existing_checkout_and_hardware_preserved(self):
         shutil.copytree(self.template,self.repo)
@@ -118,16 +116,22 @@ class Deployment(unittest.TestCase):
         self.env['TEST_UID']='0'; self.apply(success=False)
         self.assertFalse(self.events('git'))
 
-    def test_update_builds_before_switch(self):
+    def test_update_refreshes_inputs_then_uses_standard_rebuild(self):
         self.marker.touch(); self.apply('--update')
         calls=self.events('nix')
         self.assertIn('update',calls[0]); self.assertIn('--flake',calls[0])
         self.assertTrue(self.events('sudo'))
+        self.assertFalse(self.builds())
 
     def test_update_failure_stops_build_and_switch(self):
         self.marker.touch(); self.env['TEST_UPDATE_FAIL']='1'
         self.assertEqual(self.apply('--update',success=False).returncode,43)
         self.assertFalse(self.builds()); self.assertFalse(self.events('sudo'))
+
+    def test_switch_failure_is_reported(self):
+        self.marker.touch(); self.env['TEST_SWITCH_FAIL']='1'
+        self.assertEqual(self.apply(success=False).returncode,4)
+        self.assertFalse(self.builds())
 
     def test_nix_interpolation_escaped(self):
         self.marker.touch()

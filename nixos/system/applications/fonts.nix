@@ -25,19 +25,4 @@
     ];
   };
 
-  # Cache paths from the old user profile can survive moving fonts to the
-  # system. Refresh inside each sandbox as its user, once per font set/ref.
-  systemd.user.services.flatpak-font-cache = {
-    description = "Refresh Flatpak font caches after font changes";
-    wantedBy = [ "graphical-session.target" ];
-    partOf = [ "graphical-session.target" ];
-    after = [ "graphical-session-pre.target" ];
-    restartTriggers = [ config.system.path ];
-    path = [ config.services.flatpak.package ];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      ExecStart = "${pkgs.python3}/bin/python3 ${../../pkgs/flatpak-font-cache.py} /run/current-system/sw/share/X11/fonts";
-    };
-  };
 }

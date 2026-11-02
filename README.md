@@ -18,8 +18,8 @@ nix run github:OmarDardery/config#update
 
 Run as your normal user. The launcher clones to `~/config`, generates ignored
 local account settings, and copies `/etc/nixos/hardware-configuration.nix` if
-missing. It builds the complete system before using sudo to switch, including
-Home Manager. `#update` updates the local `flake.lock`; it preserves your source
+missing. It runs the standard `sudo nixos-rebuild switch`, which builds the complete system
+before activating, including Home Manager. `#update` updates the local `flake.lock`; it preserves your source
 edits and does not pull Git commits. Pull source changes with `git pull --ff-only`
 when wanted, then apply. Review and commit lockfile changes in your checkout.
 
@@ -29,7 +29,7 @@ NVIDIA/PRIME bus IDs and a storage mount. Preserve system/home state versions.
 
 NixOS manages applications and desktop services declaratively. Home Manager
 configures the shell, Git, editors, Umbriel, Noctalia and desktop preferences.
-Neovim/LazyVim, VSCodium, direnv and native Steam/Millennium remain available;
+Neovim/LazyVim, VSCodium, Logisim Evolution, direnv and native Steam remain available;
 language toolchains load through project shells. There are no standalone home
 profiles or non-NixOS graphics wrappers in this configuration.
 
@@ -57,6 +57,20 @@ fetches plugins on first launch. `#update` runs `git pull --ff-only`, refusing
 tracked source edits or a diverged checkout before touching dotfiles.
 See [non-nixos/README.md](non-nixos/README.md) for paths, backups and requirements.
 
+## Rebuild troubleshooting
+
+The flake is at `~/config`, not `~/config/nixos`. From any directory, use:
+
+```sh
+sudo nixos-rebuild switch --flake "path:$HOME/config#nixos"
+```
+
+Keep `path:`: it includes the ignored generated hardware/account files. After
+rebuilding, `exec zsh` reloads changed aliases; an already open shell still has its
+old `update` definition. `systemd-run` is NixOS's normal activation mechanism.
+This config no longer installs `desktop-config.service`, font-cache refresh
+services, settings reconciliation scripts or a scheduler daemon.
+
 ## Options and local use
 
 If flakes are not enabled, prefix either command with:
@@ -80,7 +94,7 @@ Repository arguments accept `OWNER/REPO`, `github:OWNER/REPO` or an HTTPS GitHub
 URL with this layout. `--ref` selects a branch/tag/commit for a new clone only.
 Existing checkouts are never reset or switched. To test an unmerged branch,
 select it in the flake URL and with `--ref BRANCH`, using a fresh `--repo-dir`.
-The distro-specific setup scripts forward to the matching flake.
+`setup.sh` is the only checkout launcher; distro-specific forwarding scripts are removed.
 
 NixOS personal defaults are in [nixos/profile.nix](nixos/profile.nix).
 Generated `nixos/local-profile.nix` and hardware stay ignored; `path:` builds
@@ -142,14 +156,14 @@ NixOS specialist bundles default off. Enable `workstation.engineering.enable`,
 Steam remain enabled. Docker is socket-activated when enabled. Existing user
 data and unmanaged Flatpaks are retained.
 
-Editor preferences stay writable. Mason, Tree-sitter compilation, notebook
+NixOS editor preferences are managed directly by Home Manager. Mason, Tree-sitter compilation, notebook
 kernels and language providers are disabled in the starter; add tools per project.
 On NixOS, `up`/`rebuild` apply, `nbuild` builds only, `update` updates inputs and
 switches, `neval` checks the flake, and `cnf`/`cconf` edit/enter the checkout.
-`desktop-apply` initializes desktop palettes at graphical login.
+No custom desktop initialization service is installed.
 
 NixOS recovery: `sudo nixos-rebuild switch --rollback` or a previous boot generation.
-Mutable editor preferences need manual restoration from their backups.
+Home Manager backs up conflicting unmanaged files with a `.bak` suffix.
 
 [Detailed NixOS notes](nixos/README.md) · [Shortcuts](nixos/SHORTCUTS.md) ·
 [Theming](nixos/THEMING.md) · [Backups](nixos/BACKUPS.md)

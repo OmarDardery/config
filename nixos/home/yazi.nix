@@ -12,9 +12,5 @@
       sort_by = "natural";
       sort_dir_first = true;
     };
-    theme.flavor = {
-      dark = "noctalia";
-      light = "noctalia";
-    };
   };
 }

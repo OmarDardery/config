@@ -1,125 +1,39 @@
-# Plain VSCodium, a Nix extension and the shared desktop theme.
+{ pkgs, ... }:
 {
-  pkgs,
-  lib,
-  config,
-  ...
-}:
-let
-  editorExtensions = with pkgs.vscode-extensions; [
-    jnoortheen.nix-ide
-    editorconfig.editorconfig
-  ];
-  # Noctalia must render this file before the theme's first use. Keep the
-  # manifest path inside the extension; only the symlink points outside it.
-  noctaliaTheme = pkgs.vscode-utils.buildVscodeExtension {
-    pname = "noctalia";
-    version = "1.0.0";
-    vscodeExtPublisher = "noctalia";
-    vscodeExtName = "noctalia";
-    vscodeExtUniqueId = "noctalia.noctalia";
-    dontUnpack = true;
-    dontConfigure = true;
-    dontBuild = true;
-    dontFixup = true;
-    installPhase =
-      let
-        manifest = pkgs.writeText "noctalia-package.json" (
-          builtins.toJSON {
-            name = "noctalia";
-            displayName = "Noctalia";
-            publisher = "noctalia";
-            version = "1.0.0";
-            engines.vscode = "^1.70.0";
-            categories = [ "Themes" ];
-            contributes.themes = [
-              {
-                id = "NoctaliaTheme";
-                label = "NoctaliaTheme";
-                uiTheme = "vs-dark";
-                path = "themeJsonSymlink.json";
-                _watch = true;
-              }
-              {
-                id = "NoctaliaLight";
-                label = "NoctaliaLight";
-                uiTheme = "vs";
-                path = "themeJsonSymlink.json";
-                _watch = true;
-              }
-            ];
-          }
-        );
-      in
-      ''
-        runHook preInstall
-        mkdir -p "$out/$installPrefix"
-        cp ${manifest} "$out/$installPrefix/package.json"
-        ln -s ${pkgs.lib.escapeShellArg "${config.xdg.stateHome}/noctalia/theme/vscode.json"} \
-          "$out/$installPrefix/themeJsonSymlink.json"
-        runHook postInstall
-      '';
-  };
-  settings = {
-    "editor.lineNumbers" = "relative";
-    "editor.cursorSurroundingLines" = 8;
-    "editor.minimap.enabled" = false;
-    "editor.formatOnSave" = true;
-    "editor.fontFamily" = "'JetBrainsMono Nerd Font', 'JetBrains Mono', monospace";
-    "editor.fontSize" = 14;
-    "files.trimTrailingWhitespace" = true;
-    "files.insertFinalNewline" = true;
-    "terminal.integrated.scrollback" = 10000;
-    "window.titleBarStyle" = "custom";
-    "window.controlsStyle" = "hidden";
-    "window.autoDetectColorScheme" = true;
-    "workbench.colorTheme" = "NoctaliaTheme";
-    "workbench.preferredDarkColorTheme" = "NoctaliaTheme";
-    "workbench.preferredLightColorTheme" = "NoctaliaLight";
-    "telemetry.telemetryLevel" = "off";
-    "update.mode" = "none";
-    "nix.enableLanguageServer" = true;
-    "nix.serverPath" = "nixd";
-    "nix.formatterPath" = "nixfmt";
-    "[nix]"."editor.defaultFormatter" = "jnoortheen.nix-ide";
-  };
-  userDefaults = pkgs.linkFarm "codium-user-starter" [
-    {
-      name = "settings.json";
-      path = pkgs.writeText "codium-settings.json" (builtins.toJSON settings);
-    }
-  ];
-  extensionDefaults = pkgs.linkFarm "codium-extension-starter" (
-    map (extension: {
-      name = extension.vscodeExtUniqueId;
-      path = "${extension}/share/vscode/extensions/${extension.vscodeExtUniqueId}";
-    }) (editorExtensions ++ [ noctaliaTheme ])
-  );
-  manifest = pkgs.writeText "codium-starter.json" (
-    builtins.toJSON {
-      directories = {
-        "${config.xdg.configHome}/VSCodium/User" = "${userDefaults}";
-        "${config.home.homeDirectory}/.vscode-oss/extensions" = "${extensionDefaults}";
+  programs.vscodium = {
+    enable = true;
+    package = pkgs.vscodium;
+    mutableExtensionsDir = true;
+    profiles.default = {
+      enableUpdateCheck = false;
+      enableExtensionUpdateCheck = false;
+      extensions = with pkgs.vscode-extensions; [
+        jnoortheen.nix-ide
+        editorconfig.editorconfig
+      ];
+      userSettings = {
+        "editor.lineNumbers" = "relative";
+        "editor.cursorSurroundingLines" = 8;
+        "editor.minimap.enabled" = false;
+        "editor.formatOnSave" = true;
+        "editor.fontFamily" = "'JetBrainsMono Nerd Font', 'JetBrains Mono', monospace";
+        "editor.fontSize" = 14;
+        "files.trimTrailingWhitespace" = true;
+        "files.insertFinalNewline" = true;
+        "terminal.integrated.scrollback" = 10000;
+        "window.titleBarStyle" = "custom";
+        "window.controlsStyle" = "hidden";
+        "window.autoDetectColorScheme" = true;
+        "workbench.colorTheme" = "Default Dark Modern";
+        "workbench.preferredDarkColorTheme" = "Default Dark Modern";
+        "workbench.preferredLightColorTheme" = "Default Light Modern";
+        "telemetry.telemetryLevel" = "off";
+        "update.mode" = "none";
+        "nix.enableLanguageServer" = true;
+        "nix.serverPath" = "nixd";
+        "nix.formatterPath" = "nixfmt";
+        "[nix]"."editor.defaultFormatter" = "jnoortheen.nix-ide";
       };
-      extensionIndex = "${config.home.homeDirectory}/.vscode-oss/extensions/extensions.json";
-    }
-  );
-  extensionManifest = pkgs.writeText "codium-portable-extensions.json" (
-    builtins.toJSON {
-      directories."${config.home.homeDirectory}/.vscode-oss/extensions" = "${extensionDefaults}";
-      extensionIndex = "${config.home.homeDirectory}/.vscode-oss/extensions/extensions.json";
-    }
-  );
-in
-{
-  # The application owns settings, profiles, keybindings and all installed extensions.
-  home.packages = [ pkgs.vscodium ];
-  home.activation.mutableVSCodium =
-    lib.hm.dag.entryBetween [ "linkGeneration" ] [ "writeBoundary" ]
-      ''
-        run ${pkgs.python3}/bin/python3 ${../../pkgs}/migrate-desktop.py editor-defaults \
-          ${manifest} ${lib.escapeShellArg "${config.xdg.stateHome}/editor-defaults/codium"}
-        run ${pkgs.python3}/bin/python3 ${../../pkgs}/migrate-desktop.py editor-defaults \
-          ${extensionManifest} ${lib.escapeShellArg "${config.xdg.stateHome}/editor-defaults/codium-portable-extensions"}
-      '';
+    };
+  };
 }

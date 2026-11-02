@@ -1,16 +1,13 @@
 {
-  isLaptop,
   pkgs,
   config,
   lib,
-  profile,
   ...
 }:
 {
   environment.systemPackages =
     with pkgs;
     [
-      (import ../../pkgs/performance-launchers.nix { inherit pkgs isLaptop; }).performanceRun
       kitty
       starship
       zoxide
@@ -27,10 +24,6 @@
       git-lfs
       delta
       gh
-      nh
-      nix-output-monitor
-      nvd
-      nix-tree
       curl
       wget
       jq
@@ -59,5 +52,4 @@
         ethtool
       ]
     );
-  environment.sessionVariables.NH_FLAKE = "path:${profile.configRepo}";
 }

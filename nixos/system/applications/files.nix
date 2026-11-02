@@ -16,7 +16,6 @@
     pavucontrol
     brightnessctl
     playerctl
-    kdePackages.kdeconnect-kde
   ];
   qt = {
     enable = true;

@@ -41,7 +41,6 @@
     backupFileExtension = "bak";
     users.${profile.username}.imports = [
       ../home
-      ../home/hardware-user.nix
     ];
   };
 

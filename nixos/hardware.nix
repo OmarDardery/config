@@ -5,10 +5,6 @@
   ...
 }:
 {
-  environment.systemPackages = [
-    config.hardware.nvidia.package.settings
-    (import ./pkgs/nvidia-offload.nix { inherit pkgs; })
-  ];
   hardware = {
     bluetooth = {
       enable = true;
@@ -22,7 +18,7 @@
 
     graphics.enable = true;
 
-    # Native driver and daemon; the tablet preference seed is in home/hardware-user.nix.
+    # Native tablet driver. Configure pen mappings through its own UI.
     uinput.enable = true;
 
     # NVIDIA driver and PRIME offload policy.
@@ -43,7 +39,7 @@
       # Use open kernel modules for this Ada GPU.
       open = true;
 
-      nvidiaSettings = false; # matching settings GUI is installed above
+      nvidiaSettings = false;
 
       # Preserve the working suspend policy; test resume before enabling.
       powerManagement.enable = false;
@@ -59,7 +55,7 @@
 
         offload = {
           enable = true;
-          enableOffloadCmd = false; # system-provided `nvidia-offload` wrapper
+          enableOffloadCmd = true;
         };
       };
     };

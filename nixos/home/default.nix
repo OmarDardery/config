@@ -11,7 +11,6 @@
     ./nix-tools.nix
     ./editors
     ./development.nix
-    ./gaming.nix
     inputs.noctalia.homeModules.default
     inputs.umbriel.homeModules.default
     ./desktop.nix
@@ -19,7 +18,6 @@
     ./noctalia.nix
     ./umbriel.nix
     ./kitty.nix
-    ./office.nix
   ];
   home.username = profile.username;
   home.homeDirectory = profile.homeDirectory;
