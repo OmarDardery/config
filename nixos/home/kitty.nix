@@ -8,17 +8,11 @@
 {
   programs.kitty = {
     enable = true;
-    package = null;
-    # The shared shell files are plain dotfiles, so let Kitty load its own
-    # integration instead of HM emitting no-rc and injecting disabled modules.
-    shellIntegration.mode = null;
     font = {
       name = "JetBrainsMono Nerd Font";
       size = 14;
     };
     settings = {
-      shell = "zsh";
-      shell_integration = "enabled";
       bold_font = "auto";
       italic_font = "auto";
       bold_italic_font = "auto";

@@ -1,5 +1,5 @@
 {
-  description = "NixOS workstation with Home Manager and project development shells";
+  description = "NixOS workstation with Home Manager";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
@@ -70,25 +70,6 @@
         };
       };
       formatter.${system} = pkgs.nixfmt-tree;
-      devShells.${system} = import ./nixos/dev-shells.nix { inherit pkgs; };
-      templates = builtins.listToAttrs (
-        map
-          (name: {
-            inherit name;
-            value = {
-              path = ./templates + "/${name}";
-              description = "Standalone ${name} project shell with direnv";
-            };
-          })
-          [
-            "nix"
-            "python"
-            "go"
-            "node"
-            "rust"
-            "cpp"
-          ]
-      );
       nixosConfigurations.${profile.hostName} = nixpkgs.lib.nixosSystem {
         specialArgs = {
           inherit inputs profile;

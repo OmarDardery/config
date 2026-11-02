@@ -28,7 +28,7 @@ in
         autostart = [
           "noctalia"
         ]
-        ++ lib.optional isLaptop "xrdb -merge ${lib.escapeShellArg "${config.xdg.configHome}/X11/Xresources"}";
+        ++ lib.optional isLaptop "xrdb -merge ${lib.escapeShellArg "${config.home.homeDirectory}/.Xresources"}";
         mod_key = "Super";
         show_cheatsheet = false;
         focus_on_activate = true;
@@ -54,8 +54,8 @@ in
           follows_mouse_max_scroll = 0.0;
         };
         cursor = {
-          theme = "Bibata-Modern-Classic";
-          size = 24;
+          theme = config.home.pointerCursor.name;
+          size = config.home.pointerCursor.size;
           hide_when_typing = true;
         };
       };

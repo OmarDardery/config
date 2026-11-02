@@ -1,88 +1,47 @@
+{ pkgs, config, ... }:
 {
-  pkgs,
-  config,
-  lib,
-  ...
-}:
-let
-  aliases = config.home.shellAliases;
-  aliasLines = lib.concatStringsSep "\n" (
-    lib.mapAttrsToList (name: command: "alias ${name}=${lib.escapeShellArg command}") aliases
-  );
-  common = ''
-    export PATH="$HOME/.local/bin:$PATH"
-    ${aliasLines}
-    if [ -z "''${LS_COLORS:-}" ] && command -v dircolors >/dev/null 2>&1; then
-      eval "$(dircolors -b)"
-    fi
-    if command -v eza >/dev/null 2>&1; then
-      alias ls='eza --icons=auto --group-directories-first'
-      alias ll='eza -l --icons=auto --group-directories-first'
-      alias la='eza -la --icons=auto --group-directories-first'
-    else
-      alias ls='ls --color=auto'
-      alias ll='ls -l --color=auto'
-      alias la='ls -la --color=auto'
-    fi
-    alias grep='grep --color=auto'
-    if command -v direnv >/dev/null 2>&1; then eval "$(direnv hook "$shell_kind")"; fi
-    if command -v starship >/dev/null 2>&1; then eval "$(starship init "$shell_kind")"; fi
-    if command -v zoxide >/dev/null 2>&1; then eval "$(zoxide init "$shell_kind")"; fi
-    if command -v fzf >/dev/null 2>&1; then
-      if [ "$shell_kind" = zsh ]; then source <(fzf --zsh); else eval "$(fzf --bash)"; fi
-    fi
-    y() {
-      local tmp cwd exit_code=0
-      tmp=$(mktemp)
-      command yazi "$@" --cwd-file="$tmp" || exit_code=$?
-      cwd=$(cat "$tmp")
-      rm -f "$tmp"
-      if [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then cd -- "$cwd"; fi
-      return "$exit_code"
-    }
-  '';
-in
-{
-  home.sessionPath = [
-    "${config.home.homeDirectory}/.local/bin"
+  home.sessionPath = [ "${config.home.homeDirectory}/.local/bin" ];
+  home.packages = with pkgs; [
+    ripgrep
+    fd
+    tealdeer
   ];
   home.shellAliases = {
     lt = "eza --tree --level=2";
     edit = "sudo -e";
+    grep = "grep --color=auto";
   };
-  home.file.".zshenv".text = ''
-    if [ -r "${config.home.profileDirectory}/etc/profile.d/hm-session-vars.sh" ]; then
-      . "${config.home.profileDirectory}/etc/profile.d/hm-session-vars.sh"
-    fi
-  '';
-  home.file.".zshrc".text = ''
-    HISTFILE="$HOME/.zsh_history"
-    HISTSIZE=10000
-    SAVEHIST=10000
-    setopt HIST_IGNORE_ALL_DUPS SHARE_HISTORY
-    autoload -Uz colors compinit
-    colors
-    compinit
-    shell_kind=zsh
-    ${common}
-    zstyle ':completion:*' list-colors "''${(s.:.)LS_COLORS}"
-    # Load highlighting last, after tools have registered their ZLE widgets.
-    source ${pkgs.zsh-autosuggestions}/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-    source ${pkgs.zsh-syntax-highlighting}/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-  '';
-  programs.bash = {
-    enable = true;
-    package = null;
-    initExtra = ''
-      shell_kind=bash
-      ${common}
-    '';
-  };
-  xdg.configFile."lazygit/config.yml".text = "{}\n";
-
-  programs.btop = {
-    enable = true;
-    package = null;
-
+  programs = {
+    bash = {
+      enable = true;
+      package = null;
+    };
+    zsh = {
+      enable = true;
+      autosuggestion.enable = true;
+      syntaxHighlighting.enable = true;
+      history = {
+        path = "${config.home.homeDirectory}/.zsh_history";
+        size = 10000;
+        save = 10000;
+        share = true;
+        ignoreAllDups = true;
+      };
+    };
+    starship.enable = true;
+    zoxide.enable = true;
+    fzf.enable = true;
+    eza = {
+      enable = true;
+      icons = "auto";
+      extraOptions = [ "--group-directories-first" ];
+    };
+    bat.enable = true;
+    btop.enable = true;
+    lazygit.enable = true;
+    direnv = {
+      enable = true;
+      nix-direnv.enable = true;
+    };
   };
 }

@@ -10,7 +10,6 @@
     ./git.nix
     ./nix-tools.nix
     ./editors
-    ./development.nix
     inputs.noctalia.homeModules.default
     inputs.umbriel.homeModules.default
     ./desktop.nix

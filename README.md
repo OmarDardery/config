@@ -29,7 +29,7 @@ NVIDIA/PRIME bus IDs and a storage mount. Preserve system/home state versions.
 
 NixOS manages applications and desktop services declaratively. Home Manager
 configures the shell, Git, editors, Umbriel, Noctalia and desktop preferences.
-Neovim/LazyVim, VSCodium, Logisim Evolution, direnv and native Steam remain available;
+Neovim/LazyVim, VSCodium, direnv and native Steam remain available;
 language toolchains load through project shells. There are no standalone home
 profiles or non-NixOS graphics wrappers in this configuration.
 
@@ -100,53 +100,26 @@ NixOS personal defaults are in [nixos/profile.nix](nixos/profile.nix).
 Generated `nixos/local-profile.nix` and hardware stay ignored; `path:` builds
 include them without staging. The native dotfile installer never writes them.
 
-## Development shells and project templates
+## Project environments
 
-```sh
-# From a project directory, use a convenience shell:
-nix develop ~/config#python
-nix develop ~/config#go --command codium .
+Each project owns its `shell.nix`. This system repo provides no development shells
+or project templates and installs no project language toolchains globally.
+
+Inside a project, create a `shell.nix`, for example:
+
+```nix
+{ pkgs ? import <nixpkgs> { } }:
+pkgs.mkShell {
+  packages = [ pkgs.go pkgs.gopls ];
+}
 ```
 
-| Shell | Tools |
-| --- | --- |
-| `default` | Nix language server/formatter and common build utilities |
-| `python` | Python, uv, Ruff, Pyright |
-| `go` | Go, gopls, Delve, golangci-lint |
-| `node` | Node.js, pnpm, TypeScript language server |
-| `rust` | Rust, Cargo, rustfmt, Clippy, rust-analyzer |
-| `cpp` | C/C++ compiler, clang tools, CMake, Ninja, GDB |
+Run `nix-shell`, then `codium .` or `nvim`. Optional automatic loading uses a
+project `.envrc` containing `use nix`; review it and run `direnv allow`.
+`<nixpkgs>` follows the machine's Nix search path. For reproducibility, pin the
+Nixpkgs source in that project. The project owns tool versions and dependencies.
 
-All shells have Git, Make and pkg-config. Nix/Node shells omit the C compiler;
-others include it for linking/native dependencies. Python pins uv to Nix's
-interpreter and disables automatic interpreter downloads. Create the virtual
-environment inside the shell:
-
-```sh
-uv venv
-uv pip install -r requirements.txt
-source .venv/bin/activate
-codium .
-```
-
-Recreate `.venv` if it came from a different distro/interpreter. Project packages
-are not installed automatically. Close existing Codium processes before launching
-from a shell so extensions/terminals inherit its environment. Install language
-extensions or LazyVim extras per your projects.
-
-For automatic loading, use `use flake "path:$HOME/config#python"` in the project's
-`.envrc`, review it, then `direnv allow`. For a durable independent project:
-
-```sh
-# Inside a project directory without conflicting template files:
-nix flake init -t github:OmarDardery/config#python
-nix develop
-```
-
-Templates: `python`, `go`, `node`, `rust`, `cpp`, `nix`. Each includes a standalone
-flake, editable `shell.nix`, `.envrc`, ignore rules and useful editor settings.
-Commit its generated `flake.lock` so workstation updates do not change the project
-toolchain. Convenience shells reuse these same definitions.
+For manually installed apps outside this config, see [Nix profiles](nixos/APPS.md).
 
 ## Keep it lean
 

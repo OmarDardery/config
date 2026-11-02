@@ -1,10 +1,10 @@
 name: Evaluate Nix configuration
 on:
   pull_request:
-    paths: ['nixos/**', 'non-nixos/**', 'scripts/**', 'templates/**', 'tests/**', '*.sh', 'flake.*', '.github/**']
+    paths: ['nixos/**', 'non-nixos/**', 'scripts/**', 'tests/**', '*.sh', 'flake.*', '.github/**']
   push:
     branches: [main]
-    paths: ['nixos/**', 'non-nixos/**', 'scripts/**', 'templates/**', 'tests/**', '*.sh', 'flake.*', '.github/**']
+    paths: ['nixos/**', 'non-nixos/**', 'scripts/**', 'tests/**', '*.sh', 'flake.*', '.github/**']
   workflow_dispatch:
 permissions:
   contents: read
@@ -31,7 +31,7 @@ jobs:
         run: |
           work=$(mktemp -d)
           trap 'rm -rf -- "$work"' EXIT
-          cp -R nixos scripts templates flake.nix flake.lock "$work/"
+          cp -R nixos scripts flake.nix flake.lock "$work/"
           cp .github/ci-hardware.nix "$work/nixos/hardware-configuration.nix"
           flake="path:$work"
           nix build "$flake" "$flake#update" --no-link --no-write-lock-file
@@ -57,5 +57,3 @@ jobs:
           shell_settings=$(nix build --no-link --print-out-paths --no-write-lock-file "$flake#nixosConfigurations.$host.config.home-manager.users.$profile_user.xdg.configFile.\"noctalia/config.toml\".source")
           "$shell_package/bin/noctalia" config validate "$shell_settings"
           "$shell_package/bin/noctalia" config validate non-nixos/dotfiles/noctalia/config.toml
-      - name: Initialize standalone project templates
-        run: python3 tests/templates.py

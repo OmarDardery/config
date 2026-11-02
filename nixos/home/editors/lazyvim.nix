@@ -98,11 +98,6 @@ in
     withNodeJs = false;
     withPerl = false;
     initLua = lib.mkForce "";
-    extraPackages = [
-      pkgs.git
-      pkgs.ripgrep
-      pkgs.fd
-    ];
   };
   home.packages = [
     pkgs.nixd

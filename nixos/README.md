@@ -48,7 +48,7 @@ Edit Nix-managed preferences in `home/` and rebuild. Existing conflicting files
 are backed up using Home Manager's `.bak` policy; if a `.bak` already exists,
 move it aside before retrying. Extra local LazyVim files and user-installed
 Codium extensions remain yours. Plugins are downloaded by LazyVim on first use;
-language toolchains come from project shells, not global language suites.
+language toolchains belong in each project’s own `shell.nix`.
 
 Steam and GameMode use the normal NixOS modules. There is no Millennium/client
 fork or theme installer. Optional engineering uses native Nix packages, including
@@ -78,3 +78,12 @@ sudo nixos-rebuild switch --rollback
 
 Build and validate before changing graphics or display-manager settings. Remote
 evaluation cannot test the laptop's displays, tablet or suspend/resume behavior.
+
+## Manual apps and package ownership
+
+Home Manager installs and configures user tools, including the shell integrations,
+Git, Kitty and Yazi. NixOS owns system services and hardware. Fonts are declared
+once in the system font list. Logisim Evolution and Wireshark are removed.
+
+Use [Nix profiles](APPS.md) for apps you want outside the declarative config.
+There are no shared dev shells or project templates in this repository.

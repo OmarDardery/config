@@ -1,35 +1,30 @@
 {
+  pkgs,
   lib,
   isLaptop,
   ...
 }:
-let
-  cursor = "Bibata-Modern-Classic";
-  display = import ../lib/display.nix;
-in
 {
   services.kdeconnect.enable = true;
   services.mpris-proxy.enable = true;
-  xdg.configFile = {
-    # Merge our font DPI without replacing unrelated X resources.
-    "X11/Xresources" = {
-      enable = isLaptop;
-      text = "Xft.dpi: ${toString (96 * display.laptopScale)}\n";
+  home.pointerCursor = {
+    enable = true;
+    name = "Bibata-Modern-Classic";
+    package = pkgs.bibata-cursors;
+    size = 24;
+    gtk.enable = true;
+    x11.enable = true;
+  };
+  gtk = {
+    enable = true;
+    iconTheme = {
+      name = "Adwaita";
+      package = pkgs.adwaita-icon-theme;
     };
-  }
-  // lib.genAttrs [ "gtk-3.0/gtk.css" "gtk-4.0/gtk.css" ] (_: {
-    text = ''@import url("noctalia.css");'';
-  })
-  // lib.genAttrs [ "gtk-3.0/settings.ini" "gtk-4.0/settings.ini" ] (_: {
-    text = ''
-      [Settings]
-      gtk-cursor-theme-name=${cursor}
-      gtk-cursor-theme-size=24
-      gtk-icon-theme-name=Adwaita
-    '';
-  });
-  home.file.".icons/default/index.theme".text = ''
-    [Icon Theme]
-    Inherits=${cursor}
-  '';
+    gtk3.extraCss = ''@import url("noctalia.css");'';
+    gtk4.extraCss = ''@import url("noctalia.css");'';
+  };
+  xresources.properties."Xft.dpi" = lib.mkIf isLaptop (
+    toString (96 * (import ../lib/display.nix).laptopScale)
+  );
 }

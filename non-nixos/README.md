@@ -61,8 +61,7 @@ current upstream, refuses tracked local source edits, then applies unedited
 files. Commit source edits before updating. If the pull fails, no dotfiles change.
 It does not refresh NixOS inputs, rebuild a system or update native applications.
 To update just the installer's Nix dependency, run `nix flake update` in this
-directory. The root's dev shells/templates remain separately usable on Linux;
-this installer does not add shell hooks or tooling.
+directory. Each project owns its own `shell.nix`; this installer does not add shell hooks or tooling.
 
 Native references: [Umbriel config](https://docs.noctalia.dev/umbriel/configuration/) ·
 [Noctalia’s Umbriel template](https://docs.noctalia.dev/noctalia/templates/official/umbriel/).

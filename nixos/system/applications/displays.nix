@@ -10,7 +10,6 @@
     with pkgs;
     [
       nwg-displays
-      wlr-randr
       wl-mirror
     ]
     ++ lib.optionals isLaptop [

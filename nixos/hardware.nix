@@ -16,8 +16,6 @@
     # Xbox Bluetooth controller support; USB uses the kernel xpad driver.
     xpadneo.enable = true;
 
-    graphics.enable = true;
-
     # Native tablet driver. Configure pen mappings through its own UI.
     uinput.enable = true;
 

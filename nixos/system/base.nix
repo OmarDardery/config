@@ -19,8 +19,6 @@
       "networkmanager"
       "wheel"
       "dialout"
-      "recording"
-      "wireshark"
     ];
     shell = pkgs.zsh;
   };
@@ -28,7 +26,7 @@
   # NixOS installs the login shell; Home Manager writes its dotfiles.
   programs.nix-ld.enable = true;
   programs.zsh.enable = true;
-  # The shared .zshrc initializes completion once.
+  # Home Manager owns completion initialization.
   programs.zsh.enableGlobalCompInit = false;
 
   home-manager = {

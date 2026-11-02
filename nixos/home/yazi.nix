@@ -2,10 +2,6 @@
 {
   programs.yazi = {
     enable = true;
-    package = null;
-    # The shared shell dotfiles provide y() for both native Bash and Zsh.
-    enableBashIntegration = false;
-    enableZshIntegration = false;
     shellWrapperName = "y";
     settings.mgr = {
       show_hidden = false;

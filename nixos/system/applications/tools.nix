@@ -8,32 +8,13 @@
   environment.systemPackages =
     with pkgs;
     [
-      kitty
-      starship
-      zoxide
-      fzf
-      bat
-      eza
-      lazygit
-      btop
-      yazi
-      ripgrep
-      fd
-      tealdeer
-      git
-      git-lfs
-      delta
-      gh
       curl
-      wget
       jq
       file
       rsync
       zip
       unzip
       _7zz
-      zsh-autosuggestions
-      zsh-syntax-highlighting
     ]
     ++ lib.optionals config.workstation.diagnostics.enable (
       with pkgs;

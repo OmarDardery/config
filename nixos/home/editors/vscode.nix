@@ -2,8 +2,6 @@
 {
   programs.vscodium = {
     enable = true;
-    package = pkgs.vscodium;
-    mutableExtensionsDir = true;
     profiles.default = {
       enableUpdateCheck = false;
       enableExtensionUpdateCheck = false;
@@ -28,7 +26,6 @@
         "workbench.preferredDarkColorTheme" = "Default Dark Modern";
         "workbench.preferredLightColorTheme" = "Default Light Modern";
         "telemetry.telemetryLevel" = "off";
-        "update.mode" = "none";
         "nix.enableLanguageServer" = true;
         "nix.serverPath" = "nixd";
         "nix.formatterPath" = "nixfmt";
