@@ -5,7 +5,6 @@
   inputs,
   profile,
   isLaptop,
-  isNixOS,
   ...
 }:
 let
@@ -15,7 +14,7 @@ let
     desktopScale = if isLaptop then (import ../lib/display.nix).laptopScale else null;
     colorsFile = "${profile.homeDirectory}/.local/state/noctalia/theme/steam.css";
   };
-  launchers = import ../pkgs/performance-launchers.nix { inherit pkgs isNixOS isLaptop; };
+  launchers = import ../pkgs/performance-launchers.nix { inherit pkgs isLaptop; };
 in
 lib.mkIf config.workstation.gaming.enable {
   environment.systemPackages = [ launchers.gameRun ];

@@ -3,7 +3,6 @@
   pkgs,
   lib,
   config,
-  desktopEnabled ? false,
   ...
 }:
 let
@@ -85,8 +84,7 @@ let
         } },
       }
     '';
-  }
-  // lib.optionalAttrs desktopEnabled {
+
     "lua/plugins/noctalia.lua" = ''
       local path = ${lib.generators.toLua { } "${config.xdg.stateHome}/noctalia/theme/nvim.lua"}
       local last_stamp

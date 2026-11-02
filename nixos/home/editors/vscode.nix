@@ -3,7 +3,6 @@
   pkgs,
   lib,
   config,
-  desktopEnabled ? false,
   ...
 }:
 let
@@ -74,11 +73,9 @@ let
     "window.titleBarStyle" = "custom";
     "window.controlsStyle" = "hidden";
     "window.autoDetectColorScheme" = true;
-    "workbench.colorTheme" = if desktopEnabled then "NoctaliaTheme" else "Default Dark Modern";
-    "workbench.preferredDarkColorTheme" =
-      if desktopEnabled then "NoctaliaTheme" else "Default Dark Modern";
-    "workbench.preferredLightColorTheme" =
-      if desktopEnabled then "NoctaliaLight" else "Default Light Modern";
+    "workbench.colorTheme" = "NoctaliaTheme";
+    "workbench.preferredDarkColorTheme" = "NoctaliaTheme";
+    "workbench.preferredLightColorTheme" = "NoctaliaLight";
     "telemetry.telemetryLevel" = "off";
     "update.mode" = "none";
     "nix.enableLanguageServer" = true;
@@ -96,7 +93,7 @@ let
     map (extension: {
       name = extension.vscodeExtUniqueId;
       path = "${extension}/share/vscode/extensions/${extension.vscodeExtUniqueId}";
-    }) (editorExtensions ++ lib.optional desktopEnabled noctaliaTheme)
+    }) (editorExtensions ++ [ noctaliaTheme ])
   );
   manifest = pkgs.writeText "codium-starter.json" (
     builtins.toJSON {
@@ -116,7 +113,7 @@ let
 in
 {
   # The application owns settings, profiles, keybindings and all installed extensions.
-  home.packages = [ (config.lib.nixGL.wrap pkgs.vscodium) ];
+  home.packages = [ pkgs.vscodium ];
   home.activation.mutableVSCodium =
     lib.hm.dag.entryBetween [ "linkGeneration" ] [ "writeBoundary" ]
       ''

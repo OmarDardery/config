@@ -1,5 +1,5 @@
 {
-  description = "NixOS workstation, portable Linux home and project development shells";
+  description = "NixOS workstation with Home Manager and project development shells";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
@@ -34,10 +34,6 @@
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    nixgl = {
-      url = "github:nix-community/nixGL/b6105297e6f0cd041670c3e8628394d4ee247ed5";
-      flake = false;
-    };
     webos-dev-manager.url = "github:OmarDardery/dev-manager-desktop/b7afa5dc41b46d057db751dcbc32e70ef3d57d60";
   };
   outputs =
@@ -49,33 +45,6 @@
         inherit system;
         config = import ./nixos/package-policy.nix;
       };
-      homeProfiles = {
-        "${profile.username}" = {
-          development = true;
-          gaming = true;
-          desktop = false;
-        };
-        "${profile.username}-core" = {
-          development = false;
-          gaming = false;
-          desktop = false;
-        };
-        "${profile.username}-dev" = {
-          development = true;
-          gaming = false;
-          desktop = false;
-        };
-        "${profile.username}-gaming" = {
-          development = false;
-          gaming = true;
-          desktop = false;
-        };
-        "${profile.username}-desktop" = {
-          development = true;
-          gaming = true;
-          desktop = true;
-        };
-      };
       apply = pkgs.writeShellApplication {
         name = "config-apply";
         runtimeInputs = [
@@ -86,17 +55,29 @@
         ];
         text = builtins.readFile ./scripts/apply.sh;
       };
+      update = pkgs.writeShellApplication {
+        name = "config-update";
+        runtimeInputs = [ apply ];
+        text = ''exec config-apply --update "$@"'';
+      };
     in
     {
       lib.deployment = profile;
       packages.${system} = {
-        home-manager = home-manager.packages.${system}.home-manager;
         default = apply;
+        inherit update;
       };
-      apps.${system}.default = {
-        type = "app";
-        program = "${apply}/bin/config-apply";
-        meta.description = "Apply the NixOS system or Linux Home Manager profile for the current user";
+      apps.${system} = {
+        default = {
+          type = "app";
+          program = "${apply}/bin/config-apply";
+          meta.description = "Build and apply NixOS with integrated Home Manager";
+        };
+        update = {
+          type = "app";
+          program = "${update}/bin/config-update";
+          meta.description = "Update NixOS flake inputs, build and switch";
+        };
       };
       formatter.${system} = pkgs.nixfmt-tree;
       devShells.${system} = import ./nixos/dev-shells.nix { inherit pkgs; };
@@ -118,34 +99,9 @@
             "cpp"
           ]
       );
-      homeConfigurations = nixpkgs.lib.mapAttrs (
-        name: features:
-        home-manager.lib.homeManagerConfiguration {
-          inherit pkgs;
-          extraSpecialArgs = {
-            inherit inputs features;
-            profile = profile // {
-              profileName = name;
-            };
-            isNixOS = false;
-            isLaptop = false;
-            desktopEnabled = features.desktop;
-          };
-          modules = [
-            ./nixos/home
-            {
-              targets.genericLinux = {
-                enable = true;
-                gpu.enable = false;
-              };
-            }
-          ];
-        }
-      ) homeProfiles;
       nixosConfigurations.${profile.hostName} = nixpkgs.lib.nixosSystem {
         specialArgs = {
           inherit inputs profile;
-          isNixOS = true;
           isLaptop = true;
         };
         modules = [

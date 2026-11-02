@@ -1,8 +1,6 @@
 {
   inputs,
   profile,
-  features,
-  lib,
   ...
 }:
 {
@@ -11,14 +9,9 @@
     ./shell.nix
     ./git.nix
     ./nix-tools.nix
-  ]
-  ++ lib.optionals features.development [
     ./editors
     ./development.nix
-    ./graphics.nix
-  ]
-  ++ lib.optionals features.gaming [ ./gaming.nix ]
-  ++ lib.optionals features.desktop [
+    ./gaming.nix
     inputs.noctalia.homeModules.default
     inputs.umbriel.homeModules.default
     ./desktop.nix

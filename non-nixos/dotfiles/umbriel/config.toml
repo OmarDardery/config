@@ -1,0 +1,66 @@
+# Native apps only. Install kitty, codium, Umbriel and Noctalia through your distro.
+[include.optional]
+files = ["noctalia.toml"]
+
+[general]
+autostart = ["noctalia"]
+mod_key = "Super"
+show_cheatsheet = false
+focus_on_activate = true
+
+[input.keyboard]
+layout = "us,ara"
+options = "grp:alt_shift_toggle"
+numlock_toggle = true
+
+[input.touchpad]
+tap = true
+natural_scroll = true
+
+[input.mouse]
+accel_profile = "flat"
+
+[input.cursor]
+size = 24
+hide_when_typing = true
+
+[workspaces]
+back_and_forth = true
+
+[layout]
+mode = "dwindle"
+gap = 10
+
+[layout.dwindle]
+preserve_split = true
+
+[appearance]
+border_width = 1
+corner_radius = 16
+
+[appearance.blur]
+enabled = true
+passes = 2
+radius = 6
+noise = 0.015
+saturation = 1.15
+
+[appearance.shadow]
+enabled = true
+softness = 28
+
+[keybinds]
+"Mod+T" = { action = "spawn kitty", repeat = false }
+"Mod+I" = { action = "spawn codium", repeat = false }
+"Mod+B" = { action = "spawn xdg-open https://duckduckgo.com", repeat = false }
+"Mod+E" = { action = "spawn xdg-open .", repeat = false }
+"Mod+Space" = { action = "spawn noctalia msg panel-toggle launcher", repeat = false }
+"Mod+A" = { action = "spawn noctalia msg panel-toggle control-center", repeat = false }
+"Mod+V" = { action = "spawn noctalia msg panel-toggle clipboard", repeat = false }
+"Mod+N" = { action = "spawn noctalia msg panel-toggle notifications", repeat = false }
+"Mod+Alt+L" = { action = "spawn noctalia msg session lock", repeat = false }
+"Mod+Shift+Q" = { action = "spawn noctalia msg panel-toggle session", repeat = false }
+"Mod+Ctrl+S" = { action = "spawn noctalia msg settings-toggle", repeat = false }
+"Mod+Ctrl+Shift+R" = { action = "config-reload", repeat = false }
+"Mod+Shift+Escape" = { action = "cheatsheet-open", repeat = false }
+"Print" = { action = "spawn noctalia msg screenshot-region", repeat = false }

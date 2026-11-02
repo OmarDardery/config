@@ -1,5 +1,4 @@
 {
-  isNixOS,
   isLaptop,
   pkgs,
   config,
@@ -11,7 +10,7 @@
   environment.systemPackages =
     with pkgs;
     [
-      (import ../../pkgs/performance-launchers.nix { inherit pkgs isNixOS isLaptop; }).performanceRun
+      (import ../../pkgs/performance-launchers.nix { inherit pkgs isLaptop; }).performanceRun
       kitty
       starship
       zoxide

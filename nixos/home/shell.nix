@@ -1,9 +1,7 @@
 {
   pkgs,
   config,
-  isNixOS,
   lib,
-  desktopEnabled ? false,
   ...
 }:
 let
@@ -52,15 +50,7 @@ in
 {
   home.sessionPath = [
     "${config.home.homeDirectory}/.local/bin"
-  ]
-  ++ lib.optional (!isNixOS) "${config.home.profileDirectory}/bin";
-  home.sessionSearchVariables = lib.optionalAttrs (!isNixOS) {
-    XDG_DATA_DIRS = [
-      "${config.home.profileDirectory}/share"
-      "/usr/local/share"
-      "/usr/share"
-    ];
-  };
+  ];
   home.shellAliases = {
     lt = "eza --tree --level=2";
     edit = "sudo -e";
@@ -82,24 +72,8 @@ in
     ${common}
     zstyle ':completion:*' list-colors "''${(s.:.)LS_COLORS}"
     # Load highlighting last, after tools have registered their ZLE widgets.
-    ${
-      if isNixOS then
-        ''
-          source ${pkgs.zsh-autosuggestions}/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-          source ${pkgs.zsh-syntax-highlighting}/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-        ''
-      else
-        ''
-          for plugin in zsh-autosuggestions/zsh-autosuggestions.zsh zsh-syntax-highlighting/zsh-syntax-highlighting.zsh; do
-            for prefix in /usr/share /usr/local/share /usr/share/zsh/plugins; do
-              if [ -r "$prefix/$plugin" ]; then
-                source "$prefix/$plugin"
-                break
-              fi
-            done
-          done
-        ''
-    }
+    source ${pkgs.zsh-autosuggestions}/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+    source ${pkgs.zsh-syntax-highlighting}/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
   '';
   programs.bash = {
     enable = true;
@@ -110,12 +84,10 @@ in
     '';
   };
   xdg.configFile."lazygit/config.yml".text = "{}\n";
-  xdg.configFile."bat/config".text = (
-    if desktopEnabled then "--theme=noctalia\n" else "--theme=base16\n"
-  );
+  xdg.configFile."bat/config".text = ("--theme=noctalia\n");
   programs.btop = {
     enable = true;
     package = null;
-    settings.color_theme = if desktopEnabled then "noctalia" else "Default";
+    settings.color_theme = "noctalia";
   };
 }

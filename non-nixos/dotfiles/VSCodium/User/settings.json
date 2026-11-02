@@ -1,0 +1,16 @@
+{
+  "editor.lineNumbers": "relative",
+  "editor.cursorSurroundingLines": 8,
+  "editor.minimap.enabled": false,
+  "editor.formatOnSave": true,
+  "editor.fontFamily": "'JetBrains Mono', monospace",
+  "editor.fontSize": 14,
+  "files.trimTrailingWhitespace": true,
+  "files.insertFinalNewline": true,
+  "terminal.integrated.scrollback": 10000,
+  "window.titleBarStyle": "custom",
+  "window.autoDetectColorScheme": true,
+  "workbench.preferredDarkColorTheme": "Default Dark Modern",
+  "workbench.preferredLightColorTheme": "Default Light Modern",
+  "telemetry.telemetryLevel": "off"
+}

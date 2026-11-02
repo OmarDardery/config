@@ -1,10 +1,8 @@
-{ pkgs, isNixOS, ... }:
+{ pkgs, ... }:
 {
   home.file.".local/bin/office-convert" = {
     executable = true;
-    text =
-      "#!${if isNixOS then "${pkgs.python3}/bin/python3" else "/usr/bin/env python3"}\n"
-      + builtins.readFile ../pkgs/office-convert.py;
+    text = "#!${pkgs.python3}/bin/python3\n" + builtins.readFile ../pkgs/office-convert.py;
   };
   home.shellAliases = {
     office2pdf = "office-convert pdf";

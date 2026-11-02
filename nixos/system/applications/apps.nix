@@ -6,6 +6,7 @@
     discord
     proton-vpn
     libreoffice
+    logisim-evolution
     hunspell
     hunspellDicts.en_US
     xournalpp

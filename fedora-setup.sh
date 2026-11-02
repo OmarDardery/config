@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Compatibility entry point; use the shared launcher on each distro.
+# Native Linux dotfiles only.
 set -euo pipefail
 repo_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-exec bash "$repo_dir/setup.sh" "$@"
+exec nix --extra-experimental-features 'nix-command flakes' run "path:$repo_dir/non-nixos" -- --repo-dir "$repo_dir" "$@"

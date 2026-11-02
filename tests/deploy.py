@@ -23,11 +23,8 @@ elif name == 'git':
     elif 'get-url' in args: print(os.environ.get('TEST_ORIGIN','https://github.com/OmarDardery/config.git'))
 elif name == 'nix':
     if 'eval' in args:
-        if '--file' in args:
-            data = pathlib.Path(args[args.index('--file')+1]).read_text()
-            match = re.search(r'profileName = "([A-Za-z0-9_-]+)";', data)
-            print(match[1] if match else '')
-        else: print('nixos')
+        print('nixos')
+    elif 'update' in args and os.environ.get('TEST_UPDATE_FAIL'): sys.exit(43)
     elif 'build' in args:
         if os.environ.get('TEST_BUILD_FAIL'): sys.exit(42)
         pathlib.Path(args[args.index('--out-link')+1]).symlink_to(root/'output')
@@ -73,14 +70,9 @@ class Deployment(unittest.TestCase):
 
     def builds(self): return [e for e in self.events('nix') if 'build' in e]
 
-    def test_fedora_debian_apply_only_home(self):
-        self.apply()
-        self.assertEqual(len(self.events('activate')),1)
-        self.assertFalse(self.events('sudo'))
-        self.assertFalse((self.repo/'nixos/hardware-configuration.nix').exists())
-        self.assertIn(f'path:{self.repo}#homeConfigurations.tester.activationPackage',self.builds()[0])
-        self.assertTrue(self.events('backup')[0][1].startswith('before-config-'))
-        self.assertFalse(Path(self.builds()[0][self.builds()[0].index('--out-link')+1]).parent.exists())
+    def test_other_distros_rejected(self):
+        self.assertIn('non-nixos', self.apply(success=False).stderr)
+        self.assertFalse(self.events('git')); self.assertFalse(self.events('nix'))
 
     def test_nixos_builds_then_switches(self):
         self.marker.touch(); self.apply()
@@ -96,13 +88,9 @@ class Deployment(unittest.TestCase):
         self.assertFalse(self.events('sudo')); self.assertFalse(self.events('activate'))
 
     def test_build_only(self):
+        self.marker.touch()
         self.apply('--build-only')
         self.assertFalse(self.events('activate')); self.assertFalse(self.events('sudo'))
-
-    def test_home_mode_on_nixos(self):
-        self.marker.touch(); self.apply('--home')
-        self.assertTrue(self.events('activate')); self.assertFalse(self.events('sudo'))
-        self.assertFalse((self.repo/'nixos/hardware-configuration.nix').exists())
 
     def test_existing_checkout_and_hardware_preserved(self):
         shutil.copytree(self.template,self.repo)
@@ -113,33 +101,36 @@ class Deployment(unittest.TestCase):
         self.assertIn('get-url',self.events('git')[0])
 
     def test_new_fork_revision(self):
+        self.marker.touch()
         self.apply('github:someone/dotfiles','--ref','feature/portable')
         self.assertIn('https://github.com/someone/dotfiles.git',self.events('git')[0])
         self.assertEqual(self.events('git')[1][-2:],['checkout','feature/portable'])
 
     def test_existing_mismatch_or_ref_rejected(self):
+        self.marker.touch()
         shutil.copytree(self.template,self.repo)
         self.apply('someone/other',success=False); self.apply('--ref','main',success=False)
         self.assertFalse(self.events('nix'))
 
     def test_invalid_input_and_root(self):
-        for args in [('--wat',),('--repo-dir',),('--host','a.b'),('--profile','a;bad'),('--backup-extension','../bad'),('https://example.com/repo',)]:
+        for args in [('--wat',),('--repo-dir',),('--host','a.b'),('--home',),('--profile','dev'),('https://example.com/repo',)]:
             self.apply(*args,success=False)
         self.env['TEST_UID']='0'; self.apply(success=False)
         self.assertFalse(self.events('git'))
 
-    def test_profile_and_backup_selectors(self):
-        self.apply('--profile','tester-desktop','--backup-extension','mine')
-        self.assertEqual(self.events('backup')[0][1],'mine')
-        self.assertIn(f'path:{self.repo}#homeConfigurations.tester-desktop.activationPackage',self.builds()[0])
+    def test_update_builds_before_switch(self):
+        self.marker.touch(); self.apply('--update')
+        calls=self.events('nix')
+        self.assertIn('update',calls[0]); self.assertIn('--flake',calls[0])
+        self.assertTrue(self.events('sudo'))
 
-    def test_profile_persistence_and_reset(self):
-        self.apply('--profile','dev','--build-only'); self.apply('--build-only')
-        self.assertIn(f'path:{self.repo}#homeConfigurations.tester-dev.activationPackage',self.builds()[-1])
-        self.apply('--profile','default','--build-only')
-        self.assertIn('profileName = "tester";',(self.repo/'nixos/local-profile.nix').read_text())
+    def test_update_failure_stops_build_and_switch(self):
+        self.marker.touch(); self.env['TEST_UPDATE_FAIL']='1'
+        self.assertEqual(self.apply('--update',success=False).returncode,43)
+        self.assertFalse(self.builds()); self.assertFalse(self.events('sudo'))
 
     def test_nix_interpolation_escaped(self):
+        self.marker.touch()
         self.repo=self.home/'literal${dollar} and "quote"'
         self.apply('--repo-dir',str(self.repo))
         content=(self.repo/'nixos/local-profile.nix').read_text()
@@ -147,7 +138,7 @@ class Deployment(unittest.TestCase):
 
     def test_help_needs_no_privileges(self):
         self.env['TEST_UID']='0'
-        self.assertIn('dotfiles',self.apply('--help').stdout)
+        self.assertIn('Home Manager',self.apply('--help').stdout)
         self.assertFalse(self.events())
 
 

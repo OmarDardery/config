@@ -3,7 +3,6 @@
   pkgs,
   lib,
   config,
-  isNixOS,
   profile,
   ...
 }:
@@ -15,7 +14,7 @@
     # integration instead of HM emitting no-rc and injecting disabled modules.
     shellIntegration.mode = null;
     font = {
-      name = if isNixOS then "JetBrainsMono Nerd Font" else "JetBrains Mono";
+      name = "JetBrainsMono Nerd Font";
       size = 14;
     };
     settings = {

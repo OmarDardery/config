@@ -1,120 +1,90 @@
 # Desktop configuration
 
-One entry point for the NixOS workstation and a shared home on Fedora/Debian:
+Two independent configurations:
+
+| Configuration | Scope |
+| --- | --- |
+| Root `flake.nix` + `nixos/` | Full NixOS system, applications, services and integrated Home Manager |
+| `non-nixos/flake.nix` | Only LazyVim, VSCodium, Umbriel and Noctalia dotfiles for native Linux apps |
+
+## NixOS
 
 ```sh
+# First setup or apply local changes
 nix run github:OmarDardery/config
+# Update flake inputs, build and switch
+nix run github:OmarDardery/config#update
 ```
 
-Nix must already be installed. Run as your normal user. If flakes are not enabled:
+Run as your normal user. The launcher clones to `~/config`, generates ignored
+local account settings, and copies `/etc/nixos/hardware-configuration.nix` if
+missing. It builds the complete system before using sudo to switch, including
+Home Manager. `#update` updates the local `flake.lock`; it preserves your source
+edits and does not pull Git commits. Pull source changes with `git pull --ff-only`
+when wanted, then apply. Review and commit lockfile changes in your checkout.
 
-```sh
-nix --extra-experimental-features 'nix-command flakes' run github:OmarDardery/config
-```
-
-| Host | Applies |
-| --- | --- |
-| NixOS | Full system, applications, services and Home Manager |
-| Fedora / Debian | Home Manager applications and dotfiles |
-
-The launcher clones to `~/config`, detects your account, writes ignored local
-identity and builds before activating. NixOS copies generated hardware from
-`/etc/nixos/hardware-configuration.nix` if missing, then uses sudo to switch.
-Standalone dotfile conflicts get unique `before-config-*` backups; the NixOS
-Home Manager module retains its `.bak` policy. Writable editor settings survive.
-
-**The full NixOS configuration targets the ASUS TUF A14, x86_64, UEFI.** Review
-[nixos/hardware.nix](nixos/hardware.nix) before using different hardware: it has
+**This NixOS host targets an ASUS TUF A14, x86_64, UEFI.** Review
+[nixos/hardware.nix](nixos/hardware.nix) for another machine: it contains
 NVIDIA/PRIME bus IDs and a storage mount. Preserve system/home state versions.
-Fedora/Debian retain their desktop, login manager, kernel drivers and file
-associations. This launcher runs no apt/dnf commands or native desktop installer.
 
-## Home profiles
+NixOS manages applications and desktop services declaratively. Home Manager
+configures the shell, Git, editors, Umbriel, Noctalia and desktop preferences.
+Neovim/LazyVim, VSCodium, direnv and native Steam/Millennium remain available;
+language toolchains load through project shells. There are no standalone home
+profiles or non-NixOS graphics wrappers in this configuration.
 
-Home Manager installs LazyVim/Neovim, VSCodium with Nix and EditorConfig extensions,
-direnv/nix-direnv and the editor font in development profiles. Language toolchains
-are loaded only through project shells. NixOS retains themed native Steam and its
-Millennium helpers; NixOS handles graphics, controllers and GameMode. Other Linux
-hosts get declarative **user Flatpak Steam** and a `steam` command, without sudo.
-Its initial network installation runs during activation; failed downloads fail the
-apply visibly. A user service retries on login, and a user timer handles updates.
-Existing native Steam data is preserved; add an existing library through Storage
-settings if needed. The Flatpak client does not receive NixOS Millennium hooks.
+## Fedora, Debian and other Linux
 
-| Profile | Includes |
-| --- | --- |
-| `default` | Core settings, editors, direnv and Steam; preserves the distro desktop |
-| `core` | Shell, Git, Yazi settings and configuration maintenance helpers |
-| `dev` | Core plus editors, direnv and font; no Steam |
-| `gaming` | Core plus Steam; no editors or desktop theme |
-| `desktop` | All above plus Umbriel, Noctalia, Kitty and desktop preferences |
+Nix must already be installed. No Home Manager installation is needed.
 
 ```sh
-nix run github:OmarDardery/config -- --profile dev
-# On NixOS, select a home-only profile explicitly:
-nix run github:OmarDardery/config -- --home --profile dev
+# Apply only the four apps' dotfiles
+nix run 'github:OmarDardery/config?dir=non-nixos'
+# Pull the checkout forward and apply unedited dotfile updates
+nix run 'github:OmarDardery/config?dir=non-nixos#update'
 ```
 
-Subsequent home applies remember your selection. `--profile default` resets it.
-Full output names are `<username>`, `<username>-core`, `<username>-dev`,
-`<username>-gaming` and `<username>-desktop`. The full NixOS system keeps its
-laptop desktop. Home Manager supplies preferences for Umbriel/Noctalia in the
-optional desktop profile; install/start those apps through the distro outside
-NixOS. Log out/in so shells and launchers see home packages and Flatpak exports.
+The independent flake uses Nix only to run its small Git/Python installer. It
+supports x86_64 and aarch64 Linux. Install Neovim, Git, ripgrep/fd, VSCodium,
+Umbriel, Noctalia and Kitty through your distro as needed. It does not install
+these apps, Steam, fonts or language tools; it does not change your shell,
+services, drivers, login manager, package manager or desktop session.
 
-## Graphics outside NixOS
+Files are copied into writable user config directories. Existing conflicts are
+backed up; later applies update unedited files and preserve your edits and
+deletions. VSCodium extensions, profiles and keybindings remain yours. LazyVim
+fetches plugins on first launch. `#update` runs `git pull --ff-only`, refusing
+tracked source edits or a diverged checkout before touching dotfiles.
+See [non-nixos/README.md](non-nixos/README.md) for paths, backups and requirements.
 
-Codium uses Home Manager's NixGL integration. The default vendor-neutral Mesa
-wrapper suits Intel/AMD and this laptop's AMD-driven desktop. Libraries are scoped
-to the application; no kernel driver or `/run/opengl-driver` changes are made.
-Steam Flatpak manages its graphics runtimes independently. Child processes inherit
-NixGL's library environment: if a native tool launched from Codium reports symbol
-errors, run it from a regular terminal or the project's Nix shell.
+## Options and local use
 
-For an NVIDIA-only desktop, create ignored `nixos/local-gpu.nix`:
-
-```nix
-{
-  backend = "nvidia";
-  nvidiaVersion = "<exact host driver version>";
-  nvidiaHash = "<hash from nix store prefetch-file>";
-  nvidiaAcceptLicense = true; # Set after reviewing the driver license.
-}
-```
-
-Get the version using `nvidia-smi --query-gpu=driver_version --format=csv,noheader`.
-Prefetch the matching official archive with
-`nix store prefetch-file --json https://download.nvidia.com/XFree86/Linux-x86_64/VERSION/NVIDIA-Linux-x86_64-VERSION.run`.
-Use its `hash` in the local file, then apply. Update the pin whenever the host
-NVIDIA driver changes. Explicit pins keep evaluation pure, without `--impure`.
-The optional libraries require accepting NVIDIA's
-[driver license](https://www.nvidia.com/content/DriverDownloads/licence.php?lang=us).
-This setting never installs or replaces the host kernel driver.
-
-## Deployment options
+If flakes are not enabled, prefix either command with:
 
 ```sh
-# Fork or another checkout location
+nix --extra-experimental-features 'nix-command flakes' run …
+```
+
+Both commands accept a repository and checkout location:
+
+```sh
 nix run github:OmarDardery/config -- YOURNAME/config --repo-dir ~/dotfiles
-# Build without activating
+nix run 'github:OmarDardery/config?dir=non-nixos' -- YOURNAME/config --repo-dir ~/dotfiles
+# NixOS build without activation
 nix run github:OmarDardery/config -- --build-only
-# Apply from an existing clone
-cd ~/config
+# From an existing clone, select the appropriate configuration
 bash setup.sh
 ```
 
 Repository arguments accept `OWNER/REPO`, `github:OWNER/REPO` or an HTTPS GitHub
-URL and require this root flake/profile layout. Existing checkouts are never
-pulled, reset or switched. Use `git pull --ff-only` yourself before applying.
-`--ref` chooses a branch/tag/commit only for a new clone. Test an unmerged version
-with `nix run github:OmarDardery/config/BRANCH -- --ref BRANCH`; use a fresh
-`--repo-dir` if `~/config` already exists.
+URL with this layout. `--ref` selects a branch/tag/commit for a new clone only.
+Existing checkouts are never reset or switched. To test an unmerged branch,
+select it in the flake URL and with `--ref BRANCH`, using a fresh `--repo-dir`.
+The distro-specific setup scripts forward to the matching flake.
 
-Personal defaults remain in [nixos/profile.nix](nixos/profile.nix). The generated
-`nixos/local-profile.nix` supplies account, home, checkout and selected output.
-It and generated hardware stay ignored; `path:` builds include them without
-staging. The legacy distro setup scripts and `nixos/bootstrap.sh` now forward to
-this same launcher.
+NixOS personal defaults are in [nixos/profile.nix](nixos/profile.nix).
+Generated `nixos/local-profile.nix` and hardware stay ignored; `path:` builds
+include them without staging. The native dotfile installer never writes them.
 
 ## Development shells and project templates
 
@@ -166,24 +136,20 @@ toolchain. Convenience shells reuse these same definitions.
 
 ## Keep it lean
 
-Everyday NixOS apps and Steam stay enabled. Specialist bundles default off;
-set `workstation.engineering.enable`, `containers.enable`, `printing.enable` or
-`diagnostics.enable` in [nixos/configuration.nix](nixos/configuration.nix) as needed.
-Diagnostics covers host hardware/storage/network tools. Containers enables
-socket-activated Docker. WinBoat and its insecure Electron exception are removed.
-User data and unmanaged Flatpaks are retained. Editors keep Mason, Tree-sitter
-compilation, notebook kernels and provider language runtimes disabled; tools live
-in the dev shells. LazyVim downloads plugins on first use. Settings/plugins remain
-writable and user-owned, with no separate native editor installer.
+NixOS specialist bundles default off. Enable `workstation.engineering.enable`,
+`containers.enable`, `printing.enable` or `diagnostics.enable` in
+[nixos/configuration.nix](nixos/configuration.nix) as needed. Everyday apps and
+Steam remain enabled. Docker is socket-activated when enabled. Existing user
+data and unmanaged Flatpaks are retained.
 
-`up`/`rebuild` apply; `nbuild` builds only; `update` updates inputs, applies, then
-updates Flatpaks. `neval` checks the relevant system/home; `cnf`/`cconf` edit/enter
-the root checkout. `desktop-apply` initializes palettes in the desktop profile.
+Editor preferences stay writable. Mason, Tree-sitter compilation, notebook
+kernels and language providers are disabled in the starter; add tools per project.
+On NixOS, `up`/`rebuild` apply, `nbuild` builds only, `update` updates inputs and
+switches, `neval` checks the flake, and `cnf`/`cconf` edit/enter the checkout.
+`desktop-apply` initializes desktop palettes at graphical login.
 
 NixOS recovery: `sudo nixos-rebuild switch --rollback` or a previous boot generation.
-List standalone generations with `nix run path:./#home-manager -- generations` and
-run a previous generation's `activate` script. Mutable editor files/backups need
-manual restoration if you want to undo their one-time initialization.
+Mutable editor preferences need manual restoration from their backups.
 
-[Detailed notes](nixos/README.md) · [Shortcuts](nixos/SHORTCUTS.md) ·
+[Detailed NixOS notes](nixos/README.md) · [Shortcuts](nixos/SHORTCUTS.md) ·
 [Theming](nixos/THEMING.md) · [Backups](nixos/BACKUPS.md)

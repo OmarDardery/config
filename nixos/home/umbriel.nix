@@ -2,7 +2,6 @@
   config,
   lib,
   isLaptop,
-  isNixOS,
   profile,
   ...
 }:
@@ -75,9 +74,10 @@ in
       # No independent palette: Noctalia owns colors; native defaults before rendering.
       include.optional.files = [ "${config.xdg.stateHome}/noctalia/theme/umbriel.toml" ];
       general = {
-        autostart = [ "noctalia" ]
-          ++ lib.optional isLaptop
-            "xrdb -merge ${lib.escapeShellArg "${config.xdg.configHome}/X11/Xresources"}";
+        autostart = [
+          "noctalia"
+        ]
+        ++ lib.optional isLaptop "xrdb -merge ${lib.escapeShellArg "${config.xdg.configHome}/X11/Xresources"}";
         mod_key = "Super";
         show_cheatsheet = false;
         focus_on_activate = true;
@@ -103,7 +103,7 @@ in
           follows_mouse_max_scroll = 0.0;
         };
         cursor = {
-          theme = if isNixOS then "Bibata-Modern-Classic" else "Adwaita";
+          theme = "Bibata-Modern-Classic";
           size = 24;
           hide_when_typing = true;
         };
@@ -205,7 +205,7 @@ in
       environment = {
         ELECTRON_OZONE_PLATFORM_HINT = "wayland";
         QT_QPA_PLATFORM = "wayland";
-        QT_QPA_PLATFORMTHEME = if isNixOS then "kde" else "qt6ct";
+        QT_QPA_PLATFORMTHEME = "kde";
         QT_WAYLAND_DISABLE_WINDOWDECORATION = "1";
         _JAVA_AWT_WM_NONREPARENTING = "1";
       };
@@ -216,11 +216,12 @@ in
         "Mod+grave" = once "scratchpad-toggle terminal";
         "Mod+Ctrl+Return" = once "scratchpad-toggle calculator";
         "Mod+Ctrl+P" = once "spawn noctalia msg notification-dnd-set on && noctalia msg caffeine-enable";
-        "Mod+Ctrl+Shift+P" = once "spawn noctalia msg caffeine-disable && noctalia msg notification-dnd-set off";
+        "Mod+Ctrl+Shift+P" =
+          once "spawn noctalia msg caffeine-disable && noctalia msg notification-dnd-set off";
         "Mod+Alt+U" = once "spawn noctalia msg panel-toggle avivbintangaringga/nix-monitor:panel";
         "Mod+Space" = once "spawn noctalia msg panel-toggle launcher";
         "Alt+Tab" = once "spawn noctalia msg window-switcher hold";
-        "Mod+B" = once "spawn ${if isNixOS then "zen" else "desktop-browser"}";
+        "Mod+B" = once "spawn zen";
         "Mod+Alt+L" = once "spawn noctalia msg session lock";
         "Mod+Shift+Q" = once "spawn noctalia msg panel-toggle session";
         "XF86PowerOff" = (locked "session lock") // {
