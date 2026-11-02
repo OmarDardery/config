@@ -11,9 +11,9 @@ system configuration: project toolchains are provided as standalone templates an
 | `hardware.nix` | Laptop GPU, peripherals and storage |
 | `system/` | Boot, desktop, networking, backups and optional bundles |
 | `system/applications/` | Everyday applications and desktop services |
-| `home/` | Shared dotfiles and small editor preferences |
+| `home/` | NixOS Home Manager modules and editor preferences |
 | `pkgs/` | Desktop helpers and necessary package overrides |
-| `../scripts/` | Shared apply launcher and local hardware preparation |
+| `../scripts/` | NixOS apply/update launcher and local hardware preparation |
 | `../templates/` | Independent project environments |
 
 The direct structure takes inspiration from
@@ -29,14 +29,17 @@ installed; run as a normal user. The launcher generates ignored local identity,
 uses `path:` to include local hardware, and builds before switching.
 
 The full NixOS setup targets the ASUS TUF A14; review `hardware.nix` for other
-machines. Preserve state versions when upgrading. Fedora/Debian apply Home Manager
-only. The default home includes editors and Steam; `--profile core`, `dev`,
-`gaming` or `desktop` select genuinely different imports and persist the choice.
-See the root README for graphics setup and standalone project templates.
+machines. Preserve state versions when upgrading. Other Linux distros use the
+independent `../non-nixos/` dotfile configuration. The root flake has no standalone
+Home Manager profiles.
+
+`nix run github:OmarDardery/config#update` refreshes the checkout's flake inputs
+and builds before switching. The `update` shell alias uses this app too. It
+preserves source edits and does not pull Git commits or separately update Flatpaks.
 
 ## Editors and project tools
 
-Home Manager installs regular VSCodium and Neovim across distros with only Nix tooling. Their starter
+Home Manager installs regular VSCodium and Neovim on NixOS with only Nix tooling. Their starter
 settings are copied once into writable user files. Edit LazyVim normally in
 `~/.config/nvim/init.lua` and `~/.config/nvim/lua/`; use `:Lazy` and `:LazyExtras`
 to manage plugins. Codium owns its settings, keybindings, profiles and extensions;
@@ -67,8 +70,8 @@ and kernels disappear when Home Manager applies the new generation.
 
 ## Desktop and maintenance
 
-Home Manager writes preferences and owns the shared editors/Steam. NixOS or the
-native distribution owns desktop services, portals and other applications. `desktop-apply` runs at graphical login;
+Home Manager writes preferences and manages editors and Steam helpers. NixOS
+owns Steam, desktop services, portals and other applications. `desktop-apply` runs at graphical login;
 activation does not need a running compositor or network downloads.
 
 Optional bundles own their packages, services and Flatpaks. Disabling one does
@@ -80,8 +83,9 @@ password storage. Docker is socket-activated when the containers bundle is enabl
 The NVIDIA/kernel pair, state versions and storage policy are unchanged.
 
 GitHub Actions performs ordinary Nix evaluation against disposable hardware and
-both standalone home outputs, then validates the generated TOML with the pinned
-Umbriel executable. It never activates or deploys that hardware.
+the independent native dotfile flake. It validates generated NixOS and native
+TOML with the pinned Umbriel and Noctalia executables, and exercises dotfile backups
+and preservation with disposable homes. It never activates or deploys that hardware.
 
 Umbriel actions use whitespace-separated arguments: `spawn kitty`,
 `workspace-switch 2`, and `workspace-set-layout toggle dwindle scrolling`.

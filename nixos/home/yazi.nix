@@ -1,8 +1,4 @@
-{
-  lib,
-  desktopEnabled ? false,
-  ...
-}:
+{ ... }:
 {
   programs.yazi = {
     enable = true;
@@ -16,7 +12,7 @@
       sort_by = "natural";
       sort_dir_first = true;
     };
-    theme.flavor = lib.mkIf desktopEnabled {
+    theme.flavor = {
       dark = "noctalia";
       light = "noctalia";
     };

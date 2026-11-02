@@ -1,39 +1,15 @@
-{ isNixOS, ... }:
+{ ... }:
 let
-  browser = if isNixOS then "zen.desktop" else "config-browser.desktop";
+  browser = "zen.desktop";
 in
 {
-  home.file.".local/bin/desktop-browser" = {
-    enable = !isNixOS;
-    executable = true;
-    text = ''
-      #!/usr/bin/env bash
-      set -euo pipefail
-      if command -v firefox-esr >/dev/null; then
-        exec firefox-esr "$@"
-      fi
-      exec firefox "$@"
-    '';
-  };
-  xdg.dataFile."applications/config-browser.desktop" = {
-    enable = !isNixOS;
-    text = ''
-      [Desktop Entry]
-      Type=Application
-      Name=Firefox
-      Exec=desktop-browser %u
-      Terminal=false
-      NoDisplay=true
-      MimeType=text/html;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
-    '';
-  };
   xdg.userDirs = {
-    enable = isNixOS;
+    enable = true;
     package = null;
     createDirectories = true;
   };
   xdg.mimeApps = {
-    enable = isNixOS;
+    enable = true;
     defaultApplications = {
       "inode/directory" = [ "thunar.desktop" ];
       "text/html" = [ browser ];

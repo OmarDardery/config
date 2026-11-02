@@ -1,6 +1,5 @@
 {
   pkgs,
-  isNixOS,
   isLaptop,
   powerProfiles ? pkgs.power-profiles-daemon,
   gameMode ? pkgs.gamemode,
@@ -42,7 +41,7 @@ let
       if [[ "$offload_game" == true ]]; then
         command=( ${lib.getExe offload} "''${command[@]}" )
       fi
-      exec ${if isNixOS then lib.getExe performanceRun else ""} "''${command[@]}"
+      exec ${lib.getExe performanceRun} "''${command[@]}"
     '';
   };
 in

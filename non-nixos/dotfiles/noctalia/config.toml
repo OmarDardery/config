@@ -1,0 +1,88 @@
+# Independent native Noctalia preferences; no store paths or NixOS services.
+[audio]
+enable_volume_sounds = false
+enable_screenshot_sounds = false
+
+[bar.default]
+position = "bottom"
+reserve_space = true
+auto_hide = false
+smart_auto_hide = false
+background_opacity = 0.70
+border = "outline_variant"
+border_width = 1.0
+radius = 20
+thickness = 32
+margin_edge = 10
+margin_ends = 16
+padding = 8
+widget_spacing = 4
+start = ["launcher", "workspaces"]
+center = ["clock"]
+end = ["media", "tray", "privacy", "notifications", "network", "volume", "keyboard_layout", "battery", "control-center"]
+
+[dock]
+enabled = true
+position = "right"
+reserve_space = false
+smart_auto_hide = true
+background_opacity = 0.65
+icon_size = 32
+radius = 22
+
+[notification]
+follow_focused_output = true
+max_visible = 2
+position = "top_right"
+background_opacity = 0.92
+
+[osd]
+position = "top_center"
+hide_delay_ms = 1000
+
+[shell]
+font_family = "sans-serif"
+polkit_agent = true
+setup_wizard_enabled = false
+settings_window_translucent = true
+umbriel_overview_type_to_launch_enabled = true
+
+[shell.panel]
+launcher_placement = "floating"
+launcher_position = "center"
+control_center_placement = "floating"
+control_center_position = "bottom_right"
+transparency_mode = "glass"
+borders = true
+border_width = 1.0
+shadow = true
+
+[shell.launcher]
+layout = "simple"
+search_position = "top"
+
+[theme]
+source = "wallpaper"
+
+[theme.templates]
+builtin_ids = ["umbriel"]
+community_ids = []
+
+[widget.clock]
+format = "{:%a %d %b  %H:%M}"
+
+[widget.workspaces]
+style = "minimal"
+show_labels = true
+label_source = "id"
+
+[widget.media]
+max_length = 40
+hide_when_no_media = true
+
+[widget.keyboard_layout]
+hide_when_single_layout = true
+show_glyph = false
+
+[widget.battery]
+display_mode = "graphic"

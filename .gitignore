@@ -9,4 +9,3 @@ __pycache__/
 /nixos/hardware-configuration.nix
 
 /nixos/local-profile.nix
-/nixos/local-gpu.nix

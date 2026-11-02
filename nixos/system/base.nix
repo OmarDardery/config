@@ -2,7 +2,6 @@
   pkgs,
   inputs,
   profile,
-  config,
   ...
 }:
 {
@@ -37,14 +36,7 @@
     useUserPackages = true;
     extraSpecialArgs = {
       inherit inputs profile;
-      isNixOS = true;
-      desktopEnabled = true;
       isLaptop = true;
-      features = {
-        development = true;
-        desktop = true;
-        gaming = config.workstation.gaming.enable;
-      };
     };
     backupFileExtension = "bak";
     users.${profile.username}.imports = [
