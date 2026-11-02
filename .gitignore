@@ -7,3 +7,6 @@ __pycache__/
 
 # Generated locally from /etc/nixos during deployment.
 /nixos/hardware-configuration.nix
+
+/nixos/local-profile.nix
+/nixos/local-gpu.nix

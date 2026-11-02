@@ -1,13 +1,23 @@
-# Deployment identity, not machine hardware. Edit this for another Linux user.
+# Personal defaults; generated deployment identity and GPU overrides stay local.
+let
+  local = if builtins.pathExists ./local-profile.nix then import ./local-profile.nix else { };
+  localGpu = if builtins.pathExists ./local-gpu.nix then import ./local-gpu.nix else { };
+in
 rec {
-  username = "oad";
-  homeDirectory = "/home/${username}";
-  configRepo = "${homeDirectory}/config/nixos";
-  profileName = username;
-  hostName = "nixos";
-  system = "x86_64-linux";
+  username = local.username or "oad";
+  homeDirectory = local.homeDirectory or "/home/${username}";
+  configRepo = local.configRepo or "${homeDirectory}/config";
+  profileName = local.profileName or username;
+  hostName = local.hostName or "nixos";
+  system = local.system or "x86_64-linux";
+  gpu = {
+    backend = "mesa";
+    nvidiaVersion = null;
+    nvidiaHash = null;
+    nvidiaAcceptLicense = false;
+  }
+  // localGpu;
   displayName = "Omar Dardery";
-  # Use null for either field if that identity should remain unmanaged.
   gitName = "OmarDardery";
   gitEmail = "oadardery@gmail.com";
 }

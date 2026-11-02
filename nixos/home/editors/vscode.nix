@@ -1,5 +1,11 @@
 # Plain VSCodium, a Nix extension and the shared desktop theme.
-{ pkgs, lib, config, isNixOS, desktopEnabled ? false, ... }:
+{
+  pkgs,
+  lib,
+  config,
+  desktopEnabled ? false,
+  ...
+}:
 let
   editorExtensions = with pkgs.vscode-extensions; [
     jnoortheen.nix-ide
@@ -69,8 +75,10 @@ let
     "window.controlsStyle" = "hidden";
     "window.autoDetectColorScheme" = true;
     "workbench.colorTheme" = if desktopEnabled then "NoctaliaTheme" else "Default Dark Modern";
-    "workbench.preferredDarkColorTheme" = if desktopEnabled then "NoctaliaTheme" else "Default Dark Modern";
-    "workbench.preferredLightColorTheme" = if desktopEnabled then "NoctaliaLight" else "Default Light Modern";
+    "workbench.preferredDarkColorTheme" =
+      if desktopEnabled then "NoctaliaTheme" else "Default Dark Modern";
+    "workbench.preferredLightColorTheme" =
+      if desktopEnabled then "NoctaliaLight" else "Default Light Modern";
     "telemetry.telemetryLevel" = "off";
     "update.mode" = "none";
     "nix.enableLanguageServer" = true;
@@ -78,34 +86,43 @@ let
     "nix.formatterPath" = "nixfmt";
     "[nix]"."editor.defaultFormatter" = "jnoortheen.nix-ide";
   };
-  userDefaults = pkgs.linkFarm "codium-user-starter" [{
-    name = "settings.json";
-    path = pkgs.writeText "codium-settings.json" (builtins.toJSON settings);
-  }];
+  userDefaults = pkgs.linkFarm "codium-user-starter" [
+    {
+      name = "settings.json";
+      path = pkgs.writeText "codium-settings.json" (builtins.toJSON settings);
+    }
+  ];
   extensionDefaults = pkgs.linkFarm "codium-extension-starter" (
     map (extension: {
-      name = extension.vscodeExtUniqueId
-        + lib.optionalString (!isNixOS && extension.vscodeExtUniqueId == "noctalia.noctalia") "-1.0.0";
+      name = extension.vscodeExtUniqueId;
       path = "${extension}/share/vscode/extensions/${extension.vscodeExtUniqueId}";
-    }) (lib.optionals isNixOS editorExtensions ++ lib.optional desktopEnabled noctaliaTheme)
+    }) (editorExtensions ++ lib.optional desktopEnabled noctaliaTheme)
   );
-  manifest = pkgs.writeText "codium-starter.json" (builtins.toJSON {
-    directories = {
-      "${config.xdg.configHome}/VSCodium/User" = "${userDefaults}";
-      "${config.home.homeDirectory}/.vscode-oss/extensions" = "${extensionDefaults}";
-    };
-    extensionIndex = "${config.home.homeDirectory}/.vscode-oss/extensions/extensions.json";
-  });
+  manifest = pkgs.writeText "codium-starter.json" (
+    builtins.toJSON {
+      directories = {
+        "${config.xdg.configHome}/VSCodium/User" = "${userDefaults}";
+        "${config.home.homeDirectory}/.vscode-oss/extensions" = "${extensionDefaults}";
+      };
+      extensionIndex = "${config.home.homeDirectory}/.vscode-oss/extensions/extensions.json";
+    }
+  );
+  extensionManifest = pkgs.writeText "codium-portable-extensions.json" (
+    builtins.toJSON {
+      directories."${config.home.homeDirectory}/.vscode-oss/extensions" = "${extensionDefaults}";
+      extensionIndex = "${config.home.homeDirectory}/.vscode-oss/extensions/extensions.json";
+    }
+  );
 in
 {
   # The application owns settings, profiles, keybindings and all installed extensions.
-  home.packages = lib.optionals isNixOS [ pkgs.vscodium ];
-  xdg.dataFile."editor-defaults/extensions.list" = {
-    enable = !isNixOS;
-    text = lib.concatMapStringsSep "\n" (e: "${e.vscodeExtPublisher}.${e.vscodeExtName}") editorExtensions + "\n";
-  };
-  home.activation.mutableVSCodium = lib.hm.dag.entryBetween [ "linkGeneration" ] [ "writeBoundary" ] ''
-    run ${pkgs.python3}/bin/python3 ${../../pkgs}/migrate-desktop.py editor-defaults \
-      ${manifest} ${lib.escapeShellArg "${config.xdg.stateHome}/editor-defaults/codium"}
-  '';
+  home.packages = [ (config.lib.nixGL.wrap pkgs.vscodium) ];
+  home.activation.mutableVSCodium =
+    lib.hm.dag.entryBetween [ "linkGeneration" ] [ "writeBoundary" ]
+      ''
+        run ${pkgs.python3}/bin/python3 ${../../pkgs}/migrate-desktop.py editor-defaults \
+          ${manifest} ${lib.escapeShellArg "${config.xdg.stateHome}/editor-defaults/codium"}
+        run ${pkgs.python3}/bin/python3 ${../../pkgs}/migrate-desktop.py editor-defaults \
+          ${extensionManifest} ${lib.escapeShellArg "${config.xdg.stateHome}/editor-defaults/codium-portable-extensions"}
+      '';
 }

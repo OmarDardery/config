@@ -28,12 +28,12 @@ in
     '';
   };
   xdg.userDirs = {
-    enable = true;
+    enable = isNixOS;
     package = null;
     createDirectories = true;
   };
   xdg.mimeApps = {
-    enable = true;
+    enable = isNixOS;
     defaultApplications = {
       "inode/directory" = [ "thunar.desktop" ];
       "text/html" = [ browser ];

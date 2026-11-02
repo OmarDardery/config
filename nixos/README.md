@@ -1,8 +1,7 @@
 # Configuration notes
 
-`flake.nix` imports this host and `home/default.nix` directly. This is a personal
-system configuration: there are no development shells, custom test framework or
-language-toolchain catalogue.
+The root `../flake.nix` imports this host and `home/default.nix` directly. This is a personal
+system configuration: project toolchains are provided as standalone templates and convenience shells.
 
 | Location | Purpose |
 | --- | --- |
@@ -14,7 +13,8 @@ language-toolchain catalogue.
 | `system/applications/` | Everyday applications and desktop services |
 | `home/` | Shared dotfiles and small editor preferences |
 | `pkgs/` | Desktop helpers and necessary package overrides |
-| `native/` | Debian/Fedora application installation |
+| `../scripts/` | Shared apply launcher and local hardware preparation |
+| `../templates/` | Independent project environments |
 
 The direct structure takes inspiration from
 [Misterio77's minimal starter](https://github.com/Misterio77/nix-starter-configs/tree/main/minimal).
@@ -23,30 +23,20 @@ support and the existing desktop palette instead of a preinstalled language suit
 
 ## Applying changes
 
-Use `path:` flake references so the ignored local hardware file participates.
-The setup script copies it from `/etc/nixos`, backing up a changed predecessor:
+Run `bash setup.sh` from the repository root, or use the root `nix run`
+entry point. Add `--build-only` to build without activating. Nix must already be
+installed; run as a normal user. The launcher generates ignored local identity,
+uses `path:` to include local hardware, and builds before switching.
 
-```sh
-bash nixos/bootstrap.sh --repo-dir "$PWD" --build-only
-bash nixos-setup.sh
-```
-
-Do not change `system.stateVersion` or `home.stateVersion` as part of an upgrade.
-On another machine, adapt `profile.nix`, review `hardware.nix` and provide that
-machine's generated hardware configuration.
-
-For an existing Debian/Fedora installation with Nix and native applications:
-
-```sh
-bash nixos/bootstrap.sh --repo-dir "$PWD" --activate --backup-extension bak
-```
-
-Standalone `oad` and `oad-desktop` outputs retain the same full dotfile scope.
-They install no applications. Their names follow `profile.nix`.
+The full NixOS setup targets the ASUS TUF A14; review `hardware.nix` for other
+machines. Preserve state versions when upgrading. Fedora/Debian apply Home Manager
+only. The default home includes editors and Steam; `--profile core`, `dev`,
+`gaming` or `desktop` select genuinely different imports and persist the choice.
+See the root README for graphics setup and standalone project templates.
 
 ## Editors and project tools
 
-NixOS installs regular VSCodium and Neovim with only Nix tooling. Their starter
+Home Manager installs regular VSCodium and Neovim across distros with only Nix tooling. Their starter
 settings are copied once into writable user files. Edit LazyVim normally in
 `~/.config/nvim/init.lua` and `~/.config/nvim/lua/`; use `:Lazy` and `:LazyExtras`
 to manage plugins. Codium owns its settings, keybindings, profiles and extensions;
@@ -69,16 +59,16 @@ from this configuration.
 Activation repairs the exact previous starter with these startup fixes, backing
 it up first. Edited files and deleted files remain untouched.
 
-Use each project's own environment for language packages. `editor-setup` on other
-distributions only syncs editor plugins and the small extension list. Old manually
+Use `nix develop ~/config#python` (or `go`, `node`, `rust`, `cpp`) for project
+language tools. Home Manager installs direnv/nix-direnv for automatic loading. Old manually
 created `editor-python` environments and user-installed extensions are not erased;
 remove them yourself if you no longer use them. Managed notebook configuration
 and kernels disappear when Home Manager applies the new generation.
 
 ## Desktop and maintenance
 
-Home Manager writes preferences. NixOS or the native distribution owns desktop
-services, portals and applications. `desktop-apply` runs at graphical login;
+Home Manager writes preferences and owns the shared editors/Steam. NixOS or the
+native distribution owns desktop services, portals and other applications. `desktop-apply` runs at graphical login;
 activation does not need a running compositor or network downloads.
 
 Optional bundles own their packages, services and Flatpaks. Disabling one does

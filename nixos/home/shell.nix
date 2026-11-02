@@ -109,11 +109,6 @@ in
       ${common}
     '';
   };
-  xdg.configFile."direnv/direnvrc".text = ''
-    for candidate in /usr/share/nix-direnv/direnvrc /run/current-system/sw/share/nix-direnv/direnvrc; do
-      if [ -r "$candidate" ]; then source "$candidate"; break; fi
-    done
-  '';
   xdg.configFile."lazygit/config.yml".text = "{}\n";
   xdg.configFile."bat/config".text = (
     if desktopEnabled then "--theme=noctalia\n" else "--theme=base16\n"

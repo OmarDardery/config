@@ -183,7 +183,7 @@ live in `sync.toml` and survive rebuilds. No home-directory access is granted to
 greeter. Sync copies the chosen wallpaper into its own state directory.
 
 Build the system first. For the first display-manager replacement, activate from
-a TTY or use `sudo nixos-rebuild boot --flake ~/config/nixos#nixos` and reboot;
+a TTY or use `sudo nixos-rebuild boot --flake ~/config#nixos` and reboot;
 restarting the login service can end a graphical session. After boot, verify
 `systemctl status greetd`, logging into Umbriel, keyring unlocking, logout and
 appearance sync. Review failures with `journalctl -b -u greetd`.

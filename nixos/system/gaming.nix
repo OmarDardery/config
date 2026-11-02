@@ -18,8 +18,7 @@ let
   launchers = import ../pkgs/performance-launchers.nix { inherit pkgs isNixOS isLaptop; };
 in
 lib.mkIf config.workstation.gaming.enable {
-  environment.systemPackages = [ steam.setup steam.millennium launchers.gameRun ];
-  environment.sessionVariables.STEAM_EXTRA_COMPAT_TOOLS_PATHS = "$HOME/.steam/root/compatibilitytools.d";
+  environment.systemPackages = [ launchers.gameRun ];
   services.flatpak.packages = [ "com.vysp3r.ProtonPlus" ];
 
   programs.steam = {

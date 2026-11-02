@@ -2,6 +2,7 @@
   pkgs,
   inputs,
   profile,
+  config,
   ...
 }:
 {
@@ -39,6 +40,11 @@
       isNixOS = true;
       desktopEnabled = true;
       isLaptop = true;
+      features = {
+        development = true;
+        desktop = true;
+        gaming = config.workstation.gaming.enable;
+      };
     };
     backupFileExtension = "bak";
     users.${profile.username}.imports = [
