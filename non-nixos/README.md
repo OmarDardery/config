@@ -14,7 +14,7 @@ The default checkout is `~/config`; add `-- --repo-dir ~/dotfiles` to change it.
 Use `-- OWNER/REPO` for a fork with this layout, and `--ref BRANCH` for a new
 checkout at another revision. Existing origins must match an explicitly selected repo.
 
-Install the applications through your distro. The starter expects a current
+Install the applications through your distro. The starter follows [LazyVim’s requirements](https://www.lazyvim.org/) and expects a
 Neovim/LazyVim-compatible version (Neovim 0.11.2+ built with LuaJIT), Git, ripgrep and fd;
 VSCodium's native `codium` executable; Kitty; Umbriel; and **Noctalia v5**
 (the Rust/TOML release, rather than the legacy Quickshell shell).
@@ -63,3 +63,6 @@ It does not refresh NixOS inputs, rebuild a system or update native applications
 To update just the installer's Nix dependency, run `nix flake update` in this
 directory. The root's dev shells/templates remain separately usable on Linux;
 this installer does not add shell hooks or tooling.
+
+Native references: [Umbriel config](https://docs.noctalia.dev/umbriel/configuration/) ·
+[Noctalia’s Umbriel template](https://docs.noctalia.dev/noctalia/templates/official/umbriel/).

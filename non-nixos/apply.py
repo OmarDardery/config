@@ -100,7 +100,7 @@ def install(source, config, state):
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(prog="dotfiles-apply", description=__doc__)
     parser.add_argument("repository", nargs="?", type=github, help="GitHub OWNER/REPO (default: OmarDardery/config)")
     parser.add_argument("--repo-dir", type=Path, default=Path.home() / "config")
     parser.add_argument("--ref", help="branch, tag or commit for a new checkout")
