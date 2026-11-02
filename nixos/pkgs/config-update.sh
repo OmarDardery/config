@@ -30,7 +30,7 @@ fi
 # evaluating/updating this NixOS checkout, but preserve existing local edits.
 if [[ "$backend" == os ]]; then
   flake_directory=${repository#path:}
-  bash "$flake_directory/native/copy-hardware.sh" "$(dirname -- "$flake_directory")" --if-missing
+  bash "$flake_directory/scripts/copy-hardware.sh" "$flake_directory" --if-missing
 fi
 
 printf '%s\n' 'Updating flake inputs...'
@@ -39,9 +39,9 @@ nix flake update --flake "$repository"
 # nh builds before switching and shows the generation diff. Build failures stop here.
 printf '%s\n' 'Building and activating the updated configuration...'
 if [[ "$backend" == os ]]; then
-  nh os switch --show-activation-logs --hostname "$configuration" "$repository"
+  nix run "$repository" -- --repo-dir "${repository#path:}" --host "$configuration"
 else
-  nix run "$repository#home-manager" -- switch --flake "$repository#$configuration"
+  nix run "$repository" -- --repo-dir "${repository#path:}" --home --profile "$configuration"
 fi
 
 if command -v flatpak >/dev/null 2>&1; then

@@ -1,5 +1,11 @@
 # A small LazyVim starter. Plugins live in user data, not a system toolchain.
-{ pkgs, lib, config, isNixOS, desktopEnabled ? false, ... }:
+{
+  pkgs,
+  lib,
+  config,
+  desktopEnabled ? false,
+  ...
+}:
 let
   init = ''
     vim.g.mapleader = " "
@@ -79,7 +85,8 @@ let
         } },
       }
     '';
-  } // lib.optionalAttrs desktopEnabled {
+  }
+  // lib.optionalAttrs desktopEnabled {
     "lua/plugins/noctalia.lua" = ''
       local path = ${lib.generators.toLua { } "${config.xdg.stateHome}/noctalia/theme/nvim.lua"}
       local last_stamp
@@ -137,28 +144,32 @@ let
       }
     '';
   };
-  defaults = pkgs.linkFarm "lazyvim-starter" (lib.mapAttrsToList (name: text: {
-    inherit name;
-    path = pkgs.writeText (builtins.baseNameOf name) text;
-  }) files);
-  manifest = pkgs.writeText "lazyvim-starter.json" (builtins.toJSON {
-    directories."${config.xdg.configHome}/nvim" = "${defaults}";
-    # Repair only our exact previous starter; edited or deleted files stay yours.
-    repairs = {
-      "${config.xdg.configHome}/nvim/init.lua" = {
-        sha256 = "5c4a0c19dc24aa834cfa37e875723d08916411206e9238802261a74eb85e64b8";
-        source = "${defaults}/init.lua";
+  defaults = pkgs.linkFarm "lazyvim-starter" (
+    lib.mapAttrsToList (name: text: {
+      inherit name;
+      path = pkgs.writeText (builtins.baseNameOf name) text;
+    }) files
+  );
+  manifest = pkgs.writeText "lazyvim-starter.json" (
+    builtins.toJSON {
+      directories."${config.xdg.configHome}/nvim" = "${defaults}";
+      # Repair only our exact previous starter; edited or deleted files stay yours.
+      repairs = {
+        "${config.xdg.configHome}/nvim/init.lua" = {
+          sha256 = "5c4a0c19dc24aa834cfa37e875723d08916411206e9238802261a74eb85e64b8";
+          source = "${defaults}/init.lua";
+        };
+        "${config.xdg.configHome}/nvim/lua/plugins/tools.lua" = {
+          sha256 = "6e4844d9330cae59f39a1cfb1e5746b7bb23f83088f7247932140aeeac8e680d";
+          source = "${defaults}/lua/plugins/tools.lua";
+        };
       };
-      "${config.xdg.configHome}/nvim/lua/plugins/tools.lua" = {
-        sha256 = "6e4844d9330cae59f39a1cfb1e5746b7bb23f83088f7247932140aeeac8e680d";
-        source = "${defaults}/lua/plugins/tools.lua";
-      };
-    };
-  });
+    }
+  );
 in
 {
   # Nix supplies the program and Nix tools; Lazy owns every plugin in user data.
-  programs.neovim = lib.mkIf isNixOS {
+  programs.neovim = {
     enable = true;
     defaultEditor = true;
     viAlias = true;
@@ -168,8 +179,16 @@ in
     withNodeJs = false;
     withPerl = false;
     initLua = lib.mkForce "";
+    extraPackages = [
+      pkgs.git
+      pkgs.ripgrep
+      pkgs.fd
+    ];
   };
-  home.packages = lib.optionals isNixOS [ pkgs.nixd pkgs.nixfmt ];
+  home.packages = [
+    pkgs.nixd
+    pkgs.nixfmt
+  ];
   home.activation.mutableLazyVim = lib.hm.dag.entryBetween [ "linkGeneration" ] [ "writeBoundary" ] ''
     run ${pkgs.python3}/bin/python3 ${../../pkgs}/migrate-desktop.py editor-defaults \
       ${manifest} ${lib.escapeShellArg "${config.xdg.stateHome}/editor-defaults/lazyvim"}

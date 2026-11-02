@@ -38,7 +38,7 @@ incompatibilities: build the NVIDIA check and full system before activation.
 The full system build also covers xpadneo.
 
 ```sh
-cd ~/config/nixos
+cd ~/config
 sudo nixos-rebuild build --flake path:.#nixos
 nix build 'path:.#nixosConfigurations.nixos.config.system.build.toplevel' --no-link
 nh os switch

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Native Fedora applications and shared editor/dotfile configuration.
+# Compatibility entry point; use the shared launcher on each distro.
 set -euo pipefail
 repo_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-exec bash "$repo_dir/nixos/native/fedora.sh" "$@"
+exec bash "$repo_dir/setup.sh" "$@"

@@ -50,7 +50,7 @@
       "ctrl+shift+k" = "previous_window";
       "ctrl+shift+z" = "toggle_layout stack";
       "ctrl+shift+f2" =
-        "launch --type=overlay nvim ${lib.escapeShellArg "${profile.configRepo}/home/kitty.nix"}";
+        "launch --type=overlay nvim ${lib.escapeShellArg "${profile.configRepo}/nixos/home/kitty.nix"}";
       "ctrl+shift+u" = "kitten hints --type url";
     };
     # A missing palette on the first launch is harmless; Kitty's defaults apply.

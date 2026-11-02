@@ -2,6 +2,8 @@
   isNixOS,
   isLaptop,
   pkgs,
+  config,
+  lib,
   profile,
   ...
 }:
@@ -26,8 +28,6 @@
       git-lfs
       delta
       gh
-      direnv
-      nix-direnv
       nh
       nix-output-monitor
       nvd
@@ -40,20 +40,25 @@
       zip
       unzip
       _7zz
-      lshw
-      usbutils
-      pciutils
-      lsof
-      strace
-      sysstat
-      smartmontools
-      nvme-cli
-      dnsutils
-      nmap
-      iperf3
-      ethtool
       zsh-autosuggestions
       zsh-syntax-highlighting
-    ];
+    ]
+    ++ lib.optionals config.workstation.diagnostics.enable (
+      with pkgs;
+      [
+        lshw
+        usbutils
+        pciutils
+        lsof
+        strace
+        sysstat
+        smartmontools
+        nvme-cli
+        dnsutils
+        nmap
+        iperf3
+        ethtool
+      ]
+    );
   environment.sessionVariables.NH_FLAKE = "path:${profile.configRepo}";
 }

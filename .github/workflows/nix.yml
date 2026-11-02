@@ -1,10 +1,10 @@
 name: Evaluate Nix configuration
 on:
   pull_request:
-    paths: ['nixos/**', '.github/**']
+    paths: ['nixos/**', 'scripts/**', 'templates/**', 'tests/**', '*.sh', 'flake.*', '.github/**']
   push:
     branches: [main]
-    paths: ['nixos/**', '.github/**']
+    paths: ['nixos/**', 'scripts/**', 'templates/**', 'tests/**', '*.sh', 'flake.*', '.github/**']
   workflow_dispatch:
 permissions:
   contents: read
@@ -16,6 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Exercise deployment routing and failures
+        run: python3 tests/deploy.py
       - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31
         with:
           extra_nix_config: |
@@ -27,14 +29,30 @@ jobs:
         run: |
           work=$(mktemp -d)
           trap 'rm -rf -- "$work"' EXIT
-          cp -R nixos "$work/nixos"
+          cp -R nixos scripts templates flake.nix flake.lock "$work/"
           cp .github/ci-hardware.nix "$work/nixos/hardware-configuration.nix"
-          flake="path:$work/nixos"
+          flake="path:$work"
+          nix build "$flake" --no-link --no-write-lock-file
+          nix run "$flake" -- --help
           nix flake check "$flake" --no-build --no-write-lock-file
           profile=$(nix eval --raw "$flake#lib.deployment.profileName" --no-write-lock-file)
-          for name in "$profile" "$profile-desktop"; do
+          for name in "$profile" "$profile-core" "$profile-dev" "$profile-gaming" "$profile-desktop"; do
             nix eval --raw "$flake#homeConfigurations.$name.activationPackage.drvPath" --no-write-lock-file
           done
+          nix eval --impure --json --expr "import ./tests/portable.nix { flake = builtins.getFlake \"$flake\"; }"
+          cat > "$work/nixos/local-profile.nix" <<EOF
+          { username = "ciuser"; homeDirectory = "/srv/ciuser"; configRepo = "$work"; }
+          EOF
+          nix eval --raw "$flake#homeConfigurations.ciuser.activationPackage.drvPath" --no-write-lock-file
+          nix eval --raw "$flake#nixosConfigurations.nixos.config.home-manager.users.ciuser.home.homeDirectory" --no-write-lock-file
+          # Evaluate the pinned NVIDIA path without building a driver or needing GPU hardware.
+          cat > "$work/nixos/local-gpu.nix" <<'EOF'
+          { backend = "nvidia"; nvidiaVersion = "615.78.08";
+            nvidiaHash = "sha256-Pj9t3cLudnoIGFMAr3vjyyhuznZpjS3eNSRZl4LQf/4=";
+            nvidiaAcceptLicense = true; }
+          EOF
+          nix eval --raw "$flake#homeConfigurations.ciuser-dev.activationPackage.drvPath" --no-write-lock-file
+          rm "$work/nixos/local-gpu.nix" "$work/nixos/local-profile.nix"
           host=$(nix eval --raw "$flake#lib.deployment.hostName" --no-write-lock-file)
           profile_user=$(nix eval --raw "$flake#lib.deployment.username" --no-write-lock-file)
           compositor=$(nix build --no-link --print-out-paths --no-write-lock-file "$flake#nixosConfigurations.$host.config.programs.umbriel.package")
@@ -44,3 +62,5 @@ jobs:
           shell_package=$(nix build --no-link --print-out-paths --impure --expr "(builtins.getFlake \"$flake\").inputs.noctalia.packages.$system.default")
           shell_settings=$(nix build --no-link --print-out-paths --no-write-lock-file "$flake#nixosConfigurations.$host.config.home-manager.users.$profile_user.xdg.configFile.\"noctalia/config.toml\".source")
           "$shell_package/bin/noctalia" config validate "$shell_settings"
+      - name: Initialize standalone project templates
+        run: python3 tests/templates.py
