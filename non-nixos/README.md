@@ -1,68 +1,93 @@
 # Native Linux dotfiles
 
-This directory is independent of the NixOS flake: one small flake, its own lock,
-a Git/Python installer and plain editable dotfiles. It does not use Home Manager.
-
 ```sh
-nix run 'github:OmarDardery/config?dir=non-nixos'
-nix run 'github:OmarDardery/config?dir=non-nixos#update'
+nix --extra-experimental-features 'nix-command flakes' run github:OmarDardery/config
 ```
 
-Run as your normal user with Nix installed, on x86_64 or aarch64 Linux. Add
-`--extra-experimental-features 'nix-command flakes'` before `run` if needed.
-The default checkout is `~/config`; add `-- --repo-dir ~/dotfiles` to change it.
-Use `-- OWNER/REPO` for a fork with this layout, and `--ref BRANCH` for a new
-checkout at another revision. Existing origins must match an explicitly selected repo.
+Requires Nix on Linux (x86_64 or aarch64); Nix supplies Git and Python for
+activation. No native Git/Python packages or Home Manager installation are
+required. Run as your normal user. Default checkout: `~/config`.
+From an existing checkout use `bash setup.sh`. When flakes are enabled, the
+fresh-install command shortens to `nix run github:OmarDardery/config`.
 
-Install the applications through your distro. The starter follows [LazyVim’s requirements](https://www.lazyvim.org/) and expects a
-Neovim/LazyVim-compatible version (Neovim 0.11.2+ built with LuaJIT), Git, ripgrep and fd;
-VSCodium's native `codium` executable; Kitty; Umbriel; and **Noctalia v5**
-(the Rust/TOML release, rather than the legacy Quickshell shell).
-Umbriel/Noctalia config syntax is checked against the versions pinned by the
-NixOS flake. Native package versions may differ; validate with your own binaries:
+The installer configures these files and installs one small command in
+`~/.local/bin`. It never installs applications, fonts, extensions, drivers or
+services, changes your login shell, or starts/restarts apps. Apps stay under your
+distro's native package manager. LazyVim fetches its plugins when first opened.
+
+| Source under `dotfiles/` | Destination |
+| --- | --- |
+| `nvim/` | `$XDG_CONFIG_HOME/nvim/` |
+| `VSCodium/User/settings.json` | `$XDG_CONFIG_HOME/VSCodium/User/settings.json` |
+| `umbriel/config.toml` | `$XDG_CONFIG_HOME/umbriel/config.toml` |
+| `noctalia/config.toml` | `$XDG_CONFIG_HOME/noctalia/config.toml` |
+| `kitty/kitty.conf` | `$XDG_CONFIG_HOME/kitty/kitty.conf` |
+| `starship.toml` | `$XDG_CONFIG_HOME/starship.toml` |
+| `zsh/.zshrc` | `$ZDOTDIR/.zshrc`, or `~/.zshrc` when unset |
+
+`XDG_CONFIG_HOME` defaults to `~/.config`. Native prerequisites:
+
+- Neovim 0.11.2+ with LuaJIT, Git, ripgrep and fd for LazyVim.
+- VSCodium (`codium`), Kitty, Starship and Zsh for their respective dotfiles.
+- Umbriel and **Noctalia v5** (Rust/TOML, rather than the legacy Quickshell shell).
+- Optional JetBrainsMono Nerd Font; optional zoxide/direnv for shell integrations.
+
+These are app requirements, not packages the installer installs. Distro package
+names and availability differ; use native packages compatible with these configs.
+Stacking/dwindle switching uses `Mod+D`, with `Mod+Alt+1`/`Mod+Alt+2` for
+direct selection. Title bars and stacking drop zones require a current Umbriel
+package (validated against the 2026-11-03 upstream revision).
+
+Noctalia/Umbriel syntax is also checked against the NixOS flake's pinned versions.
+Validate against the actual native binaries after installing them:
 
 ```sh
 umbriel config validate -c ~/.config/umbriel/config.toml
 noctalia config validate ~/.config/noctalia/config.toml
 ```
 
-| Source under `dotfiles/` | Destination under `$XDG_CONFIG_HOME` |
-| --- | --- |
-| `nvim/` | `nvim/` |
-| `VSCodium/User/settings.json` | `VSCodium/User/settings.json` |
-| `umbriel/config.toml` | `umbriel/config.toml` |
-| `noctalia/config.toml` | `noctalia/config.toml` |
+Choose Umbriel at login; it starts Noctalia directly. The defaults include
+English/Arabic input, a bottom bar that reserves space, and a right dock.
+Noctalia's native Umbriel template handles compositor colors. Kitty uses its
+normal palette until a `noctalia*.conf` palette is present. Starship is configured
+statically; Zsh initializes it only when the native executable exists. Zsh also
+loads the installed Nix profile and adds `~/.local/bin` to `PATH`. Start `zsh` to use it; selecting it as the login
+shell is your choice. Machine-specific shell additions belong in `.zshrc.local`.
 
-`XDG_CONFIG_HOME` defaults to `~/.config`. Nothing else is configured. The
-installer does not select a login session or start/restart applications. Select
-your distro's Umbriel session yourself; it starts Noctalia via autostart. Configs
-include English/Arabic input, a bottom bar, a right dock and common app shortcuts.
-Noctalia's native Umbriel template handles colors. Other app themes and plugins
-can be configured through their own interfaces. No VSCodium extensions are installed.
-LazyVim downloads plugins into user data on first use; language tools are left to
-your distro or projects. Mason and parser compilation start disabled.
+## Apply and update
 
-Existing files are backed up on first apply. Old Home Manager directory links are
-backed up and materialized as writable directories; store targets are untouched.
-Later applies replace a file only if it still matches the previously applied
-version. Local edits and deletions are preserved and reported. Unrelated files
-are retained. Source files removed from the repo are not automatically deleted.
-Edit installed files for local preferences; edit and commit source files to share
-changes across your machines. To reseed all defaults, move aside the installer's
-`files.json` and apply again; current conflicts will be backed up.
+```sh
+~/.local/bin/config-apply
+~/.local/bin/config-apply --update
+```
 
-State and backups live under `$XDG_STATE_HOME/non-nixos-config/` (default
-`~/.local/state/non-nixos-config/`). Restore an individual backup by copying it
-over its destination after closing the relevant app. State is separate from the
-NixOS launcher and no account/hardware files are generated.
+In a new Zsh session, `up` updates and applies. `config-apply` uses
+the checkout as-is. `up` runs `git pull --ff-only` and applies unedited defaults;
+it refuses tracked source edits or a diverged checkout. Native app updates stay
+with your distro. The launcher re-enters the checkout's locked Nix environment,
+so they work without system Git/Python packages after the first activation.
+Nix profiles and project shells can still provide development tools independently.
 
-Normal apply never pulls commits. `#update` fast-forwards the checkout from its
-current upstream, refuses tracked local source edits, then applies unedited
-files. Commit source edits before updating. If the pull fails, no dotfiles change.
-It does not refresh NixOS inputs, rebuild a system or update native applications.
-To update just the installer's Nix dependency, run `nix flake update` in this
-directory. The root's dev shells/templates remain separately usable on Linux;
-this installer does not add shell hooks or tooling.
+Existing files are backed up on first apply. Later applies preserve local edits
+and deletions; unrelated files remain untouched. Old Home Manager directory links
+are backed up and materialized as writable directories. Source files removed from
+the repo are not automatically deleted. VSCodium extensions and keybindings stay
+yours. Mason and Tree-sitter compilation start disabled; project tooling belongs
+in project environments or native packages.
 
-Native references: [Umbriel config](https://docs.noctalia.dev/umbriel/configuration/) ·
-[Noctalia’s Umbriel template](https://docs.noctalia.dev/noctalia/templates/official/umbriel/).
+State and backups live under `$XDG_STATE_HOME/non-nixos-config/`, default
+`~/.local/state/non-nixos-config/`. Restore files by copying from a backup after
+closing the app. To reseed defaults, move aside `files.json` and apply again;
+current conflicts will be backed up. Launcher replacements are backed up too.
+
+The independent dotfiles flake is also available directly:
+
+```sh
+nix run 'github:OmarDardery/config?dir=non-nixos'
+nix run 'github:OmarDardery/config?dir=non-nixos' -- --update
+```
+
+Use `-- --repo-dir ~/dotfiles` for another checkout, `-- OWNER/REPO` for a fork,
+and `--ref BRANCH` only for a new clone. Source URLs must identify the same branch
+as `--ref` when testing an unmerged launcher. The small flake is independent of the
+NixOS system and installs only its Git/Python launcher dependencies into the Nix store.

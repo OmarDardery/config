@@ -1,17 +1,10 @@
-# Native performance policy; application launchers use the shared power profile.
-{ pkgs, ... }:
+# Native kernel scheduling and power profiles.
+{ pkgs, isLaptop, ... }:
 {
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  # Keep the tested laptop driver/kernel policy; other hosts use the stable kernel.
+  boot.kernelPackages = if isLaptop then pkgs.linuxPackages_latest else pkgs.linuxPackages;
 
   services.power-profiles-daemon.enable = true;
-  services.scx = {
-    enable = true;
-    package = pkgs.scx.rustscheds;
-    scheduler = "scx_lavd";
-    # Follow PPD (including performance-run/game-run), with upstream EPP fallback.
-    extraArgs = [ "--autopower" ];
-  };
-
   # Compressed RAM first; generated hardware config retains disk-swap fallback.
   zramSwap.enable = true;
 }

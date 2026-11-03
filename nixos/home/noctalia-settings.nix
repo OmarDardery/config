@@ -14,7 +14,7 @@
         action = "lock";
       };
       suspend = {
-        enabled = false; # The laptop power hook enables this on battery only.
+        enabled = false;
         timeout = 1200;
         action = "lock_and_suspend";
       };
@@ -112,9 +112,6 @@
         type = "notification";
       }
       {
-        type = "alexander/screen-toolkit:toggle";
-      }
-      {
         type = "caffeine";
       }
     ];
@@ -167,33 +164,12 @@
   lockscreen_widgets = {
     enabled = false;
   };
-  plugin_settings = {
-    "davemhammer/tailscale" = {
-      refresh_interval = 30;
-      notify_on_peer_change = false;
-    };
-    "avivbintangaringga/nix-monitor" = {
-      branch = "nixos-26.05";
-      system_stats_check_mode = "off";
-    };
-  };
-  plugins = {
-    enabled = [
-      "alexander/screen-toolkit"
-      "avivbintangaringga/nix-monitor"
-      "icefish/phone-connect"
-      "thepunkoff/pomodoro"
-      "alexander/game-launcher"
-      "davemhammer/tailscale"
-    ];
-    # Catalogs can be refreshed in Settings; Nix-managed plugins follow the flake pin.
-    auto_update = "none";
-  };
+  plugins.enabled = [ ];
   shell = {
     corner_radius_scale = 1.2;
     font_family = "Inter";
     polkit_agent = true;
-    greeter_sync.auto_sync = true;
+    greeter_sync.auto_sync = false;
     setup_wizard_enabled = false;
     settings_window_translucent = true;
     umbriel_overview_type_to_launch_enabled = true;
@@ -258,18 +234,6 @@
     clipboard_keep_from_closed_apps = true;
     clipboard_confirm_clear_history = true;
   };
-  theme = {
-    source = "wallpaper";
-    templates = {
-      builtin_ids = [
-        "gtk3"
-        "gtk4"
-        "kcolorscheme"
-        "starship"
-      ];
-      community_ids = [ ];
-    };
-  };
   wallpaper = {
     transition_on_startup = true;
     transition = [ "fade" ];
@@ -312,25 +276,8 @@
     battery = {
       display_mode = "graphic";
     };
-    tailscale = {
-      type = "davemhammer/tailscale:status";
-      show_counts = false;
-    };
     control-center = {
       glyph = "settings";
-    };
-    nix-monitor = {
-      show_text = false;
-      type = "avivbintangaringga/nix-monitor:nix-monitor";
-    };
-    screen-toolkit = {
-      type = "alexander/screen-toolkit:widget";
-    };
-    phone-connect = {
-      type = "icefish/phone-connect:bar";
-    };
-    pomodoro = {
-      type = "thepunkoff/pomodoro:widget";
     };
   };
 }

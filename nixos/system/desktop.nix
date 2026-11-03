@@ -1,10 +1,7 @@
 # Native login sessions and portals; application packages live in system/applications/.
 {
-  config,
-  lib,
   pkgs,
   inputs,
-  profile,
   ...
 }:
 {
@@ -15,11 +12,6 @@
   environment.sessionVariables.XKB_CONFIG_ROOT = "${pkgs.xkeyboard-config}/share/X11/xkb";
   # The upstream Umbriel module supplies its portal and the GTK file chooser.
   xdg.portal = {
-    enable = true;
-    config.umbriel.default = [
-      "umbriel"
-      "gtk"
-    ];
     config.umbriel."org.freedesktop.impl.portal.Secret" = "gnome-keyring";
   };
 
@@ -29,31 +21,10 @@
   services.gnome.at-spi2-core.enable = true;
   services.gnome.gcr-ssh-agent.enable = true;
 
-  # Limit the privileged KMS helper to the recording group.
-  # KMS capture needs CAP_SYS_ADMIN; do not expose the helper to every user.
-  users.groups.recording = { };
-  security.wrappers.gsr-kms-server = {
-    owner = "root";
-    group = "recording";
-    permissions = "u+rx,g+rx,o-rwx";
-    capabilities = "cap_sys_admin+ep";
-    source = lib.getExe' (pkgs.gpu-screen-recorder.override {
-      inherit (config.security) wrapperDir;
-    }) "gsr-kms-server";
-  };
-  # Only the privileged capture helper and access group are host-owned.
-  users.groups.wireshark = { };
-  security.wrappers.dumpcap = {
-    source = "${pkgs.wireshark-cli}/bin/dumpcap";
-    capabilities = "cap_net_raw,cap_net_admin+eip";
-    owner = "root";
-    group = "wireshark";
-    permissions = "u+rx,g+x";
-  };
-
-  # greetd's native PAM integration unlocks the user keyring.
+  # Ly's NixOS PAM integration unlocks the user keyring.
   services.gnome.gnome-keyring.enable = true;
 
+  services.flatpak.enable = true;
   services.gvfs.enable = true;
   services.tumbler.enable = true;
   programs.thunar = {
@@ -64,8 +35,6 @@
     ];
   };
 
-  # User units live in applications/services.nix; restrict ports to Tailscale.
-  programs.kdeconnect.enable = false;
   services.upower.enable = true;
   services.fwupd.enable = true;
 
@@ -78,7 +47,7 @@
     HandleLidSwitchDocked = "ignore";
   };
 
-  # One audio stack for the greeter and desktop, including PulseAudio clients.
+  # One desktop audio stack, including PulseAudio clients.
   security.rtkit.enable = true;
   services.pulseaudio.enable = false;
   services.pipewire = {

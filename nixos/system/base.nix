@@ -2,14 +2,14 @@
   pkgs,
   inputs,
   profile,
+  lib,
+  isLaptop,
   ...
 }:
 {
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.timeout = 2;
-  boot.loader.efi.canTouchEfiVariables = true;
+  boot.loader.timeout = lib.mkDefault 2;
   # Bound kernel/initrd retention on the 1 GB EFI partition.
-  boot.loader.systemd-boot.configurationLimit = 10;
+  boot.loader.systemd-boot.configurationLimit = lib.mkDefault 10;
 
   users.users.${profile.username} = {
     isNormalUser = true;
@@ -19,8 +19,6 @@
       "networkmanager"
       "wheel"
       "dialout"
-      "recording"
-      "wireshark"
     ];
     shell = pkgs.zsh;
   };
@@ -28,7 +26,7 @@
   # NixOS installs the login shell; Home Manager writes its dotfiles.
   programs.nix-ld.enable = true;
   programs.zsh.enable = true;
-  # The shared .zshrc initializes completion once.
+  # Home Manager owns completion initialization.
   programs.zsh.enableGlobalCompInit = false;
 
   home-manager = {
@@ -36,12 +34,11 @@
     useUserPackages = true;
     extraSpecialArgs = {
       inherit inputs profile;
-      isLaptop = true;
+      inherit isLaptop;
     };
     backupFileExtension = "bak";
     users.${profile.username}.imports = [
       ../home
-      ../home/hardware-user.nix
     ];
   };
 

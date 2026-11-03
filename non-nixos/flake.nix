@@ -21,15 +21,9 @@
             ];
             text = ''exec python3 ${./apply.py} "$@"'';
           };
-          update = pkgs.writeShellApplication {
-            name = "dotfiles-update";
-            runtimeInputs = [ apply ];
-            text = ''exec dotfiles-apply --update "$@"'';
-          };
         in
         {
           default = apply;
-          inherit update;
         }
       );
     in
@@ -39,12 +33,7 @@
         default = {
           type = "app";
           program = "${packages.${system}.default}/bin/dotfiles-apply";
-          meta.description = "Apply LazyVim, VSCodium, Umbriel and Noctalia dotfiles";
-        };
-        update = {
-          type = "app";
-          program = "${packages.${system}.update}/bin/dotfiles-update";
-          meta.description = "Fast-forward the checkout and update unedited dotfiles";
+          meta.description = "Apply desktop and shell dotfiles";
         };
       });
     };

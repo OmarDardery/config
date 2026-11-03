@@ -10,8 +10,6 @@
     ./git.nix
     ./nix-tools.nix
     ./editors
-    ./development.nix
-    ./gaming.nix
     inputs.noctalia.homeModules.default
     inputs.umbriel.homeModules.default
     ./desktop.nix
@@ -19,11 +17,10 @@
     ./noctalia.nix
     ./umbriel.nix
     ./kitty.nix
-    ./office.nix
   ];
   home.username = profile.username;
   home.homeDirectory = profile.homeDirectory;
-  home.stateVersion = "26.05";
+  home.stateVersion = profile.homeStateVersion;
   programs.home-manager.enable = false;
   programs.man.enable = false;
   manual.manpages.enable = false;

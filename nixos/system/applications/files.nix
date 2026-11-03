@@ -8,15 +8,9 @@
     gnome-disk-utility
     seahorse
     sshfs
-    zenity
-    adwaita-icon-theme
-    adw-gtk3
-    bibata-cursors
     glib
-    pavucontrol
     brightnessctl
     playerctl
-    kdePackages.kdeconnect-kde
   ];
   qt = {
     enable = true;
@@ -24,8 +18,4 @@
     style = "breeze";
   };
   programs.ssh.askPassword = "${pkgs.seahorse}/libexec/seahorse/ssh-askpass";
-  environment.sessionVariables = {
-    XCURSOR_THEME = "Bibata-Modern-Classic";
-    XCURSOR_SIZE = "24";
-  };
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
+# Convenience wrapper for an existing checkout; Nix supplies installer tools.
 set -euo pipefail
 repo_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
-if [[ -e /etc/NIXOS ]]; then flake="path:$repo_dir"; else flake="path:$repo_dir/non-nixos"; fi
-exec nix --extra-experimental-features 'nix-command flakes' run "$flake" -- --repo-dir "$repo_dir" "$@"
+exec nix --extra-experimental-features 'nix-command flakes' run "path:$repo_dir" -- --repo-dir "$repo_dir" "$@"

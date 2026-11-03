@@ -16,7 +16,6 @@ The bar shows essential status; occasional tools remain in panels and shortcuts.
 | Mod+T / Mod+B / Mod+E | Kitty / Zen / Thunar |
 | Mod+grave / Mod+Ctrl+Return | Terminal / calculator scratchpad |
 | Mod+Ctrl+P / Mod+Ctrl+Shift+P | Start / end presentation mode |
-| Mod+Alt+U | Nix Monitor panel |
 | Mod+Shift+E | Yazi directly in Kitty |
 | Mod+I / Mod+Ctrl+E | VSCodium / edit the Nix configuration tree |
 | Mod+Space | App launcher, search and calculator |
@@ -29,10 +28,8 @@ The bar shows essential status; occasional tools remain in panels and shortcuts.
 | Mod+Ctrl+Alt+W | Theme settings: wallpaper palette algorithm |
 | Mod+Alt+C / Mod+Alt+N | Caffeine / force night light |
 | Mod+Alt+P | Cycle power profile |
-| Mod+Alt+V | Tailscale peers, VPN and exit-node manager |
 | Mod+Alt+A / Mod+Alt+B | Audio / Bluetooth controls |
 | Mod+Alt+E | Emoji picker |
-| Mod+Alt+G / Mod+Alt+M / Mod+Alt+O | Games / phone / Pomodoro |
 | Mod+Shift+D / Mod+Shift+M | Display configuration / laptop HDMI mirror |
 | Mod+Ctrl+Alt+T | OpenTabletDriver settings (laptop) |
 | Mod+Shift+P | Turn displays off |
@@ -46,13 +43,13 @@ The power button locks first. `Ctrl+Alt+Delete` quits the compositor session.
 
 | Shortcut | Action |
 | --- | --- |
-| Mod+D | Cycle **dwindle → scrolling → dwindle** |
-| Mod+Alt+1 / Mod+Alt+2 | Select dwindle / scrolling directly |
+| Mod+D | Cycle **dwindle → stacking → dwindle** |
+| Mod+Alt+1 / Mod+Alt+2 | Select dwindle / stacking directly |
 | Mod+Left/Right or H/L | Focus horizontally |
-| Mod+J/K or Mod+WheelDown/Up | Focus rows or tabs |
+| Mod+J/K or Mod+WheelDown/Up | Focus windows vertically |
 | Mod+Up/Down / Mod+Tab | Previous-next workspace / previous workspace |
 | Mod+1…9 / Mod+Ctrl+1…9 | Select a numbered workspace / move column there |
-| Mod+Ctrl+arrows or H/J/K/L | Move columns or rows/tabs |
+| Mod+Ctrl+arrows or H/J/K/L | Move columns or windows |
 | Mod+Shift+arrows | Focus another monitor |
 | Mod+Ctrl+Shift+arrows | Move column to another monitor |
 | Mod+Home/End / Mod+Ctrl+Home/End | Focus first-last column / move it there |
@@ -75,28 +72,29 @@ Shift+vertical wheel has the same horizontal behavior. Ctrl+vertical wheel
 moves the column between workspaces. Master is absent from the configured cycle
 and direct shortcuts.
 
+Stacking opens overlapping windows. Drag title bars to move them and use the
+edge/corner previews to snap to halves or quarters. Switching back to dwindle
+re-tiles layout-floated windows. `Mod+Return` applies to tiling layouts; Umbriel
+rejects toggling floating in stacking.
+
 ## Capture
 
-`Mod+S` opens Screen Toolkit. It supports Tab, arrows, Enter and Escape.
-`Print` or `F6` captures a region; Shift+Print or Ctrl+Shift+2 captures the screen;
-Ctrl+Print or Ctrl+Shift+3 captures the focused window; Alt+Print annotates.
+Noctalia handles screenshots directly:
 
-Press **Mod+Shift+S**, release it, then:
-
-| Key | Action |
+| Shortcut | Action |
 | --- | --- |
-| C / O / Q | Colour picker / OCR / QR reader |
-| P / L / M | Palette / lens / measurement |
-| A | Annotate a region |
-| R / F / G | Record region as MP4 / screen as MP4 / region as GIF |
-| S / V | Stop recording / save result |
-| F1 / Escape | Cheatsheet / cancel the shortcut group |
+| Mod+S / Print / F6 | Capture a region |
+| Shift+Print / Ctrl+Shift+2 | Capture the screen |
+| Ctrl+Print / Ctrl+Shift+3 | Capture the focused window |
+| Alt+Print | Annotate |
 
-The group exits after an action. Invoke it again to stop/save a recording.
+The Screen Toolkit plugin and its OCR/recording submap are removed.
 
 ## XP-Pen Deco mini7
 
-The eight express keys, in OpenTabletDriver's order:
+The optional `assets/tablet-settings.json` preset has these express keys, in
+OpenTabletDriver’s order. Import or configure it manually; rebuilds do not modify
+your live tablet settings:
 
 | Keys | Action |
 | --- | --- |
@@ -105,11 +103,8 @@ The eight express keys, in OpenTabletDriver's order:
 | 5 / 6 | Paste / copy |
 | 7 / 8 | Undo / redo (`Ctrl+Z` / `Ctrl+Shift+Z`) |
 
-Both pen buttons remain native stylus buttons. Xournal++'s unset stylus actions
-are seeded to Eraser and Hand. Hold a button while drawing; release it to return
-to the previous tool. Other tool choices and OpenTabletDriver bindings survive
-rebuilds. Change them in Preferences → Stylus; use Preferences → Input System's
-test area to check whether button events arrive as stylus or mouse input.
+Set pen-button actions in OpenTabletDriver and Xournal++ Preferences → Stylus.
+Those preferences are managed by the applications themselves.
 
 ## Kitty
 
@@ -135,6 +130,6 @@ shortcuts belong in `home/kitty.nix`; colours come from Noctalia's generated pal
 
 ## Editors
 
-Both editors start with Nix support and the desktop theme. Use LazyVim's built-in
+Both editors start with Nix support and ordinary built-in themes. Use LazyVim's built-in
 which-key menu for navigation; install language tools and extensions as needed.
 Notebook and custom AI/debugger shortcuts are no longer part of this config.

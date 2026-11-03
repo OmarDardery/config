@@ -7,6 +7,5 @@
     ./fonts.nix
     ./capture.nix
     ./displays.nix
-    ./services.nix
   ];
 }

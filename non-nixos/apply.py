@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Copy four native applications' dotfiles; never install or activate applications."""
+"""Copy native desktop and shell dotfiles; never install or activate applications."""
 import argparse
 import fcntl
 import hashlib
@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import re
 import shutil
+import shlex
 import subprocess
 import sys
 import tempfile
@@ -43,26 +44,29 @@ def atomic_write(path, data):
             temporary.unlink(missing_ok=True)
 
 
-def install(source, config, state):
-    allowed = {"nvim", "VSCodium", "umbriel", "noctalia"}
+def install(source, config, state, zsh_home=None):
+    zsh_home = zsh_home or Path.home()
+    allowed = {"nvim", "VSCodium", "umbriel", "noctalia", "kitty", "starship.toml", "zsh"}
     files = sorted(p for p in source.rglob("*") if p.is_file())
     if not files or any(p.is_symlink() for p in source.rglob("*")):
         raise ValueError("dotfiles must be regular files, without source symlinks")
     if any(p.relative_to(source).parts[0] not in allowed for p in files):
-        raise ValueError("dotfiles must belong to nvim, VSCodium, umbriel or noctalia")
+        raise ValueError("unexpected file outside the managed desktop and shell dotfiles")
+    if any(p.relative_to(source).parts[0] == "zsh" and p.relative_to(source) != Path("zsh/.zshrc") for p in files):
+        raise ValueError("only .zshrc is managed outside XDG_CONFIG_HOME")
     manifest = state / "files.json"
     previous = json.loads(manifest.read_text()) if manifest.exists() else {}
     current = dict(previous)
     backup_root = state / "backups" / f"{time.time_ns()}-{os.getpid()}"
 
     def backup(path):
-        target = backup_root / path.relative_to(config)
+        target = backup_root / (Path("zsh/.zshrc") if path == zsh_home / ".zshrc" else Path("config") / path.relative_to(config))
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.move(str(path), target)
         print(f"Backup: {target}")
 
     def directory(path):
-        if path == config:
+        if path in (config, zsh_home):
             return
         directory(path.parent)
         if path.is_symlink():
@@ -76,9 +80,10 @@ def install(source, config, state):
         path.mkdir(exist_ok=True)
 
     config.mkdir(parents=True, exist_ok=True)
+    zsh_home.mkdir(parents=True, exist_ok=True)
     for file in files:
         relative = file.relative_to(source)
-        destination = config / relative
+        destination = zsh_home / ".zshrc" if relative == Path("zsh/.zshrc") else config / relative
         key = str(destination)
         directory(destination.parent)
         wanted = digest(file)
@@ -99,6 +104,36 @@ def install(source, config, state):
     atomic_write(manifest, (json.dumps(current, indent=2) + "\n").encode())
 
 
+def commands(repo, home, state):
+    """Install the apply launcher and retire the previous generated updater."""
+    bindir = home / ".local/bin"
+    bindir.mkdir(parents=True, exist_ok=True)
+
+    def launcher(extra):
+        return "#!/usr/bin/env bash\nset -euo pipefail\nexec " + shlex.join([
+            "nix", "--extra-experimental-features", "nix-command flakes", "run",
+            "--no-write-lock-file", f"path:{repo / 'non-nixos'}", "--", "--repo-dir", str(repo), *extra
+        ]) + ' "$@"\n'
+
+    def backup(path):
+        target = state / "backups" / f"commands-{time.time_ns()}" / path.name
+        target.parent.mkdir(parents=True)
+        shutil.move(str(path), target)
+
+    path = bindir / "config-apply"
+    script = launcher([])
+    if path.is_symlink() or (path.exists() and path.read_text() != script):
+        backup(path)
+    if not path.exists():
+        atomic_write(path, script.encode())
+        path.chmod(0o755)
+
+    # Retire only an exact generated launcher; retain user-written commands.
+    retired = bindir / "config-update"
+    if retired.is_file() and not retired.is_symlink() and retired.read_text() == launcher(["--update"]):
+        backup(retired)
+
+
 def main():
     parser = argparse.ArgumentParser(prog="dotfiles-apply", description=__doc__)
     parser.add_argument("repository", nargs="?", type=github, help="GitHub OWNER/REPO (default: OmarDardery/config)")
@@ -112,6 +147,9 @@ def main():
         parser.error("use the main NixOS flake to avoid conflicting with Home Manager")
     repo = args.repo_dir.expanduser().absolute()
     config = Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config")
+    zsh_home = Path(os.environ.get("ZDOTDIR") or Path.home())
+    if not zsh_home.is_absolute():
+        parser.error("ZDOTDIR must be an absolute path")
     state_home = Path(os.environ.get("XDG_STATE_HOME") or Path.home() / ".local/state")
     if not config.is_absolute() or not state_home.is_absolute():
         parser.error("XDG_CONFIG_HOME and XDG_STATE_HOME must be absolute paths")
@@ -131,14 +169,17 @@ def main():
                 parser.error("--ref only applies to a new checkout; switch existing branches with Git")
         else:
             repo.parent.mkdir(parents=True, exist_ok=True)
-            subprocess.run(["git", "clone", "--", f"https://github.com/{args.repository or 'OmarDardery/config'}.git", str(repo)], check=True)
+            clone = ["git", "clone"] + ([] if args.ref else ["--depth", "1"])
+            subprocess.run([*clone, "--", f"https://github.com/{args.repository or 'OmarDardery/config'}.git", str(repo)], check=True)
             if args.ref:
                 git(repo, "checkout", args.ref)
         if args.update:
             if git(repo, "status", "--porcelain", "--untracked-files=no"):
-                parser.error("checkout has tracked edits; commit them before #update, or apply without --update")
+                parser.error("checkout has tracked edits; commit them before up, or apply without --update")
             git(repo, "pull", "--ff-only")
-        install(repo / "non-nixos/dotfiles", config, state)
+        install(repo / "non-nixos/dotfiles", config, state, zsh_home)
+        commands(repo, Path.home(), state)
+    print("Command: up (update and apply); config-apply (apply local files only).")
     print(f"Dotfiles applied from {repo / 'non-nixos'}. Restart the apps to reload.")
 
 

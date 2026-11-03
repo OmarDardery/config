@@ -1,5 +1,7 @@
 {
   profile,
+  pkgs,
+  inputs,
   isLaptop,
   lib,
   ...
@@ -7,17 +9,21 @@
 let
   repository = lib.escapeShellArg "path:${profile.configRepo}";
   directory = lib.escapeShellArg profile.configRepo;
-  arguments = " -- --repo-dir ${directory} --host ${lib.escapeShellArg profile.hostName}";
-  applyCommand = "nix run ${repository}${arguments}";
-  updateCommand = "nix run ${lib.escapeShellArg "path:${profile.configRepo}#update"}${arguments}";
+  applyCommand = "config-apply";
+
 in
 {
-  home.sessionVariables.NH_FLAKE = "path:${profile.configRepo}";
+  home.packages = [
+    (pkgs.writeShellScriptBin "config-apply" ''
+      exec ${
+        inputs.self.packages.${profile.system}.nixos-apply
+      }/bin/nixos-apply --repo-dir ${directory} --host ${lib.escapeShellArg profile.hostName} "$@"
+    '')
+  ];
   home.shellAliases = {
-    update = updateCommand;
-    up = applyCommand;
+    up = "${applyCommand} --update";
     rebuild = applyCommand;
-    nbuild = "${applyCommand} --build-only";
+    nbuild = "nix build ${lib.escapeShellArg "path:${profile.configRepo}#nixosConfigurations.${profile.hostName}.config.system.build.toplevel"} --no-link --no-write-lock-file";
     neval = "nix flake check ${repository} --no-build --no-write-lock-file";
     nupdate = "nix flake update --flake ${repository}";
     nfmt = "(cd ${directory} && nix fmt --no-write-lock-file)";

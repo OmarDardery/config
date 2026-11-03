@@ -15,58 +15,9 @@ let
     action = "spawn noctalia msg ${command}";
     allow_when_locked = true;
   };
-  capture = event: {
-    action = "spawn noctalia msg plugin alexander/screen-toolkit:service all ${event}";
-    submap = "reset";
-    repeat = false;
-  };
-  rowNavigation = {
-    executable = true;
-    text = ''
-      #!/usr/bin/env bash
-      set -euo pipefail
-      case "''${1:-}" in
-        focus-up) tab_action=column-focus-tab-previous ;;
-        focus-down) tab_action=column-focus-tab-next ;;
-        move-up) tab_action=column-move-tab-previous ;;
-        move-down) tab_action=column-move-tab-next ;;
-        *) printf '%s\n' 'Expected focus-up, focus-down, move-up or move-down' >&2; exit 2 ;;
-      esac
-      tabbed=$(umbriel windows --json | jq -er '
-        [.[] | select(.active)]
-        | if length == 1 then .[0].tabbed | tostring else error("Expected one active window") end
-      ')
-      if [[ "$tabbed" == true ]]; then
-        exec umbriel msg "$tab_action"
-      else
-        exec umbriel msg "window-$1"
-      fi
-    '';
-  };
-  rowAction =
-    action:
-    "spawn ${lib.escapeShellArg "${config.home.homeDirectory}/.local/bin/umbriel-row-action"} ${action}";
-  screenshotWindow = {
-    executable = true;
-    text = ''
-      #!/usr/bin/env bash
-      set -euo pipefail
-      identifier=$(umbriel windows --json | jq -er '
-        [.[] | select(.active)]
-        | if length == 1 then .[0].id else error("Expected one active window") end
-        | if type == "string" and length > 0 then . else error("Missing window identifier") end
-      ')
-      image=$(mktemp --suffix=.png)
-      trap 'rm -f "$image"' EXIT
-      # Capture the isolated client surface, not a crop containing other windows.
-      grim -T "$identifier" "$image"
-      wl-copy --type image/png < "$image"
-    '';
-  };
+  rowAction = action: "window-${action}";
 in
 {
-  home.file.".local/bin/umbriel-row-action" = rowNavigation;
-  home.file.".local/bin/screenshot-window-umbriel" = screenshotWindow;
   programs.umbriel = {
     enable = true;
     package = null;
@@ -77,7 +28,7 @@ in
         autostart = [
           "noctalia"
         ]
-        ++ lib.optional isLaptop "xrdb -merge ${lib.escapeShellArg "${config.xdg.configHome}/X11/Xresources"}";
+        ++ lib.optional isLaptop "xrdb -merge ${lib.escapeShellArg "${config.home.homeDirectory}/.Xresources"}";
         mod_key = "Super";
         show_cheatsheet = false;
         focus_on_activate = true;
@@ -103,8 +54,8 @@ in
           follows_mouse_max_scroll = 0.0;
         };
         cursor = {
-          theme = "Bibata-Modern-Classic";
-          size = 24;
+          theme = config.home.pointerCursor.name;
+          size = config.home.pointerCursor.size;
           hide_when_typing = true;
         };
       };
@@ -131,11 +82,7 @@ in
           0.5
           0.66667
         ];
-        scrolling = {
-          default_extent_fraction = 0.5;
-          center_focused = "on_overflow";
-          center_underfull_strip = true;
-        };
+        stacking.drop_zones = true;
         # Keep manual split choices stable when windows and outputs resize.
         dwindle.preserve_split = true;
         tabs = {
@@ -145,6 +92,7 @@ in
       };
       appearance = {
         prefer_no_csd = true;
+        title_bar.mode = "on";
         border_width = 1;
         outer_border_width = 0;
         corner_radius = 16;
@@ -218,7 +166,6 @@ in
         "Mod+Ctrl+P" = once "spawn noctalia msg notification-dnd-set on && noctalia msg caffeine-enable";
         "Mod+Ctrl+Shift+P" =
           once "spawn noctalia msg caffeine-disable && noctalia msg notification-dnd-set off";
-        "Mod+Alt+U" = once "spawn noctalia msg panel-toggle avivbintangaringga/nix-monitor:panel";
         "Mod+Space" = once "spawn noctalia msg panel-toggle launcher";
         "Alt+Tab" = once "spawn noctalia msg window-switcher hold";
         "Mod+B" = once "spawn zen";
@@ -235,7 +182,7 @@ in
         "Mod+Ctrl+E" = once "spawn kitty nvim ${lib.escapeShellArg profile.configRepo}";
         "Mod+Shift+D" = once "spawn nwg-displays";
         "Mod+A" = once "spawn noctalia msg panel-toggle control-center";
-        "Mod+S" = once "spawn noctalia msg plugin alexander/screen-toolkit:service all toggle";
+        "Mod+S" = once "spawn noctalia msg screenshot-region";
         "Mod+Ctrl+S" = once "spawn noctalia msg settings-toggle";
         "Mod+V" = once "spawn noctalia msg panel-toggle clipboard";
         "Mod+N" = once "spawn noctalia msg panel-toggle notifications";
@@ -255,29 +202,9 @@ in
         "Mod+Ctrl+Shift+R" = once "config-reload";
         "Print" = once "spawn noctalia msg screenshot-region";
         "Shift+Print" = once "spawn noctalia msg screenshot-fullscreen";
-        "Ctrl+Print" =
-          once "spawn ${lib.escapeShellArg "${config.home.homeDirectory}/.local/bin/screenshot-window-umbriel"}";
+        "Ctrl+Print" = once "spawn noctalia msg screenshot-window";
         "Mod+P" = once "window-toggle-pinned";
         "Alt+Print" = once "spawn noctalia msg screenshot-annotate";
-        "Mod+Alt+G" = once "spawn noctalia msg panel-toggle alexander/game-launcher:browser";
-        "Mod+Alt+V" = once "spawn noctalia msg panel-toggle davemhammer/tailscale:manager";
-        "Mod+Alt+M" = once "spawn noctalia msg panel-toggle icefish/phone-connect:details";
-        "Mod+Alt+O" = once "spawn noctalia msg panel-toggle thepunkoff/pomodoro:panel";
-        "Mod+Shift+S" = once "submap capture";
-        "submap[capture],Escape" = "submap reset";
-        "submap[capture],F1" = once "cheatsheet-open";
-        "submap[capture],C" = capture "colorPicker";
-        "submap[capture],O" = capture "ocr";
-        "submap[capture],Q" = capture "qr";
-        "submap[capture],P" = capture "palette";
-        "submap[capture],L" = capture "lens";
-        "submap[capture],M" = capture "measure";
-        "submap[capture],A" = capture "annotate";
-        "submap[capture],R" = capture "recordMp4";
-        "submap[capture],F" = capture "recordFullscreenMp4";
-        "submap[capture],G" = capture "record";
-        "submap[capture],S" = capture "recordStop";
-        "submap[capture],V" = capture "recordSave";
 
         "XF86AudioRaiseVolume" = locked "volume-up";
         "XF86AudioLowerVolume" = locked "volume-down";
@@ -381,12 +308,11 @@ in
         "Mod+Alt+Space" = once "window-restore-from-scratchpad stash";
         "Mod+Alt+Tab" = once "scratchpad-focus-next stash";
         "Mod+Alt+1" = once "workspace-set-layout dwindle";
-        "Mod+Alt+2" = once "workspace-set-layout scrolling";
-        "Mod+D" = once "workspace-set-layout toggle dwindle scrolling";
+        "Mod+Alt+2" = once "workspace-set-layout stacking";
+        "Mod+D" = once "workspace-set-layout toggle dwindle stacking";
         "F6" = once "spawn noctalia msg screenshot-region";
         "Ctrl+Shift+2" = once "spawn noctalia msg screenshot-fullscreen";
-        "Ctrl+Shift+3" =
-          once "spawn ${lib.escapeShellArg "${config.home.homeDirectory}/.local/bin/screenshot-window-umbriel"}";
+        "Ctrl+Shift+3" = once "spawn noctalia msg screenshot-window";
         "Mod+Escape" = (once "shortcuts-inhibit-toggle") // {
           allow_when_inhibited = true;
         };
