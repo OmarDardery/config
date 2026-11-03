@@ -38,6 +38,16 @@ reported failed unit is the thing to diagnose; removing systemd would break the 
 
 ## Desktop and apps
 
+Ly provides the login screen using its built-in Matrix animation. This uses the
+native `services.displayManager.ly` NixOS module and the pinned Nixpkgs Ly package;
+no separate greeter flake or theme package is needed. Ly lists Wayland sessions
+and launches Umbriel; XWayland apps continue to work inside the desktop. The
+NixOS module also supplies PAM and GNOME Keyring integration.
+
+On the first login, select Umbriel if needed. Ly remembers the selected user and
+session. After applying this display-manager change, reboot to enter Ly; restarting
+`display-manager.service` from the desktop would terminate the current session.
+
 Umbriel starts Noctalia directly. Noctalia handles its own runtime state,
 wallpaper colors and Kitty/Umbriel palettes. There is no `desktop-config`
 service, palette seeder, state reconciler or font-cache refresh service.

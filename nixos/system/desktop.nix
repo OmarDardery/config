@@ -21,7 +21,7 @@
   services.gnome.at-spi2-core.enable = true;
   services.gnome.gcr-ssh-agent.enable = true;
 
-  # greetd's native PAM integration unlocks the user keyring.
+  # Ly's NixOS PAM integration unlocks the user keyring.
   services.gnome.gnome-keyring.enable = true;
 
   services.flatpak.enable = true;
@@ -47,7 +47,7 @@
     HandleLidSwitchDocked = "ignore";
   };
 
-  # One audio stack for the greeter and desktop, including PulseAudio clients.
+  # One desktop audio stack, including PulseAudio clients.
   security.rtkit.enable = true;
   services.pulseaudio.enable = false;
   services.pipewire = {

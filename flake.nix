@@ -10,10 +10,6 @@
     # Keep the cache branch and independent nixpkgs pin to match cached builds.
     # Cache settings live in system/nix.nix.
     noctalia.url = "github:noctalia-dev/noctalia/cachix";
-    noctalia-greeter = {
-      url = "github:noctalia-dev/noctalia-greeter/v1.7.0";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     # Keep the tested action syntax and matching wlroots/portal dependency pins.
     umbriel.url = "github:noctalia-dev/umbriel/b1c3efc407c4cbc8db265bd678eddc13261553c3";
     nix-index-database = {
