@@ -44,8 +44,8 @@ After restarting Zsh:
 
 | Command | NixOS | Other Linux |
 | --- | --- | --- |
-| `up` / `config-apply` | Apply the checkout | Apply dotfiles |
-| `update` / `config-update` | Refresh flake inputs, then rebuild | Fast-forward the checkout, then apply dotfiles |
+| `up` | Refresh flake inputs, then rebuild | Fast-forward the checkout, then apply dotfiles |
+| `config-apply` / `rebuild` | Apply local config | Apply local dotfiles |
 | `nupdate` | Refresh only the flake lock | — |
 | `nbuild` | Build without activating | — |
 | `cnf` / `cconf` | Edit / enter the checkout | — |
@@ -53,11 +53,11 @@ After restarting Zsh:
 The commands also work outside Zsh. Native launchers live in `~/.local/bin`; use
 the full path if your current shell has not added it to `PATH` yet.
 
-NixOS `update` runs `nix flake update` against the local checkout and keeps your
+NixOS `up` runs `nix flake update` against the local checkout and keeps your
 source edits. It does not pull Git commits. To receive repository changes, run
 `git -C ~/config pull --ff-only`, then `up`. Review and commit changed lockfiles.
 An input with an explicit commit/tag stays pinned until its URL is changed.
-Native `update` refuses tracked source edits or a diverged checkout; it does not
+Native `up` refuses tracked source edits or a diverged checkout; it does not
 update native packages. The launchers use Nix for their Git/Python runtime. Use your distro's normal package updater.
 
 ## Hardware and optional features

@@ -105,23 +105,33 @@ def install(source, config, state, zsh_home=None):
 
 
 def commands(repo, home, state):
-    """Install two small launchers without taking over the distro's shell files."""
+    """Install the apply launcher and retire the previous generated updater."""
     bindir = home / ".local/bin"
     bindir.mkdir(parents=True, exist_ok=True)
-    for name, extra in (("config-apply", []), ("config-update", ["--update"])):
-        script = "#!/usr/bin/env bash\nset -euo pipefail\nexec " + shlex.join([
+
+    def launcher(extra):
+        return "#!/usr/bin/env bash\nset -euo pipefail\nexec " + shlex.join([
             "nix", "--extra-experimental-features", "nix-command flakes", "run",
             "--no-write-lock-file", f"path:{repo / 'non-nixos'}", "--", "--repo-dir", str(repo), *extra
         ]) + ' "$@"\n'
-        path = bindir / name
-        if path.exists() or path.is_symlink():
-            if not path.is_symlink() and path.read_text() == script:
-                continue
-            backup = state / "backups" / f"commands-{time.time_ns()}" / name
-            backup.parent.mkdir(parents=True)
-            shutil.move(str(path), backup)
+
+    def backup(path):
+        target = state / "backups" / f"commands-{time.time_ns()}" / path.name
+        target.parent.mkdir(parents=True)
+        shutil.move(str(path), target)
+
+    path = bindir / "config-apply"
+    script = launcher([])
+    if path.is_symlink() or (path.exists() and path.read_text() != script):
+        backup(path)
+    if not path.exists():
         atomic_write(path, script.encode())
         path.chmod(0o755)
+
+    # Retire only an exact generated launcher; retain user-written commands.
+    retired = bindir / "config-update"
+    if retired.is_file() and not retired.is_symlink() and retired.read_text() == launcher(["--update"]):
+        backup(retired)
 
 
 def main():
@@ -165,11 +175,11 @@ def main():
                 git(repo, "checkout", args.ref)
         if args.update:
             if git(repo, "status", "--porcelain", "--untracked-files=no"):
-                parser.error("checkout has tracked edits; commit them before #update, or apply without --update")
+                parser.error("checkout has tracked edits; commit them before up, or apply without --update")
             git(repo, "pull", "--ff-only")
         install(repo / "non-nixos/dotfiles", config, state, zsh_home)
         commands(repo, Path.home(), state)
-    print("Commands: ~/.local/bin/config-apply and ~/.local/bin/config-update (update alias in Zsh).")
+    print("Command: up (update and apply); config-apply (apply local files only).")
     print(f"Dotfiles applied from {repo / 'non-nixos'}. Restart the apps to reload.")
 
 

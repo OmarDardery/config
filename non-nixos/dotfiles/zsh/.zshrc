@@ -16,9 +16,8 @@ bindkey -e
 autoload -Uz compinit
 compinit
 
-alias up=config-apply
+alias up='config-apply --update'
 alias rebuild=config-apply
-alias update=config-update
 alias ll='ls -lah'
 
 if (( $+commands[starship] )); then eval "$(starship init zsh)"; fi

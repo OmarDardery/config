@@ -10,7 +10,6 @@ let
   repository = lib.escapeShellArg "path:${profile.configRepo}";
   directory = lib.escapeShellArg profile.configRepo;
   applyCommand = "config-apply";
-  updateCommand = "config-update";
 
 in
 {
@@ -20,15 +19,9 @@ in
         inputs.self.packages.${profile.system}.nixos-apply
       }/bin/nixos-apply --repo-dir ${directory} --host ${lib.escapeShellArg profile.hostName} "$@"
     '')
-    (pkgs.writeShellScriptBin "config-update" ''
-      exec ${
-        inputs.self.packages.${profile.system}.nixos-apply
-      }/bin/nixos-apply --repo-dir ${directory} --host ${lib.escapeShellArg profile.hostName} --update "$@"
-    '')
   ];
   home.shellAliases = {
-    update = updateCommand;
-    up = applyCommand;
+    up = "${applyCommand} --update";
     rebuild = applyCommand;
     nbuild = "nix build ${lib.escapeShellArg "path:${profile.configRepo}#nixosConfigurations.${profile.hostName}.config.system.build.toplevel"} --no-link --no-write-lock-file";
     neval = "nix flake check ${repository} --no-build --no-write-lock-file";

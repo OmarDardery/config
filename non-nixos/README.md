@@ -10,7 +10,7 @@ required. Run as your normal user. Default checkout: `~/config`.
 From an existing checkout use `bash setup.sh`. When flakes are enabled, the
 fresh-install command shortens to `nix run github:OmarDardery/config`.
 
-The installer configures these files and installs two small commands in
+The installer configures these files and installs one small command in
 `~/.local/bin`. It never installs applications, fonts, extensions, drivers or
 services, changes your login shell, or starts/restarts apps. Apps stay under your
 distro's native package manager. LazyVim fetches its plugins when first opened.
@@ -54,13 +54,13 @@ shell is your choice. Machine-specific shell additions belong in `.zshrc.local`.
 
 ```sh
 ~/.local/bin/config-apply
-~/.local/bin/config-update
+~/.local/bin/config-apply --update
 ```
 
-In a new Zsh session, `up` and `update` are aliases for these commands. Apply uses
-the checkout as-is. Update runs `git pull --ff-only` and applies unedited defaults;
+In a new Zsh session, `up` updates and applies. `config-apply` uses
+the checkout as-is. `up` runs `git pull --ff-only` and applies unedited defaults;
 it refuses tracked source edits or a diverged checkout. Native app updates stay
-with your distro. Both launchers re-enter the checkout's locked Nix environment,
+with your distro. The launcher re-enters the checkout's locked Nix environment,
 so they work without system Git/Python packages after the first activation.
 Nix profiles and project shells can still provide development tools independently.
 
@@ -80,7 +80,7 @@ The independent dotfiles flake is also available directly:
 
 ```sh
 nix run 'github:OmarDardery/config?dir=non-nixos'
-nix run 'github:OmarDardery/config?dir=non-nixos#update'
+nix run 'github:OmarDardery/config?dir=non-nixos' -- --update
 ```
 
 Use `-- --repo-dir ~/dotfiles` for another checkout, `-- OWNER/REPO` for a fork,

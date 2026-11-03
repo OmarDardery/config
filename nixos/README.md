@@ -27,8 +27,8 @@ shells retain aliases from the previous generation. The aliases use checkout-bou
 
 | Command | Action |
 | --- | --- |
-| `up`, `rebuild`, `config-apply` | Prepare local settings and run one standard rebuild |
-| `update`, `config-update` | Update local flake inputs, then rebuild |
+| `up` | Update local flake inputs, then rebuild |
+| `rebuild`, `config-apply` | Apply local settings without updating inputs |
 | `nbuild` | Build without activating |
 | `cnf`, `cconf` | Edit or enter the checkout |
 

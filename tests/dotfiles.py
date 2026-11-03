@@ -159,10 +159,10 @@ class Dotfiles(unittest.TestCase):
         import subprocess
         from unittest.mock import patch
         self.run_main()
-        launcher = self.home / ".local/bin/config-update"
+        launcher = self.home / ".local/bin/config-apply"
         self.assertTrue(launcher.stat().st_mode & 0o111)
         subprocess.run(["bash", "-n", str(launcher)], check=True)
-        self.assertIn("--update", launcher.read_text())
+        self.assertFalse((self.home / ".local/bin/config-update").exists())
         self.assertIn("--repo-dir", launcher.read_text())
         self.assertNotIn("python3", launcher.read_text())
         self.assertIn("nix-command flakes", launcher.read_text())
@@ -173,10 +173,32 @@ class Dotfiles(unittest.TestCase):
         nix = bindir / "nix"
         nix.write_text("#!/bin/sh\nprintf '%s\\n' \"$@\"\n")
         nix.chmod(0o755)
-        result = subprocess.run(["/bin/bash", str(launcher)], env={"PATH": str(bindir)}, text=True, capture_output=True, check=True)
+        result = subprocess.run(["/bin/bash", str(launcher), "--update"], env={"PATH": str(bindir)}, text=True, capture_output=True, check=True)
         self.assertIn("run", result.stdout)
         self.assertIn("--update", result.stdout)
         self.assertIn(str(self.root / "checkout/non-nixos"), result.stdout)
+
+    def test_up_updates_without_separate_update_alias(self):
+        shell = (self.source / "zsh/.zshrc").read_text()
+        self.assertIn("alias up='config-apply --update'", shell)
+        self.assertNotIn("alias update=", shell)
+
+    def test_retire_only_generated_update_command(self):
+        import shlex
+        self.run_main()
+        repo = self.root / "checkout"
+        retired = self.home / ".local/bin/config-update"
+        old = "#!/usr/bin/env bash\nset -euo pipefail\nexec " + shlex.join([
+            "nix", "--extra-experimental-features", "nix-command flakes", "run",
+            "--no-write-lock-file", f"path:{repo / 'non-nixos'}", "--", "--repo-dir", str(repo), "--update"
+        ]) + ' "$@"\n'
+        retired.write_text(old)
+        self.run_main()
+        self.assertFalse(retired.exists())
+        self.assertEqual(next((self.state / "non-nixos-config/backups").rglob("config-update")).read_text(), old)
+        retired.write_text("# personal updater\n")
+        self.run_main()
+        self.assertEqual(retired.read_text(), "# personal updater\n")
 
     def test_configs_are_valid_json_and_toml(self):
         import tomllib

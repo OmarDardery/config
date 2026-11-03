@@ -34,6 +34,10 @@ assert builtins.all (
     "wireshark-cli"
   ])
 ) os.environment.systemPackages;
+assert home.home.shellAliases.up == "config-apply --update";
+assert !(home.home.shellAliases ? update);
+assert !(flake.packages.x86_64-linux ? update);
+assert !(flake.apps.x86_64-linux ? update);
 assert home.programs.zsh.enable && home.programs.direnv.enableZshIntegration;
 assert home.programs.yazi.enableZshIntegration && home.programs.yazi.enableBashIntegration;
 

@@ -18,12 +18,12 @@ Build and apply NixOS with integrated Home Manager. Requires NixOS.
   --ref REF       Git branch, tag or commit for a NEW checkout
   --host NAME     NixOS configuration (default: profile.nix hostName)
   --hardware NAME generic or asus-tuf-a14 (default: detect the TUF A14)
-  --update        Update flake inputs before building (also available as #update)
+  --update        Update flake inputs before building (used by up)
   --build-only    Build without switching the running system
   -h, --help      Show help
 Repository accepts OWNER/REPO, github:OWNER/REPO, or an HTTPS GitHub URL.
 Existing checkouts keep your source edits; pull source changes with Git.
-#update updates the checkout's flake.lock and applies the result.
+up updates the checkout's flake.lock and applies the result.
 Generated identity, bootloader, state versions and hardware stay local.
 Other distros: the root nix run command automatically applies native dotfiles.
 HELP

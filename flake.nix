@@ -67,15 +67,9 @@
                 --no-write-lock-file path:${./non-nixos} -- "$@"
             '';
           };
-          update = pkgs.writeShellApplication {
-            name = "config-update";
-            runtimeInputs = [ apply ];
-            text = ''exec config-apply --update "$@"'';
-          };
         in
         {
           default = apply;
-          inherit update;
         }
         // nixpkgs.lib.optionalAttrs (system == "x86_64-linux") { nixos-apply = nixosApply; }
       );
@@ -88,11 +82,6 @@
           type = "app";
           program = "${packages.${system}.default}/bin/config-apply";
           meta.description = "Apply the NixOS desktop or native Linux dotfiles";
-        };
-        update = {
-          type = "app";
-          program = "${packages.${system}.update}/bin/config-update";
-          meta.description = "Update and apply this platform's configuration";
         };
       });
       formatter = forSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-tree);

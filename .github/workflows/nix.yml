@@ -37,8 +37,8 @@ jobs:
           cp -R nixos non-nixos scripts flake.nix flake.lock "$work/"
           cp .github/ci-hardware.nix "$work/nixos/hardware-configuration.nix"
           flake="path:$work"
-          nix build "$flake" "$flake#update" --no-link --no-write-lock-file
-          nix build path:./non-nixos path:./non-nixos#update --no-link --no-write-lock-file
+          nix build "$flake" --no-link --no-write-lock-file
+          nix build path:./non-nixos --no-link --no-write-lock-file
           nix run path:./non-nixos -- --help
           nix flake check path:./non-nixos --all-systems --no-build --no-write-lock-file
           nix run "$flake" -- --help
