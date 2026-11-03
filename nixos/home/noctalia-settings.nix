@@ -234,18 +234,6 @@
     clipboard_keep_from_closed_apps = true;
     clipboard_confirm_clear_history = true;
   };
-  theme = {
-    source = "wallpaper";
-    templates = {
-      builtin_ids = [
-        "gtk3"
-        "gtk4"
-        "kcolorscheme"
-        "starship"
-      ];
-      community_ids = [ ];
-    };
-  };
   wallpaper = {
     transition_on_startup = true;
     transition = [ "fade" ];

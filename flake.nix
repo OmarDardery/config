@@ -24,13 +24,13 @@
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    webos-dev-manager.url = "github:OmarDardery/dev-manager-desktop/b7afa5dc41b46d057db751dcbc32e70ef3d57d60";
   };
   outputs =
     { nixpkgs, home-manager, ... }@inputs:
     let
       profile = import ./nixos/profile.nix;
       inherit (profile) system;
+      isLaptop = profile.hardwareProfile == "asus-tuf-a14";
       pkgs = import nixpkgs {
         inherit system;
         config = import ./nixos/package-policy.nix;
@@ -73,7 +73,7 @@
       nixosConfigurations.${profile.hostName} = nixpkgs.lib.nixosSystem {
         specialArgs = {
           inherit inputs profile;
-          isLaptop = true;
+          inherit isLaptop;
         };
         modules = [
           ./nixos/configuration.nix

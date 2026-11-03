@@ -1,4 +1,4 @@
-# Terminal behavior is declarative; Noctalia writes only the included palette.
+# Shared terminal defaults; Noctalia writes only the optional runtime palette.
 {
   lib,
   config,
@@ -8,45 +8,10 @@
 {
   programs.kitty = {
     enable = true;
-    font = {
-      name = "JetBrainsMono Nerd Font";
-      size = 14;
-    };
-    settings = {
-      bold_font = "auto";
-      italic_font = "auto";
-      bold_italic_font = "auto";
-      background_opacity = "0.94";
-      dynamic_background_opacity = true;
-      cursor_trail = 1;
-      enable_audio_bell = false;
-      update_check_interval = 0;
-      confirm_os_window_close = -1;
-      scrollback_lines = 20000;
-      scrollback_pager_history_size = 32;
-      window_padding_width = 10;
-      initial_window_width = "95c";
-      initial_window_height = "35c";
-      enabled_layouts = "splits,stack,tall";
-      tab_bar_style = "powerline";
-      tab_bar_min_tabs = 2;
-      tab_title_template = "{index}: {title}";
-    };
-    keybindings = {
-      "ctrl+shift+enter" = "launch --cwd=current";
-      "ctrl+shift+d" = "combine : goto_layout splits : launch --location=hsplit --cwd=current";
-      "ctrl+shift+alt+d" = "combine : goto_layout splits : launch --location=vsplit --cwd=current";
-      "ctrl+shift+t" = "launch --type=tab --cwd=current";
-      "ctrl+shift+n" = "launch --type=os-window --cwd=current";
-      "ctrl+shift+j" = "next_window";
-      "ctrl+shift+k" = "previous_window";
-      "ctrl+shift+z" = "toggle_layout stack";
-      "ctrl+shift+f2" =
-        "launch --type=overlay nvim ${lib.escapeShellArg "${profile.configRepo}/nixos/home/kitty.nix"}";
-      "ctrl+shift+u" = "kitten hints --type url";
-    };
-    # A missing palette on the first launch is harmless; Kitty's defaults apply.
-    extraConfig = "include ${config.xdg.stateHome}/noctalia/theme/kitty.conf";
+    extraConfig = builtins.readFile ../../non-nixos/dotfiles/kitty/kitty.conf + ''
+      include ${config.xdg.stateHome}/noctalia/theme/kitty.conf
+    '';
+    keybindings."ctrl+shift+f2" =
+      "launch --type=overlay nvim ${lib.escapeShellArg "${profile.configRepo}/non-nixos/dotfiles/kitty/kitty.conf"}";
   };
-
 }

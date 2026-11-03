@@ -1,5 +1,7 @@
 {
   profile,
+  pkgs,
+  inputs,
   isLaptop,
   lib,
   ...
@@ -7,12 +9,23 @@
 let
   repository = lib.escapeShellArg "path:${profile.configRepo}";
   directory = lib.escapeShellArg profile.configRepo;
-  target = lib.escapeShellArg "path:${profile.configRepo}#${profile.hostName}";
-  applyCommand = "sudo nixos-rebuild switch --flake ${target} --no-write-lock-file";
-  updateCommand = "nix flake update --flake ${repository} && ${applyCommand}";
+  applyCommand = "config-apply";
+  updateCommand = "config-update";
 
 in
 {
+  home.packages = [
+    (pkgs.writeShellScriptBin "config-apply" ''
+      exec ${
+        inputs.self.packages.${profile.system}.default
+      }/bin/config-apply --repo-dir ${directory} --host ${lib.escapeShellArg profile.hostName} "$@"
+    '')
+    (pkgs.writeShellScriptBin "config-update" ''
+      exec ${
+        inputs.self.packages.${profile.system}.default
+      }/bin/config-apply --repo-dir ${directory} --host ${lib.escapeShellArg profile.hostName} --update "$@"
+    '')
+  ];
   home.shellAliases = {
     update = updateCommand;
     up = applyCommand;

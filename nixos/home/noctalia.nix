@@ -14,7 +14,6 @@
             "gtk3"
             "gtk4"
             "kcolorscheme"
-            "starship"
           ];
           community_ids = [ ];
           user = {

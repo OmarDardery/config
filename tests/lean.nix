@@ -8,7 +8,13 @@ assert !(os.systemd.user.services ? desktop-config);
 assert !(os.systemd.user.services ? flatpak-font-cache);
 assert !(os.systemd.services ? flatpak-managed-install);
 assert !os.services.scx.enable;
-assert os.programs.steam.enable && os.hardware.nvidia.prime.offload.enableOffloadCmd;
+assert os.programs.steam.enable;
+assert !os.services.tailscale.enable;
+assert !(os.services.restic.backups ? home);
+assert !(os.fileSystems ? "/mnt/storage");
+assert !os.virtualisation.docker.enable && !os.services.printing.enable;
+assert
+  flake.lib.deployment.hardwareProfile != "generic" || !os.hardware.nvidia.prime.offload.enable;
 assert home.programs.vscodium.enable && home.programs.neovim.enable;
 assert !home.programs.noctalia.systemd.enable;
 assert home.programs.noctalia.settings.plugins.enabled == [ ];

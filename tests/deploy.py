@@ -23,7 +23,11 @@ elif name == 'git':
     elif 'get-url' in args: print(os.environ.get('TEST_ORIGIN','https://github.com/OmarDardery/config.git'))
 elif name == 'nix':
     if 'eval' in args:
-        print('nixos')
+        if '--json' in args:
+            if os.environ.get('TEST_CAPTURE_FAIL'): sys.exit(44)
+            print(json.dumps({'stateVersion':'25.11', 'homeStateVersion':'25.05', 'bootLoader':{'grub': {'enable': True, 'device': '/dev/test'}}}))
+        elif 'hardwareProfile' in ' '.join(args): print('generic')
+        else: print('nixos')
     elif 'update' in args and os.environ.get('TEST_UPDATE_FAIL'): sys.exit(43)
     elif 'build' in args:
         if os.environ.get('TEST_BUILD_FAIL'): sys.exit(42)
@@ -119,7 +123,8 @@ class Deployment(unittest.TestCase):
     def test_update_refreshes_inputs_then_uses_standard_rebuild(self):
         self.marker.touch(); self.apply('--update')
         calls=self.events('nix')
-        self.assertIn('update',calls[0]); self.assertIn('--flake',calls[0])
+        update = next(c for c in calls if 'update' in c)
+        self.assertIn('--flake',update)
         self.assertTrue(self.events('sudo'))
         self.assertFalse(self.builds())
 
@@ -139,6 +144,26 @@ class Deployment(unittest.TestCase):
         self.apply('--repo-dir',str(self.repo))
         content=(self.repo/'nixos/local-profile.nix').read_text()
         self.assertIn(r'\${dollar}',content); self.assertIn(r'\"quote\"',content)
+
+    def test_installed_bootloader_and_state_versions_preserved(self):
+        self.marker.touch(); self.apply()
+        saved = json.loads((self.repo/'nixos/local-system.json').read_text())
+        self.assertEqual(saved['stateVersion'], '25.11')
+        self.assertEqual(saved['homeStateVersion'], '25.05')
+        self.assertTrue(saved['bootLoader']['grub']['enable'])
+        self.apply()
+        captures = [e for e in self.events('nix') if '--json' in e]
+        self.assertEqual(len(captures), 1)
+
+    def test_capture_failure_stops_activation(self):
+        self.marker.touch(); self.env['TEST_CAPTURE_FAIL']='1'
+        self.assertEqual(self.apply(success=False).returncode,44)
+        self.assertFalse(self.events('sudo'))
+        self.assertFalse((self.repo/'nixos/local-system.json').exists())
+
+    def test_hardware_override(self):
+        self.marker.touch(); self.apply('--hardware','asus-tuf-a14')
+        self.assertIn('hardwareProfile = "asus-tuf-a14";', (self.repo/'nixos/local-profile.nix').read_text())
 
     def test_help_needs_no_privileges(self):
         self.env['TEST_UID']='0'

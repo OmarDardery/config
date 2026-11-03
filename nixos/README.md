@@ -1,8 +1,9 @@
 # NixOS configuration
 
 The root flake imports `configuration.nix` and integrates Home Manager as a
-NixOS module. `hardware.nix` contains ASUS TUF A14 details; generated hardware
-and account settings stay local and ignored by Git.
+NixOS module. `hardware.nix` is selected automatically only for the ASUS TUF A14 (FA401).
+Generated hardware, account settings, state versions and boot target stay local
+and ignored by Git. Other hosts use generic hardware and the stable kernel.
 
 ## Apply and update
 
@@ -22,12 +23,12 @@ source updates use `git -C ~/config pull --ff-only`. `nixos-rebuild` builds befo
 switching, so there is no second pre-build or custom activation service.
 
 After a successful rebuild, reload the open shell with `exec zsh`. Existing
-shells retain aliases from the previous generation. The aliases are direct:
+shells retain aliases from the previous generation. The aliases use checkout-bound commands:
 
 | Command | Action |
 | --- | --- |
-| `up`, `rebuild` | `sudo nixos-rebuild switch` with the absolute path flake |
-| `update` | Update local flake inputs, then rebuild |
+| `up`, `rebuild`, `config-apply` | Prepare local settings and run one standard rebuild |
+| `update`, `config-update` | Update local flake inputs, then rebuild |
 | `nbuild` | Build without activating |
 | `cnf`, `cconf` | Edit or enter the checkout |
 
@@ -58,7 +59,10 @@ when you want to update them. The font mount remains for sandbox compatibility.
 The kernel scheduler and power-profiles-daemon handle normal power management.
 Choose power profiles through Noctalia or `powerprofilesctl`; there is no extra
 scheduler daemon or script that changes profiles when the power source changes.
-The kernel/NVIDIA pins, boot policy, disk mounts and backup jobs are retained.
+The ASUS kernel/NVIDIA pins stay in its hardware profile. The installed boot
+target and state versions are captured once in `local-system.json`; updates do
+not advance state versions. The personal data disk is mounted only when detected.
+Tailscale and backup jobs are opt-in, alongside the other specialist bundles.
 
 OpenTabletDriver manages tablet settings through its GUI. The optional preset
 is `assets/tablet-settings.json`; it is not repeatedly merged into your live

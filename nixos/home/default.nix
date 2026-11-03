@@ -20,7 +20,7 @@
   ];
   home.username = profile.username;
   home.homeDirectory = profile.homeDirectory;
-  home.stateVersion = "26.05";
+  home.stateVersion = profile.homeStateVersion;
   programs.home-manager.enable = false;
   programs.man.enable = false;
   manual.manpages.enable = false;

@@ -23,6 +23,7 @@ class Dotfiles(unittest.TestCase):
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
         self.config = self.root / "home with spaces/config"
+        self.home = self.root / "home with spaces"
         self.state = self.root / "state"
         self.state.mkdir()
         self.source = self.root / "source"
@@ -30,15 +31,16 @@ class Dotfiles(unittest.TestCase):
 
     def apply(self):
         with contextlib.redirect_stdout(io.StringIO()) as output:
-            dotfiles.install(self.source, self.config, self.state)
+            dotfiles.install(self.source, self.config, self.state, self.home)
         return output.getvalue()
 
     def test_exact_scope_and_writable_copies(self):
         self.apply()
-        expected = {p.relative_to(self.source) for p in self.source.rglob("*") if p.is_file()}
+        expected = {p.relative_to(self.source) for p in self.source.rglob("*") if p.is_file() and p.relative_to(self.source) != Path("zsh/.zshrc")}
         actual = {p.relative_to(self.config) for p in self.config.rglob("*") if p.is_file()}
         self.assertEqual(expected, actual)
-        self.assertEqual({p.parts[0] for p in actual}, {"nvim", "VSCodium", "umbriel", "noctalia"})
+        self.assertEqual({p.parts[0] for p in actual}, {"nvim", "VSCodium", "umbriel", "noctalia", "kitty", "starship.toml"})
+        self.assertEqual((self.home / ".zshrc").read_text(), (self.source / "zsh/.zshrc").read_text())
         self.assertFalse(any(p.is_symlink() for p in self.config.rglob("*")))
         self.assertFalse((self.root / "home with spaces/.bashrc").exists())
 
@@ -117,8 +119,9 @@ class Dotfiles(unittest.TestCase):
             return ""
 
         with patch.object(dotfiles.os, "getuid", return_value=1000), \
+             patch.object(dotfiles.Path, "home", return_value=self.home), \
              patch.object(dotfiles, "git", side_effect=git), \
-             patch.dict(os.environ, XDG_CONFIG_HOME=str(self.config), XDG_STATE_HOME=str(self.state)), \
+             patch.dict(os.environ, HOME=str(self.home), ZDOTDIR=str(self.home), XDG_CONFIG_HOME=str(self.config), XDG_STATE_HOME=str(self.state)), \
              patch.object(dotfiles.sys, "argv", ["dotfiles-apply", "--repo-dir", str(repo), *arguments]), \
              contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
             dotfiles.main()
@@ -140,6 +143,27 @@ class Dotfiles(unittest.TestCase):
     def test_origin_mismatch_rejected(self):
         with self.assertRaises(SystemExit): self.run_main("someone/else")
         self.assertFalse(self.config.exists())
+
+    def test_shell_conflicts_and_edits_are_preserved(self):
+        self.home.mkdir(parents=True)
+        zsh = self.home / ".zshrc"
+        zsh.write_text("# old shell")
+        self.apply()
+        backups = list((self.state / "backups").rglob(".zshrc"))
+        self.assertEqual(backups[0].read_text(), "# old shell")
+        zsh.write_text("# local changes")
+        self.apply()
+        self.assertEqual(zsh.read_text(), "# local changes")
+
+    def test_commands_bind_checkout_with_spaces(self):
+        import subprocess
+        from unittest.mock import patch
+        self.run_main()
+        launcher = self.home / ".local/bin/config-update"
+        self.assertTrue(launcher.stat().st_mode & 0o111)
+        subprocess.run(["bash", "-n", str(launcher)], check=True)
+        self.assertIn("--update", launcher.read_text())
+        self.assertIn("--repo-dir", launcher.read_text())
 
     def test_configs_are_valid_json_and_toml(self):
         import tomllib

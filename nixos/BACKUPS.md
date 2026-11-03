@@ -1,5 +1,8 @@
 # Home backups
 
+Backups default off. Enable `workstation.backups.enable = true;` in
+`configuration.nix` only after configuring and verifying the storage mount.
+
 `system/backups.nix` backs up the configured user's home to `/mnt/storage/backup`
 with Restic encryption. A daily persistent timer catches up after the laptop has
 been off, with up to an hour of scheduling jitter. The job retains 7 daily, 4 weekly

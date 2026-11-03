@@ -70,13 +70,4 @@
   # Work around AMD stripe corruption in both desktop and greeter; relog to change.
   environment.sessionVariables.AMD_DEBUG = "nodcc";
 
-  fileSystems."/mnt/storage" = {
-    device = "/dev/disk/by-uuid/71d4d606-a6ef-42bb-b63c-8f5a8fee4b24";
-    fsType = "xfs";
-    options = [
-      "nofail"
-      "x-systemd.automount"
-      "x-systemd.device-timeout=5s"
-    ];
-  };
 }

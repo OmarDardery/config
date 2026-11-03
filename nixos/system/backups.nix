@@ -1,5 +1,6 @@
 {
   lib,
+  config,
   pkgs,
   profile,
   ...
@@ -9,7 +10,7 @@ let
   repository = "${mountPoint}/backup";
   passwordFile = "/var/lib/restic/home.password";
 in
-{
+lib.mkIf config.workstation.backups.enable {
   services.restic.backups.home = {
     inherit repository passwordFile;
     paths = [ profile.homeDirectory ];

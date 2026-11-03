@@ -39,7 +39,7 @@
         default = {
           type = "app";
           program = "${packages.${system}.default}/bin/dotfiles-apply";
-          meta.description = "Apply LazyVim, VSCodium, Umbriel and Noctalia dotfiles";
+          meta.description = "Apply desktop and shell dotfiles";
         };
         update = {
           type = "app";

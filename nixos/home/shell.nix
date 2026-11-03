@@ -28,7 +28,10 @@
         ignoreAllDups = true;
       };
     };
-    starship.enable = true;
+    starship = {
+      enable = true;
+      settings = builtins.fromTOML (builtins.readFile ../../non-nixos/dotfiles/starship.toml);
+    };
     zoxide.enable = true;
     fzf.enable = true;
     eza = {
