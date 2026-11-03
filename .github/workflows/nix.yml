@@ -42,7 +42,8 @@ jobs:
           nix run path:./non-nixos -- --help
           nix flake check path:./non-nixos --all-systems --no-build --no-write-lock-file
           nix run "$flake" -- --help
-          nix flake check "$flake" --no-build --no-write-lock-file
+          nix run "$flake#nixos-apply" -- --help
+          nix flake check "$flake" --all-systems --no-build --no-write-lock-file
           nix eval --impure --json --expr "import ./tests/lean.nix { flake = builtins.getFlake \"$flake\"; }"
           printf '%s\n' '{ hardwareProfile = "asus-tuf-a14"; }' > "$work/nixos/local-profile.nix"
           nix eval --raw "$flake#nixosConfigurations.nixos.config.system.build.toplevel.drvPath" --no-write-lock-file

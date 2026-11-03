@@ -17,13 +17,13 @@ in
   home.packages = [
     (pkgs.writeShellScriptBin "config-apply" ''
       exec ${
-        inputs.self.packages.${profile.system}.default
-      }/bin/config-apply --repo-dir ${directory} --host ${lib.escapeShellArg profile.hostName} "$@"
+        inputs.self.packages.${profile.system}.nixos-apply
+      }/bin/nixos-apply --repo-dir ${directory} --host ${lib.escapeShellArg profile.hostName} "$@"
     '')
     (pkgs.writeShellScriptBin "config-update" ''
       exec ${
-        inputs.self.packages.${profile.system}.default
-      }/bin/config-apply --repo-dir ${directory} --host ${lib.escapeShellArg profile.hostName} --update "$@"
+        inputs.self.packages.${profile.system}.nixos-apply
+      }/bin/nixos-apply --repo-dir ${directory} --host ${lib.escapeShellArg profile.hostName} --update "$@"
     '')
   ];
   home.shellAliases = {

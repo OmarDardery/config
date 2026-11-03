@@ -110,7 +110,8 @@ def commands(repo, home, state):
     bindir.mkdir(parents=True, exist_ok=True)
     for name, extra in (("config-apply", []), ("config-update", ["--update"])):
         script = "#!/usr/bin/env bash\nset -euo pipefail\nexec " + shlex.join([
-            "python3", str(repo / "non-nixos/apply.py"), "--repo-dir", str(repo), *extra
+            "nix", "--extra-experimental-features", "nix-command flakes", "run",
+            "--no-write-lock-file", f"path:{repo / 'non-nixos'}", "--", "--repo-dir", str(repo), *extra
         ]) + ' "$@"\n'
         path = bindir / name
         if path.exists() or path.is_symlink():
@@ -158,7 +159,8 @@ def main():
                 parser.error("--ref only applies to a new checkout; switch existing branches with Git")
         else:
             repo.parent.mkdir(parents=True, exist_ok=True)
-            subprocess.run(["git", "clone", "--", f"https://github.com/{args.repository or 'OmarDardery/config'}.git", str(repo)], check=True)
+            clone = ["git", "clone"] + ([] if args.ref else ["--depth", "1"])
+            subprocess.run([*clone, "--", f"https://github.com/{args.repository or 'OmarDardery/config'}.git", str(repo)], check=True)
             if args.ref:
                 git(repo, "checkout", args.ref)
         if args.update:

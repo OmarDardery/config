@@ -1,5 +1,5 @@
 {
-  description = "NixOS workstation with Home Manager";
+  description = "NixOS desktop and native Linux dotfiles";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
@@ -29,47 +29,73 @@
     { nixpkgs, home-manager, ... }@inputs:
     let
       profile = import ./nixos/profile.nix;
-      inherit (profile) system;
       isLaptop = profile.hardwareProfile == "asus-tuf-a14";
-      pkgs = import nixpkgs {
-        inherit system;
-        config = import ./nixos/package-policy.nix;
-      };
-      apply = pkgs.writeShellApplication {
-        name = "config-apply";
-        runtimeInputs = [
-          pkgs.gitMinimal
-          pkgs.coreutils
-          pkgs.util-linux
-          pkgs.jq
-        ];
-        text = builtins.readFile ./scripts/apply.sh;
-      };
-      update = pkgs.writeShellApplication {
-        name = "config-update";
-        runtimeInputs = [ apply ];
-        text = ''exec config-apply --update "$@"'';
-      };
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
+      forSystems = nixpkgs.lib.genAttrs systems;
+      packages = forSystems (
+        system:
+        let
+          pkgs = import nixpkgs {
+            inherit system;
+            config = import ./nixos/package-policy.nix;
+          };
+          nixosApply = pkgs.writeShellApplication {
+            name = "nixos-apply";
+            runtimeInputs = [
+              pkgs.gitMinimal
+              pkgs.coreutils
+              pkgs.util-linux
+              pkgs.jq
+            ];
+            text = builtins.readFile ./scripts/apply.sh;
+          };
+          apply = pkgs.writeShellApplication {
+            name = "config-apply";
+            text = ''
+              if [[ -e /etc/NIXOS ]]; then
+                ${
+                  if system == "x86_64-linux" then
+                    "exec ${nixosApply}/bin/nixos-apply \"$@\""
+                  else
+                    "echo 'The full NixOS desktop supports x86_64-linux only.' >&2; exit 1"
+                }
+              fi
+              exec nix --extra-experimental-features 'nix-command flakes' run \
+                --no-write-lock-file path:${./non-nixos} -- "$@"
+            '';
+          };
+          update = pkgs.writeShellApplication {
+            name = "config-update";
+            runtimeInputs = [ apply ];
+            text = ''exec config-apply --update "$@"'';
+          };
+        in
+        {
+          default = apply;
+          inherit update;
+        }
+        // nixpkgs.lib.optionalAttrs (system == "x86_64-linux") { nixos-apply = nixosApply; }
+      );
     in
     {
       lib.deployment = profile;
-      packages.${system} = {
-        default = apply;
-        inherit update;
-      };
-      apps.${system} = {
+      inherit packages;
+      apps = forSystems (system: {
         default = {
           type = "app";
-          program = "${apply}/bin/config-apply";
-          meta.description = "Build and apply NixOS with integrated Home Manager";
+          program = "${packages.${system}.default}/bin/config-apply";
+          meta.description = "Apply the NixOS desktop or native Linux dotfiles";
         };
         update = {
           type = "app";
-          program = "${update}/bin/config-update";
-          meta.description = "Update NixOS flake inputs, build and switch";
+          program = "${packages.${system}.update}/bin/config-update";
+          meta.description = "Update and apply this platform's configuration";
         };
-      };
-      formatter.${system} = pkgs.nixfmt-tree;
+      });
+      formatter = forSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-tree);
       nixosConfigurations.${profile.hostName} = nixpkgs.lib.nixosSystem {
         specialArgs = {
           inherit inputs profile;

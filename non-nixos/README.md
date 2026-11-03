@@ -1,12 +1,14 @@
 # Native Linux dotfiles
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/OmarDardery/config/main/setup.sh | bash
+nix --extra-experimental-features 'nix-command flakes' run github:OmarDardery/config
 ```
 
-Requires distro-installed Bash, curl, Git and Python 3.10+. Nix is optional; no
-Home Manager is used. Run as your normal user. Default checkout: `~/config`.
-From an existing checkout use `bash setup.sh` or `python3 non-nixos/apply.py`.
+Requires Nix on Linux (x86_64 or aarch64); Nix supplies Git and Python for
+activation. No native Git/Python packages or Home Manager installation are
+required. Run as your normal user. Default checkout: `~/config`.
+From an existing checkout use `bash setup.sh`. When flakes are enabled, the
+fresh-install command shortens to `nix run github:OmarDardery/config`.
 
 The installer configures these files and installs two small commands in
 `~/.local/bin`. It never installs applications, fonts, extensions, drivers or
@@ -45,7 +47,7 @@ English/Arabic input, a bottom bar that reserves space, and a right dock.
 Noctalia's native Umbriel template handles compositor colors. Kitty uses its
 normal palette until a `noctalia*.conf` palette is present. Starship is configured
 statically; Zsh initializes it only when the native executable exists. Zsh also
-adds `~/.local/bin` to `PATH`. Start `zsh` to use it; selecting it as the login
+loads the installed Nix profile and adds `~/.local/bin` to `PATH`. Start `zsh` to use it; selecting it as the login
 shell is your choice. Machine-specific shell additions belong in `.zshrc.local`.
 
 ## Apply and update
@@ -58,7 +60,9 @@ shell is your choice. Machine-specific shell additions belong in `.zshrc.local`.
 In a new Zsh session, `up` and `update` are aliases for these commands. Apply uses
 the checkout as-is. Update runs `git pull --ff-only` and applies unedited defaults;
 it refuses tracked source edits or a diverged checkout. Native app updates stay
-with your distro. No flake operation is needed for this Nix-free path.
+with your distro. Both launchers re-enter the checkout's locked Nix environment,
+so they work without system Git/Python packages after the first activation.
+Nix profiles and project shells can still provide development tools independently.
 
 Existing files are backed up on first apply. Later applies preserve local edits
 and deletions; unrelated files remain untouched. Old Home Manager directory links
@@ -72,7 +76,7 @@ State and backups live under `$XDG_STATE_HOME/non-nixos-config/`, default
 closing the app. To reseed defaults, move aside `files.json` and apply again;
 current conflicts will be backed up. Launcher replacements are backed up too.
 
-For an existing Nix installation, these optional commands still work:
+The independent dotfiles flake is also available directly:
 
 ```sh
 nix run 'github:OmarDardery/config?dir=non-nixos'

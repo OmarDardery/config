@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Exercise checkout and piped bootstraps without a package manager or live home."""
+"""Exercise the local Nix entry point without touching a live home."""
 import json
 import os
 from pathlib import Path
@@ -47,33 +47,24 @@ class Bootstrap(unittest.TestCase):
         events = self.root/'events'
         return [json.loads(line) for line in events.read_text().splitlines()] if events.exists() else []
 
-    def test_piped_native_never_runs_nix(self):
-        calls = self.run_setup()
-        self.assertFalse(any(c[0] == 'nix' for c in calls))
-        self.assertEqual(next(c for c in calls if c[0] == 'git')[1:4], ['clone', '--depth', '1'])
-        self.assertIn(str(self.home/'config'), calls[-1])
-
-    def test_local_native_does_not_clone(self):
+    def test_native_setup_only_requires_nix(self):
         calls = self.run_setup(local=True)
-        self.assertFalse(any(c[0] in ('git', 'nix') for c in calls))
-        self.assertIn(str(self.home/'existing checkout'), calls[-1])
-
-    def test_native_branch_consumed_before_apply(self):
-        calls = self.run_setup('--ref', 'feature/setup')
-        self.assertEqual(next(c for c in calls if 'checkout' in c)[-1], 'feature/setup')
-        self.assertNotIn('--ref', calls[-1])
-
-    def test_nixos_no_preinstalled_git_required(self):
-        self.marker.touch()
-        calls = self.run_setup('--hardware', 'generic')
         self.assertEqual(len(calls), 1)
         self.assertEqual(calls[0][0], 'nix')
         self.assertIn('nix-command flakes', calls[0])
-        self.assertIn('github:OmarDardery/config', calls[0])
+        self.assertIn(f'path:{self.home}/existing checkout', calls[0])
+        self.assertIn('--repo-dir', calls[0])
 
-    def test_native_help_writes_nothing(self):
-        self.assertEqual(self.run_setup('--help'), [])
-        self.assertFalse((self.home/'config').exists())
+    def test_options_are_forwarded_unchanged(self):
+        calls = self.run_setup('--ref', 'feature/setup', '--update', local=True)
+        self.assertEqual(calls[0][-3:], ['--ref', 'feature/setup', '--update'])
+
+    def test_nixos_uses_the_same_entry_point(self):
+        self.marker.touch()
+        calls = self.run_setup('--hardware', 'generic', local=True)
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0][0], 'nix')
+        self.assertEqual(calls[0][-2:], ['--hardware', 'generic'])
 
 
 if __name__ == '__main__': unittest.main(verbosity=2)

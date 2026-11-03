@@ -9,10 +9,10 @@ One setup command, two scopes:
 
 ## Install
 
-Run as your normal user on an installed system:
+With Nix installed, run as your normal user on either NixOS or another Linux distro:
 
 ```sh
-curl -fsSL https://raw.githubusercontent.com/OmarDardery/config/main/setup.sh | bash
+nix --extra-experimental-features 'nix-command flakes' run github:OmarDardery/config
 ```
 
 **NixOS:** no Git/flake setup is required beforehand. The launcher uses Nix to
@@ -22,17 +22,16 @@ runs one `sudo nixos-rebuild switch`. Your current user and home are used. It do
 not modify `/etc/nixos`. It supports the normal installed GRUB and systemd-boot
 layouts; custom bootloader modules may need manual configuration.
 
-The direct NixOS command works too, even when flakes are initially disabled:
+The same command detects the operating system. No clone, separate Home Manager
+installation, native Git or native Python installation is required beforehand.
+Once flakes are enabled, the command shortens to `nix run github:OmarDardery/config`.
 
-```sh
-nix --extra-experimental-features 'nix-command flakes' run github:OmarDardery/config
-```
-
-**Other distros:** requires native Bash, Git, curl and Python 3.10+. No Nix or Home
-Manager is needed. Install applications with your distro's package manager; this
-installer never installs apps, enables services, changes your login shell or
-selects a desktop session. Select your distro's Umbriel session to use the desktop.
-See [native requirements and files](non-nixos/README.md).
+**Other distros:** Nix supplies the small Git/Python activation environment.
+Only dotfiles are applied; desktop applications remain installed through your
+distro's package manager. Your Nix profiles and project development environments
+remain available for development tools. The installer does not enable services,
+change your login shell or select a desktop session. Select your distro's Umbriel
+session to use the desktop. See [native requirements and files](non-nixos/README.md).
 
 Existing file conflicts are backed up. On non-NixOS, subsequent applies preserve
 local edits and deletions. NixOS preferences are managed directly by Home Manager;
@@ -59,7 +58,7 @@ source edits. It does not pull Git commits. To receive repository changes, run
 `git -C ~/config pull --ff-only`, then `up`. Review and commit changed lockfiles.
 An input with an explicit commit/tag stays pinned until its URL is changed.
 Native `update` refuses tracked source edits or a diverged checkout; it does not
-update native packages or require Nix. Use your distro's normal package updater.
+update native packages. The launchers use Nix for their Git/Python runtime. Use your distro's normal package updater.
 
 ## Hardware and optional features
 
@@ -90,7 +89,7 @@ bash setup.sh YOURNAME/config --repo-dir ~/dotfiles
 # NixOS: inspect a full build without switching
 bash setup.sh --build-only
 # Native Linux: apply without pulling
-python3 ~/config/non-nixos/apply.py
+nix run "path:$HOME/config/non-nixos" -- --repo-dir "$HOME/config"
 ```
 
 `--ref BRANCH` selects a revision for a **new** checkout. When testing an unmerged

@@ -164,6 +164,19 @@ class Dotfiles(unittest.TestCase):
         subprocess.run(["bash", "-n", str(launcher)], check=True)
         self.assertIn("--update", launcher.read_text())
         self.assertIn("--repo-dir", launcher.read_text())
+        self.assertNotIn("python3", launcher.read_text())
+        self.assertIn("nix-command flakes", launcher.read_text())
+        self.assertIn("path:", launcher.read_text())
+        # Exercise the generated launcher with no Git/Python commands on PATH.
+        bindir = self.root / "only-nix"
+        bindir.mkdir()
+        nix = bindir / "nix"
+        nix.write_text("#!/bin/sh\nprintf '%s\\n' \"$@\"\n")
+        nix.chmod(0o755)
+        result = subprocess.run(["/bin/bash", str(launcher)], env={"PATH": str(bindir)}, text=True, capture_output=True, check=True)
+        self.assertIn("run", result.stdout)
+        self.assertIn("--update", result.stdout)
+        self.assertIn(str(self.root / "checkout/non-nixos"), result.stdout)
 
     def test_configs_are_valid_json_and_toml(self):
         import tomllib
