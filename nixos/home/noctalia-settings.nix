@@ -169,7 +169,7 @@
     corner_radius_scale = 1.2;
     font_family = "Inter";
     polkit_agent = true;
-    greeter_sync.auto_sync = true;
+    greeter_sync.auto_sync = false;
     setup_wizard_enabled = false;
     settings_window_translucent = true;
     umbriel_overview_type_to_launch_enabled = true;

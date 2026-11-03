@@ -43,8 +43,8 @@ The power button locks first. `Ctrl+Alt+Delete` quits the compositor session.
 
 | Shortcut | Action |
 | --- | --- |
-| Mod+D | Cycle **dwindle → scrolling → dwindle** |
-| Mod+Alt+1 / Mod+Alt+2 | Select dwindle / scrolling directly |
+| Mod+D | Cycle **dwindle → stacking → dwindle** |
+| Mod+Alt+1 / Mod+Alt+2 | Select dwindle / stacking directly |
 | Mod+Left/Right or H/L | Focus horizontally |
 | Mod+J/K or Mod+WheelDown/Up | Focus windows vertically |
 | Mod+Up/Down / Mod+Tab | Previous-next workspace / previous workspace |
@@ -71,6 +71,11 @@ Horizontal wheel actions focus horizontally; adding Ctrl moves the column.
 Shift+vertical wheel has the same horizontal behavior. Ctrl+vertical wheel
 moves the column between workspaces. Master is absent from the configured cycle
 and direct shortcuts.
+
+Stacking opens overlapping windows. Drag title bars to move them and use the
+edge/corner previews to snap to halves or quarters. Switching back to dwindle
+re-tiles layout-floated windows. `Mod+Return` applies to tiling layouts; Umbriel
+rejects toggling floating in stacking.
 
 ## Capture
 

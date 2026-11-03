@@ -82,11 +82,7 @@ in
           0.5
           0.66667
         ];
-        scrolling = {
-          default_extent_fraction = 0.5;
-          center_focused = "on_overflow";
-          center_underfull_strip = true;
-        };
+        stacking.drop_zones = true;
         # Keep manual split choices stable when windows and outputs resize.
         dwindle.preserve_split = true;
         tabs = {
@@ -96,6 +92,7 @@ in
       };
       appearance = {
         prefer_no_csd = true;
+        title_bar.mode = "on";
         border_width = 1;
         outer_border_width = 0;
         corner_radius = 16;
@@ -311,8 +308,8 @@ in
         "Mod+Alt+Space" = once "window-restore-from-scratchpad stash";
         "Mod+Alt+Tab" = once "scratchpad-focus-next stash";
         "Mod+Alt+1" = once "workspace-set-layout dwindle";
-        "Mod+Alt+2" = once "workspace-set-layout scrolling";
-        "Mod+D" = once "workspace-set-layout toggle dwindle scrolling";
+        "Mod+Alt+2" = once "workspace-set-layout stacking";
+        "Mod+D" = once "workspace-set-layout toggle dwindle stacking";
         "F6" = once "spawn noctalia msg screenshot-region";
         "Ctrl+Shift+2" = once "spawn noctalia msg screenshot-fullscreen";
         "Ctrl+Shift+3" = once "spawn noctalia msg screenshot-window";

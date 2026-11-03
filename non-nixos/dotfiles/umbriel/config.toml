@@ -31,12 +31,18 @@ back_and_forth = true
 mode = "dwindle"
 gap = 10
 
+[layout.stacking]
+drop_zones = true
+
 [layout.dwindle]
 preserve_split = true
 
 [appearance]
 border_width = 1
 corner_radius = 16
+
+[appearance.title_bar]
+mode = "on"
 
 [appearance.blur]
 enabled = true
@@ -64,3 +70,8 @@ softness = 28
 "Mod+Ctrl+Shift+R" = { action = "config-reload", repeat = false }
 "Mod+Shift+Escape" = { action = "cheatsheet-open", repeat = false }
 "Print" = { action = "spawn noctalia msg screenshot-region", repeat = false }
+
+"Mod+D" = { action = "workspace-set-layout toggle dwindle stacking", repeat = false }
+"Mod+Alt+1" = { action = "workspace-set-layout dwindle", repeat = false }
+"Mod+Alt+2" = { action = "workspace-set-layout stacking", repeat = false }
+"Mod+F" = { action = "window-toggle-fullscreen", repeat = false }

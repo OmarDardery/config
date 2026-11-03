@@ -34,6 +34,10 @@ distro's native package manager. LazyVim fetches its plugins when first opened.
 
 These are app requirements, not packages the installer installs. Distro package
 names and availability differ; use native packages compatible with these configs.
+Stacking/dwindle switching uses `Mod+D`, with `Mod+Alt+1`/`Mod+Alt+2` for
+direct selection. Title bars and stacking drop zones require a current Umbriel
+package (validated against the 2026-11-03 upstream revision).
+
 Noctalia/Umbriel syntax is also checked against the NixOS flake's pinned versions.
 Validate against the actual native binaries after installing them:
 

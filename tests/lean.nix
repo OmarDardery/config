@@ -22,6 +22,13 @@ assert !(os.fileSystems ? "/mnt/storage");
 assert !os.virtualisation.docker.enable && !os.services.printing.enable;
 assert
   flake.lib.deployment.hardwareProfile != "generic" || !os.hardware.nvidia.prime.offload.enable;
+assert home.programs.umbriel.settings.layout.mode == "dwindle";
+assert home.programs.umbriel.settings.layout.stacking.drop_zones;
+assert home.programs.umbriel.settings.appearance.title_bar.mode == "on";
+assert
+  home.programs.umbriel.settings.keybinds."Mod+D".action
+  == "workspace-set-layout toggle dwindle stacking";
+assert !home.programs.noctalia.settings.shell.greeter_sync.auto_sync;
 assert home.programs.vscodium.enable && home.programs.neovim.enable;
 assert !home.programs.noctalia.systemd.enable;
 assert home.programs.noctalia.settings.plugins.enabled == [ ];
