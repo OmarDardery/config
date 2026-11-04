@@ -61,6 +61,11 @@
 
   hardware.opentabletdriver.enable = true;
 
+  # Enforce the charge cap through the kernel battery interface (BAT0 or BAT1).
+  services.udev.extraRules = ''
+    ACTION=="add|change", SUBSYSTEM=="power_supply", ATTR{type}=="Battery", TEST=="charge_control_end_threshold", ATTR{charge_control_end_threshold}="80"
+  '';
+
   # Keep the iGPU first in the PRIME driver list.
   services.xserver.videoDrivers = [
     "amdgpu"
