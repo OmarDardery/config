@@ -16,5 +16,6 @@ lib.mkIf config.workstation.gaming.enable {
     };
   };
   programs.gamemode.enable = true;
+  services.flatpak.packages = [ "com.vysp3r.ProtonPlus" ];
   users.users.${profile.username}.extraGroups = [ "gamemode" ];
 }

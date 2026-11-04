@@ -1,4 +1,4 @@
-# Specialist bundles are opt-in; enable them in configuration.nix.
+# Bundle switches; the desktop entry point enables them by default.
 { lib, ... }:
 {
   imports = [

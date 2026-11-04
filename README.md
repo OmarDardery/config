@@ -71,11 +71,16 @@ NVIDIA/PRIME, kernel and display policy. Override detection with `--hardware
 generic` or `--hardware asus-tuf-a14`. Other NVIDIA machines need their own driver
 module. The personal XFS storage mount is added only if its UUID exists locally.
 
-Steam and everyday desktop apps remain enabled. Docker, engineering tools,
-printers/scanners, diagnostics, Tailscale and daily Restic backups default off.
-Enable the needed `workstation.<feature>.enable` options in
-[nixos/configuration.nix](nixos/configuration.nix). Backup details and recovery
-are in [nixos/BACKUPS.md](nixos/BACKUPS.md).
+Steam/GameMode, the everyday apps, FreeCAD/PlatformIO, Docker, printing/scanning,
+diagnostics and Tailscale are included by default. Flathub is configured and
+OrcaSlicer/ProtonPlus are installed as system Flatpaks. Existing unmanaged Flatpaks
+are preserved; configured apps update at activation. Downloads require Internet
+access and may take time on a fresh install.
+
+Set individual `workstation.<feature>.enable = false;` options in
+[nixos/configuration.nix](nixos/configuration.nix) to opt out. Restic backups
+activate by default when the personal storage disk is configured; see
+[nixos/BACKUPS.md](nixos/BACKUPS.md).
 
 Nix uses two concurrent build jobs, four cores per job and lower scheduling
 priority. The desktop uses the native scheduler, power-profiles-daemon and zram.

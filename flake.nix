@@ -2,6 +2,7 @@
   description = "NixOS desktop and native Linux dotfiles";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    nix-flatpak.url = "github:gmodena/nix-flatpak";
 
     zen-browser = {
       url = "github:youwen5/zen-browser-flake";

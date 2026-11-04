@@ -7,10 +7,17 @@
   ]
   ++ lib.optional (profile.hardwareProfile == "asus-tuf-a14") ./hardware.nix;
 
-  # Optional bundles default off; set workstation.<bundle>.enable = true here.
-  # See README.md for gaming, engineering, containers and printing.
-  # Steam is part of this laptop's normal setup.
-  workstation.gaming.enable = true;
+  # Complete desktop setup. Set individual bundles to false here to opt out.
+  workstation = {
+    gaming.enable = lib.mkDefault true;
+    engineering.enable = lib.mkDefault true;
+    containers.enable = lib.mkDefault true;
+    printing.enable = lib.mkDefault true;
+    diagnostics.enable = lib.mkDefault true;
+    tailscale.enable = lib.mkDefault true;
+    # The backup repository lives on the personal storage disk.
+    backups.enable = lib.mkDefault (profile.storageUUID != null);
+  };
 
   # Preserve the original installation's stateful defaults.
   system.stateVersion = profile.stateVersion;

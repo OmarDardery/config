@@ -6,7 +6,11 @@ let
 in
 assert !(os.systemd.user.services ? desktop-config);
 assert !(os.systemd.user.services ? flatpak-font-cache);
-assert !(os.systemd.services ? flatpak-managed-install);
+assert os.systemd.services ? flatpak-managed-install;
+assert os.services.flatpak.enable;
+assert !os.services.flatpak.uninstallUnmanaged;
+assert builtins.elem "com.orcaslicer.OrcaSlicer" (map (p: p.appId) os.services.flatpak.packages);
+assert builtins.elem "com.vysp3r.ProtonPlus" (map (p: p.appId) os.services.flatpak.packages);
 assert !os.services.scx.enable;
 assert os.services.displayManager.ly.enable;
 assert !os.services.displayManager.ly.x11Support;
@@ -16,10 +20,12 @@ assert !os.services.greetd.enable;
 assert os.security.pam.services.ly.enableGnomeKeyring;
 assert !(flake.inputs ? noctalia-greeter);
 assert os.programs.steam.enable;
-assert !os.services.tailscale.enable;
-assert !(os.services.restic.backups ? home);
-assert !(os.fileSystems ? "/mnt/storage");
-assert !os.virtualisation.docker.enable && !os.services.printing.enable;
+assert os.services.tailscale.enable;
+assert (os.services.restic.backups ? home) == (flake.lib.deployment.storageUUID != null);
+assert (os.fileSystems ? "/mnt/storage") == (flake.lib.deployment.storageUUID != null);
+assert os.virtualisation.docker.enable && os.services.printing.enable;
+assert os.workstation.engineering.enable && os.workstation.diagnostics.enable;
+assert os.programs.gamemode.enable;
 assert
   flake.lib.deployment.hardwareProfile != "generic" || !os.hardware.nvidia.prime.offload.enable;
 assert home.programs.umbriel.settings.layout.mode == "dwindle";
