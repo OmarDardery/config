@@ -62,9 +62,11 @@ Codium extensions remain yours. Plugins are downloaded by LazyVim on first use;
 language toolchains belong in each project’s own `shell.nix`.
 
 Steam and GameMode use the normal NixOS modules. There is no Millennium/client
-fork or theme installer. Optional engineering uses native Nix packages, including
-OrcaSlicer. Existing Flatpak applications/data are retained; use `flatpak update`
-when you want to update them. The font mount remains for sandbox compatibility.
+fork or theme installer. Engineering tools are included by default. FreeCAD and
+PlatformIO use Nix;
+OrcaSlicer and ProtonPlus use the declared Flathub installation. Existing Flatpak
+apps/data are preserved and configured apps update during activation. The font
+mount remains for sandbox compatibility.
 
 The kernel scheduler and power-profiles-daemon handle normal power management.
 Choose power profiles through Noctalia or `powerprofilesctl`; there is no extra
@@ -72,7 +74,8 @@ scheduler daemon or script that changes profiles when the power source changes.
 The ASUS kernel/NVIDIA pins stay in its hardware profile. The installed boot
 target and state versions are captured once in `local-system.json`; updates do
 not advance state versions. The personal data disk is mounted only when detected.
-Tailscale and backup jobs are opt-in, alongside the other specialist bundles.
+Tailscale, Docker, printing/scanning and diagnostics are enabled by default.
+Backups are enabled when the personal storage disk is configured.
 
 OpenTabletDriver manages tablet settings through its GUI. The optional preset
 is `assets/tablet-settings.json`; it is not repeatedly merged into your live

@@ -7,6 +7,7 @@
     ./nix.nix
     ./performance.nix
     ./features.nix
+    ./flatpak.nix
     ./desktop.nix
     ./greeter.nix
     ./applications

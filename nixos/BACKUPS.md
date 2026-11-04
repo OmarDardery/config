@@ -1,7 +1,8 @@
 # Home backups
 
-Backups default off. Enable `workstation.backups.enable = true;` in
-`configuration.nix` only after configuring and verifying the storage mount.
+Backups default on when the personal storage disk is configured. Verify the
+storage mount before relying on them. Set `workstation.backups.enable = false;`
+in `configuration.nix` to opt out.
 
 `system/backups.nix` backs up the configured user's home to `/mnt/storage/backup`
 with Restic encryption. A daily persistent timer catches up after the laptop has

@@ -24,7 +24,6 @@
   # Ly's NixOS PAM integration unlocks the user keyring.
   services.gnome.gnome-keyring.enable = true;
 
-  services.flatpak.enable = true;
   services.gvfs.enable = true;
   services.tumbler.enable = true;
   programs.thunar = {
