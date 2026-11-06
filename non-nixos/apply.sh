@@ -83,7 +83,7 @@ if [[ ! -e "$profile" ]]; then
 fi
 temporary=$(mktemp "$repo_dir/non-nixos/.local-profile.XXXXXXXX")
 trap 'rm -f -- "$temporary"' EXIT
-jq --arg repo "$repo_dir" '.configRepo = $repo' "$profile" > "$temporary"
+jq --arg repo "$repo_dir" --arg data "$data_home" '.configRepo = $repo | .dataHome //= $data' "$profile" > "$temporary"
 mv -T -- "$temporary" "$profile"
 username=$(jq -er '.username' "$profile")
 jq -e --arg username "$(id -un)" --arg home "$HOME" --arg system "$system" \

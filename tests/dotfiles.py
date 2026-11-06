@@ -91,6 +91,22 @@ class StandaloneHome(unittest.TestCase):
         self.assertFalse(any('pull' in call for call in self.events('git')))
         self.assertTrue(any('update' in call for call in self.events('nix')))
 
+    def test_upgrade_adds_missing_data_home_without_overwriting_custom_identity(self):
+        self.apply()
+        path = self.repo/'non-nixos/local-profile.json'
+        profile = json.loads(path.read_text())
+        del profile['dataHome']
+        profile['configRepo'] = '/old/checkout'
+        path.write_text(json.dumps(profile))
+        self.apply()
+        profile = json.loads(path.read_text())
+        self.assertEqual(profile['dataHome'], self.env['XDG_DATA_HOME'])
+        self.assertEqual(profile['configRepo'], str(self.repo))
+        profile['dataHome'] = str(self.home/'my data override')
+        path.write_text(json.dumps(profile))
+        self.apply()
+        self.assertEqual(json.loads(path.read_text())['dataHome'], profile['dataHome'])
+
     def test_build_only_does_not_activate(self):
         self.apply('--build-only')
         self.assertFalse(self.events('home-manager'))

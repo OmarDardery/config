@@ -6,7 +6,7 @@ elif [[ -r $HOME/.nix-profile/etc/profile.d/nix.sh ]]; then
 fi
 # Load Home Manager environment variables, including native Linux integration.
 [[ ! -r $HOME/.nix-profile/etc/profile.d/hm-session-vars.sh ]] || source "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
-# Desktop programs use native packages; every integration below is optional.
+# Home Manager supplies the desktop apps and optional shell integrations.
 typeset -U path
 path=("$HOME/.local/bin" $path)
 export EDITOR=nvim
