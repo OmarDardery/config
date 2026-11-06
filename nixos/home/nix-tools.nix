@@ -9,8 +9,6 @@
 let
   repository = lib.escapeShellArg "path:${profile.configRepo}";
   directory = lib.escapeShellArg profile.configRepo;
-  applyCommand = "config-apply";
-
 in
 {
   home.packages = [
@@ -21,8 +19,8 @@ in
     '')
   ];
   home.shellAliases = {
-    up = "${applyCommand} --update";
-    rebuild = applyCommand;
+    up = "config-apply --update";
+    rebuild = "config-apply";
     nbuild = "nix build ${lib.escapeShellArg "path:${profile.configRepo}#nixosConfigurations.${profile.hostName}.config.system.build.toplevel"} --no-link --no-write-lock-file";
     neval = "nix flake check ${repository} --no-build --no-write-lock-file";
     nupdate = "nix flake update --flake ${repository}";

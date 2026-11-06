@@ -1,7 +1,7 @@
 # Regression checks for the failed desktop activation and retired wrappers.
 { flake }:
 let
-  os = flake.nixosConfigurations.nixos.config;
+  os = flake.nixosConfigurations.${flake.lib.deployment.hostName}.config;
   home = os.home-manager.users.${flake.lib.deployment.username};
 in
 assert !(os.systemd.user.services ? desktop-config);

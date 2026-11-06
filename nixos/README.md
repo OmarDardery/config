@@ -5,6 +5,27 @@ NixOS module. `hardware.nix` is selected automatically only for the ASUS TUF A14
 Generated hardware, account settings, state versions and boot target stay local
 and ignored by Git. Other hosts use generic hardware and the stable kernel.
 
+## Structure
+
+| Location | Responsibility |
+| --- | --- |
+| `configuration.nix` | Compose the desktop, Home Manager and feature defaults |
+| `profile.nix` | Account and deployment values, with local overrides |
+| `hardware.nix` | ASUS kernel, GPU, peripherals and battery policy |
+| `system/default.nix` | Explicit list of system modules |
+| `system/<feature>.nix` | A feature's option, packages, services and permissions |
+| `system/applications/` | Everyday apps, CLI utilities, fonts and display tools |
+| `home/` | User programs and preferences |
+| `../non-nixos/` | Independent native Linux dotfile installer |
+
+Change `workstation.<feature>.enable` in `configuration.nix` to choose bundles.
+Each feature declares its own option beside its implementation and defaults to
+off when imported alone. The desktop entry point enables your usual bundles.
+Diagnostics owns both its tools and MTR; Tailscale owns its VPN and firewall rules.
+Add a system module to `system/default.nix` explicitly; there is no auto-discovery
+or module-generation framework. Keep closely related settings in one file and
+split only when a feature has a separate purpose or switch.
+
 ## Apply and update
 
 From any directory, after initial setup:
