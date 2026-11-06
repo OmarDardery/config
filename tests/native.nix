@@ -43,6 +43,12 @@ assert home.home.file ? ".zshrc";
 assert home.systemd.user.services == { };
 assert home.desktop.flatpak.enable && home.home.activation ? desktopFlatpaks;
 assert !(withoutFlatpaks.home.activation ? desktopFlatpaks);
+assert lib.hasInfix (
+  "XDG_DATA_HOME=" + lib.escapeShellArg home.xdg.dataHome
+) home.home.activation.desktopFlatpaks.data;
+assert lib.hasInfix (
+  "XDG_STATE_HOME=" + lib.escapeShellArg home.xdg.stateHome
+) home.home.activation.desktopFlatpaks.data;
 assert builtins.length ids == builtins.length (lib.unique ids);
 assert
   if pkgs.stdenv.hostPlatform.isx86_64 then

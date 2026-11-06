@@ -47,7 +47,11 @@ in
       "/var/lib/flatpak/exports/share"
     ];
     home.activation.desktopFlatpaks = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-      run ${installer}/bin/desktop-flatpaks ${lib.escapeShellArgs cfg.packages}
+      run ${pkgs.coreutils}/bin/env \
+        XDG_DATA_HOME=${lib.escapeShellArg config.xdg.dataHome} \
+        XDG_CONFIG_HOME=${lib.escapeShellArg config.xdg.configHome} \
+        XDG_STATE_HOME=${lib.escapeShellArg config.xdg.stateHome} \
+        ${installer}/bin/desktop-flatpaks ${lib.escapeShellArgs cfg.packages}
     '';
   };
 }
