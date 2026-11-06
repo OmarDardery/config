@@ -70,33 +70,32 @@ else
   [[ -z "$revision" ]] || git -C "$repo_dir" checkout "$revision"
 fi
 [[ -f "$repo_dir/non-nixos/flake.lock" && -f "$repo_dir/non-nixos/home/default.nix" ]] || die 'checkout needs the standalone Home Manager configuration; pull repository changes first'
+username=$(id -un)
+[[ "$username" =~ ^[A-Za-z_][A-Za-z0-9_-]*$ ]] || die 'unsupported account name'
 profile="$repo_dir/non-nixos/local-profile.json"
-if [[ ! -e "$profile" ]]; then
-  temporary=$(mktemp "$repo_dir/non-nixos/.local-profile.XXXXXXXX")
-  trap 'rm -f -- "$temporary"' EXIT
-  jq -n --arg username "$(id -un)" --arg homeDirectory "$HOME" \
-    --arg system "$system" --arg configRepo "$repo_dir" \
-    --arg dataHome "$data_home" --arg configHome "$config_home" --arg stateHome "$state_home" --arg zshHome "$zsh_home" \
-    '{username:$username,homeDirectory:$homeDirectory,system:$system,configRepo:$configRepo,
-      dataHome:$dataHome,configHome:$configHome,stateHome:$stateHome,zshHome:$zshHome,stateVersion:"26.05"}' > "$temporary"
-  mv -T -- "$temporary" "$profile"
-fi
+profile_source=/dev/null
+[[ ! -e "$profile" ]] || profile_source=$profile
 temporary=$(mktemp "$repo_dir/non-nixos/.local-profile.XXXXXXXX")
 trap 'rm -f -- "$temporary"' EXIT
-jq --arg repo "$repo_dir" --arg data "$data_home" '.configRepo = $repo | .dataHome //= $data' "$profile" > "$temporary"
+jq -n --slurpfile saved "$profile_source" \
+  --arg username "$username" --arg homeDirectory "$HOME" --arg system "$system" \
+  --arg configRepo "$repo_dir" --arg dataHome "$data_home" \
+  --arg configHome "$config_home" --arg stateHome "$state_home" --arg zshHome "$zsh_home" '
+    (if ($saved | length) == 0 then {username:$username,homeDirectory:$homeDirectory,system:$system,
+      dataHome:$dataHome,configHome:$configHome,stateHome:$stateHome,
+      zshHome:$zshHome,stateVersion:"26.05"} else $saved[0] end) |
+    if .username != $username or .homeDirectory != $homeDirectory or .system != $system
+    then error("local-profile.json belongs to a different user, home or architecture")
+    else .configRepo = $configRepo | .dataHome //= $dataHome end
+  ' > "$temporary"
 mv -T -- "$temporary" "$profile"
-username=$(jq -er '.username' "$profile")
-jq -e --arg username "$(id -un)" --arg home "$HOME" --arg system "$system" \
-  '.username == $username and .homeDirectory == $home and .system == $system' "$profile" >/dev/null \
-  || die 'local-profile.json belongs to a different user, home or architecture'
 flake="path:$repo_dir/non-nixos"
 if [[ "$update_inputs" == true ]]; then nix "${nixflags[@]}" flake update --flake "$flake"; fi
 if [[ "$build_only" == true ]]; then
   nix "${nixflags[@]}" build --no-write-lock-file --no-link "$flake#homeConfigurations.$username.activationPackage"
 else
-  flatpak_enabled=$(nix "${nixflags[@]}" eval --json --no-write-lock-file "$flake#homeConfigurations.$username.config.desktop.flatpak.enable")
-  flatpak_count=$(nix "${nixflags[@]}" eval --json --no-write-lock-file "$flake#homeConfigurations.$username.config.desktop.flatpak.packages" | jq length)
-  if [[ "$flatpak_enabled" == true && "$flatpak_count" != 0 ]]; then
+  needs_flatpak=$(nix "${nixflags[@]}" eval --json --no-write-lock-file "$flake#lib.hostRequirements.flatpak")
+  if [[ "$needs_flatpak" == true ]]; then
     bash "$repo_dir/non-nixos/host-deps.sh"
   fi
   home-manager switch --flake "$flake#$username" --no-write-lock-file \

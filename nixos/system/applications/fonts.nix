@@ -1,12 +1,7 @@
 { config, pkgs, ... }:
 {
   fonts = {
-    packages = with pkgs; [
-      inter
-      nerd-fonts.jetbrains-mono
-      noto-fonts
-      noto-fonts-color-emoji
-    ];
+    packages = (import ../../../non-nixos/packages.nix { inherit pkgs; }).fonts;
     fontDir.enable = true;
   };
 

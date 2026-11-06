@@ -1,5 +1,5 @@
 {
-  description = "Standalone Home Manager for Linux: editors and desktop dotfiles";
+  description = "Standalone Home Manager desktop essentials for Linux";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     home-manager = {
@@ -15,6 +15,19 @@
         "x86_64-linux"
         "aarch64-linux"
       ];
+      mkHome =
+        system:
+        home-manager.lib.homeManagerConfiguration {
+          pkgs = import nixpkgs {
+            inherit system;
+            config.allowUnfree = true;
+          };
+          extraSpecialArgs.profile = profile // {
+            inherit system;
+          };
+          modules = [ ./home ];
+        };
+      home = mkHome profile.system;
       packages = forSystems (system: {
         default =
           let
@@ -35,19 +48,18 @@
     in
     {
       inherit packages;
-      homeConfigurations.${profile.username} = home-manager.lib.homeManagerConfiguration {
-        pkgs = import nixpkgs {
-          inherit (profile) system;
-          config.allowUnfree = true;
-        };
-        extraSpecialArgs = { inherit profile; };
-        modules = [ ./home ];
-      };
+      homeConfigurations.${profile.username} = home;
+      lib.deployment = profile;
+      lib.hostRequirements.flatpak =
+        home.config.desktop.flatpak.enable && home.config.desktop.flatpak.packages != [ ];
+      checks = forSystems (system: {
+        home = (mkHome system).activationPackage;
+      });
       apps = forSystems (system: {
         default = {
           type = "app";
           program = "${packages.${system}.default}/bin/home-apply";
-          meta.description = "Apply standalone Home Manager editors and dotfiles";
+          meta.description = "Apply standalone Home Manager desktop essentials";
         };
       });
     };

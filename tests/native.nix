@@ -30,6 +30,9 @@ let
   ids = home.desktop.flatpak.packages;
 in
 assert home.targets.genericLinux.enable;
+assert flake.lib.hostRequirements.flatpak == (home.desktop.flatpak.enable && ids != [ ]);
+assert
+  flake.checks.${flake.lib.deployment.system}.home.drvPath == home.home.activationPackage.drvPath;
 assert home.programs.home-manager.enable;
 assert home.programs.neovim.enable && home.programs.vscodium.enable;
 assert !home.programs.neovim.withPython3 && !home.programs.neovim.withNodeJs;

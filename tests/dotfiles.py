@@ -16,7 +16,7 @@ name = pathlib.Path(sys.argv[0]).name
 args = sys.argv[1:]
 root = pathlib.Path(os.environ['TEST_ROOT'])
 with (root/'events').open('a') as stream: stream.write(json.dumps([name, *args])+'\n')
-if name == 'id': print(os.environ.get('TEST_UID','1000') if args == ['-u'] else 'tester')
+if name == 'id': print(os.environ.get('TEST_UID','1000') if args == ['-u'] else os.environ.get('TEST_USER','tester'))
 elif name == 'uname': print(os.environ.get('TEST_ARCH','x86_64'))
 elif name == 'git':
     if args[0] == 'clone': shutil.copytree(root/'template', args[-1])
@@ -25,8 +25,7 @@ elif name == 'nix':
     if 'update' in args and os.environ.get('TEST_UPDATE_FAIL'): sys.exit(43)
     if 'eval' in args:
         if os.environ.get('TEST_EVAL_FAIL'): sys.exit(45)
-        if args[-1].endswith('.enable'): print('true')
-        else: print('[]' if os.environ.get('TEST_ARCH') == 'aarch64' else '["com.valvesoftware.Steam"]')
+        print('false' if os.environ.get('TEST_ARCH') == 'aarch64' else 'true')
 elif name == 'flatpak': pass
 elif name == 'home-manager' and os.environ.get('TEST_SWITCH_FAIL'): sys.exit(44)
 '''
@@ -68,6 +67,7 @@ class StandaloneHome(unittest.TestCase):
         self.apply()
         command = self.events('home-manager')[0]
         self.assertEqual(command[1], 'switch')
+        self.assertEqual(sum('eval' in call for call in self.events('nix')), 1)
         self.assertIn(f'path:{self.repo}/non-nixos#tester', command)
         self.assertIn('--no-write-lock-file', command)
         self.assertTrue(command[command.index('-b')+1].startswith('before-home-manager-'))
@@ -144,7 +144,18 @@ class StandaloneHome(unittest.TestCase):
         path = self.repo/'non-nixos/local-profile.json'
         profile = json.loads(path.read_text()); profile['homeDirectory'] = '/home/someone-else'
         path.write_text(json.dumps(profile))
+        before = path.read_bytes()
         self.apply(success=False)
+        self.assertEqual(path.read_bytes(), before)
+        self.assertEqual(len(self.events('home-manager')), 1)
+
+    def test_invalid_profile_is_not_replaced(self):
+        self.apply()
+        path = self.repo/'non-nixos/local-profile.json'
+        for invalid in ['{broken', 'false', '{}']:
+            path.write_text(invalid)
+            self.apply(success=False)
+            self.assertEqual(path.read_text(), invalid)
         self.assertEqual(len(self.events('home-manager')), 1)
 
     def test_root_nixos_unsupported_arch_and_relative_xdg_rejected(self):

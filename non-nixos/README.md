@@ -20,7 +20,8 @@ standalone Home Manager. From an existing checkout use `bash setup.sh`.
 | Fonts | Inter, JetBrainsMono Nerd Font, Noto, emoji |
 | x86_64 user Flatpaks | Steam, ProtonPlus, OrcaSlicer, Discord |
 
-Home Manager installs the Nix apps, fonts, associations and dotfiles.
+Shared apps/fonts are selected in `packages.nix`; standalone-only apps and
+associations live in `home/desktop.nix`. Home Manager installs them and the dotfiles.
 Use your preferred browser; this configuration does not install or select one. The distro
 continues to own its desktop session, drivers, audio services, portals and login
 manager. Umbriel/Noctalia settings remain available if you use that session;
@@ -51,7 +52,8 @@ Disable Flatpaks in `home/default.nix` with `desktop.flatpak.enable = false;`, o
 set `desktop.flatpak.packages = [ ... ];` to change the list. A disabled or empty
 list requires no native Flatpak setup. Direct `home-manager switch` expects host
 prerequisites to be installed already; `config-apply` handles that preflight.
-Build-only mode never installs host packages or runs Flatpak operations.
+Build-only mode never installs host packages or runs Flatpak operations. The
+installer evaluates the effective prerequisite once before activation.
 
 ## Apply and update
 
@@ -85,7 +87,9 @@ home-manager switch --flake "path:$HOME/config/non-nixos#$(id -un)"
 `local-profile.json` records identity, architecture, checkout, XDG config/data/state
 paths, Zsh directory and initial state version. It stays out of Git. Keep
 `stateVersion` when updating; moving a checkout refreshes `configRepo` on apply.
-Flake evaluation stays pure. No shared development shells or global project
+Invalid local profiles are rejected without replacement. Flake evaluation stays
+pure; `nix flake check --no-build` evaluates both supported home architectures.
+No shared development shells or global project
 language runtimes are added.
 
 ## Migration, edits and recovery

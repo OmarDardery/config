@@ -51,6 +51,6 @@ current docs. Keep GUI overrides in state: resetting a changed setting in the UI
 is preferable to introducing another configuration rewrite service.
 
 For native installs, update Umbriel and Noctalia with the distro package manager
-before using newly introduced options. The Nix launcher still manages dotfiles
-only. Run both validators after native package updates; CI checks the NixOS and
+before using newly introduced options. Standalone Home Manager manages apps and dotfiles; the distro still supplies
+the compositor and shell. Run both validators after native package updates; CI checks the NixOS and
 native files against the locked binaries.

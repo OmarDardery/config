@@ -1,38 +1,25 @@
 { pkgs, ... }:
+let
+  shared = import ../packages.nix { inherit pkgs; };
+in
 {
-  home.packages = with pkgs; [
-    kitty
-    starship
-    zsh
-    xournalpp
-    libreoffice
-    hunspell
-    hunspellDicts.en_US
-    (papers.override { supportNautilus = false; })
-    thunar
-    file-roller
-    gnome-calculator
-    mpv
-    imv
-    keepassxc
-    gimp
-    grim
-    slurp
-    wl-clipboard
-    xclip
-    brightnessctl
-    playerctl
-    pavucontrol
-    btop
-    zoxide
-    direnv
-    unzip
-    _7zz
-    inter
-    nerd-fonts.jetbrains-mono
-    noto-fonts
-    noto-fonts-color-emoji
-  ];
+  home.packages =
+    shared.desktop
+    ++ shared.fonts
+    ++ (with pkgs; [
+      kitty
+      starship
+      zsh
+      thunar
+      keepassxc
+      xclip
+      pavucontrol
+      btop
+      zoxide
+      direnv
+      unzip
+      _7zz
+    ]);
   fonts.fontconfig.enable = true;
   home.sessionVariables = {
     TERMINAL = "kitty";
