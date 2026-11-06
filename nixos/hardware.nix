@@ -5,9 +5,6 @@
   ...
 }:
 {
-  # Keep the tested kernel and NVIDIA driver policy together.
-  boot.kernelPackages = pkgs.linuxPackages_latest;
-
   hardware = {
     bluetooth = {
       enable = true;

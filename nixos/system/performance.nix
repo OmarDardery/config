@@ -1,7 +1,7 @@
 # Native kernel scheduling and power profiles.
-{ lib, pkgs, ... }:
+{ pkgs, ... }:
 {
-  boot.kernelPackages = lib.mkDefault pkgs.linuxPackages;
+  boot.kernelPackages = pkgs.linuxPackages_latest;
 
   services.power-profiles-daemon.enable = true;
   # Compressed RAM first; generated hardware config retains disk-swap fallback.

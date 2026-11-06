@@ -65,9 +65,10 @@ update native packages. The launchers use Nix for their Git/Python runtime. Use 
 NixOS uses Ly with its built-in Matrix animation for login, then starts Umbriel.
 The non-NixOS path configures only user dotfiles; use your distro to manage Ly.
 
-Generic machines use the stable kernel and their generated hardware settings.
+All machines use the latest kernel available in the pinned Nixpkgs input.
+Generic machines use their generated hardware settings.
 The ASUS TUF A14 (FA401) is detected automatically and uses the existing tested
-NVIDIA/PRIME, kernel and display policy. Override detection with `--hardware
+NVIDIA/PRIME and display policy. Override detection with `--hardware
 generic` or `--hardware asus-tuf-a14`. Other NVIDIA machines need their own driver
 module. The personal XFS storage mount is added only if its UUID exists locally.
 

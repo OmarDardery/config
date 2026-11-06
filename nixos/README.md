@@ -3,7 +3,8 @@
 The root flake imports `configuration.nix` and integrates Home Manager as a
 NixOS module. `hardware.nix` is selected automatically only for the ASUS TUF A14 (FA401).
 Generated hardware, account settings, state versions and boot target stay local
-and ignored by Git. Other hosts use generic hardware and the stable kernel.
+and ignored by Git. Other hosts use generic hardware. All hosts use the latest kernel available in
+the pinned Nixpkgs input.
 
 ## Structure
 
@@ -11,7 +12,7 @@ and ignored by Git. Other hosts use generic hardware and the stable kernel.
 | --- | --- |
 | `configuration.nix` | Compose the desktop, Home Manager and feature defaults |
 | `profile.nix` | Account and deployment values, with local overrides |
-| `hardware.nix` | ASUS kernel, GPU, peripherals and battery policy |
+| `hardware.nix` | ASUS GPU, peripherals and battery policy |
 | `system/default.nix` | Explicit list of system modules |
 | `system/<feature>.nix` | A feature's option, packages, services and permissions |
 | `system/applications/` | Everyday apps, CLI utilities, fonts and display tools |
@@ -92,7 +93,8 @@ mount remains for sandbox compatibility.
 The kernel scheduler and power-profiles-daemon handle normal power management.
 Choose power profiles through Noctalia or `powerprofilesctl`; there is no extra
 scheduler daemon or script that changes profiles when the power source changes.
-The ASUS kernel/NVIDIA pins stay in its hardware profile. The installed boot
+The latest kernel is selected in `system/performance.nix`; the ASUS NVIDIA
+driver pin stays in its hardware profile. The installed boot
 target and state versions are captured once in `local-system.json`; updates do
 not advance state versions. The personal data disk is mounted only when detected.
 Tailscale, Docker, printing/scanning and diagnostics are enabled by default.
