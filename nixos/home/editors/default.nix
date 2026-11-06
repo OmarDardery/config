@@ -1,7 +1,1 @@
-{ ... }:
-{
-  imports = [
-    ./lazyvim.nix
-    ./vscode.nix
-  ];
-}
+{ ... }: { imports = [ ../../../non-nixos/home/editors ]; }

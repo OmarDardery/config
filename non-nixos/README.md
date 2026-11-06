@@ -1,93 +1,114 @@
-# Native Linux dotfiles
+# Standalone Linux desktop essentials
 
 ```sh
 nix --extra-experimental-features 'nix-command flakes' run github:OmarDardery/config
 ```
 
-Requires Nix on Linux (x86_64 or aarch64); Nix supplies Git and Python for
-activation. No native Git/Python packages or Home Manager installation are
-required. Run as your normal user. Default checkout: `~/config`.
-From an existing checkout use `bash setup.sh`. When flakes are enabled, the
-fresh-install command shortens to `nix run github:OmarDardery/config`.
+Run as your normal Linux user with Nix installed. Supports x86_64 and aarch64.
+The launcher clones into `~/config`, records the local identity, and applies
+standalone Home Manager. From an existing checkout use `bash setup.sh`.
 
-The installer configures these files and installs one small command in
-`~/.local/bin`. It never installs applications, fonts, extensions, drivers or
-services, changes your login shell, or starts/restarts apps. Apps stay under your
-distro's native package manager. LazyVim fetches its plugins when first opened.
-
-| Source under `dotfiles/` | Destination |
+| Use | Provided apps |
 | --- | --- |
-| `nvim/` | `$XDG_CONFIG_HOME/nvim/` |
-| `VSCodium/User/settings.json` | `$XDG_CONFIG_HOME/VSCodium/User/settings.json` |
-| `umbriel/config.toml` | `$XDG_CONFIG_HOME/umbriel/config.toml` |
-| `noctalia/config.toml` | `$XDG_CONFIG_HOME/noctalia/config.toml` |
-| `kitty/kitty.conf` | `$XDG_CONFIG_HOME/kitty/kitty.conf` |
-| `starship.toml` | `$XDG_CONFIG_HOME/starship.toml` |
-| `zsh/.zshrc` | `$ZDOTDIR/.zshrc`, or `~/.zshrc` when unset |
+| Editors/development | VSCodium, Neovim/LazyVim, Git, ripgrep, fd, nixd, nixfmt |
+| Office, notes and PDFs | LibreOffice, Xournal++, Papers, English spellchecking |
+| Files and archives | Thunar, File Roller, unzip, 7-Zip |
+| Images, audio and video | GIMP, imv, mpv |
+| Passwords | KeePassXC |
+| Terminal and shell | Kitty, Zsh, Starship, zoxide, direnv, btop |
+| Desktop helpers | Calculator, volume mixer, clipboard/screenshot tools, brightness/media controls |
+| Fonts | Inter, JetBrainsMono Nerd Font, Noto, emoji |
+| x86_64 user Flatpaks | Steam, ProtonPlus, OrcaSlicer, Discord |
 
-`XDG_CONFIG_HOME` defaults to `~/.config`. Native prerequisites:
+Shared apps/fonts are selected in `packages.nix`; standalone-only apps and
+associations live in `home/desktop.nix`. Home Manager installs them and the dotfiles.
+Use your preferred browser; this configuration does not install or select one. The distro
+continues to own its desktop session, drivers, audio services, portals and login
+manager. Umbriel/Noctalia settings remain available if you use that session;
+existing GNOME/KDE/Xfce sessions are not replaced. Zsh is installed without
+changing your login shell; run `zsh` to use the configured shell.
 
-- Neovim 0.11.2+ with LuaJIT, Git, ripgrep and fd for LazyVim.
-- VSCodium (`codium`), Kitty, Starship and Zsh for their respective dotfiles.
-- Umbriel and **Noctalia v5** (Rust/TOML, rather than the legacy Quickshell shell).
-- Optional JetBrainsMono Nerd Font; optional zoxide/direnv for shell integrations.
+## Flatpak installation
 
-These are app requirements, not packages the installer installs. Distro package
-names and availability differ; use native packages compatible with these configs.
-Stacking/dwindle switching uses `Mod+D`, with `Mod+Alt+1`/`Mod+Alt+2` for
-direct selection. Title bars and stacking drop zones require a current Umbriel
-package (validated against the 2026-11-03 upstream revision).
+Steam and ProtonPlus use the native Flatpak sandbox and GPU integration. Their
+Flathub IDs, along with OrcaSlicer and Discord, are declared in `home/flatpak.nix`.
+They are enabled on x86_64; ARM gets the remaining desktop essentials without
+trying to install unsupported gaming apps.
 
-Noctalia/Umbriel syntax is also checked against the NixOS flake's pinned versions.
-Validate against the actual native binaries after installing them:
+If Flatpak is missing, the normal installer uses sudo to install native Flatpak
+and portal support on apt, dnf, pacman or zypper systems. On other systems it
+stops with instructions to install the host prerequisite. If Flatpak is already
+installed, no host package operation is performed. Keep your distro desktop's
+portal backend available for screen sharing and file dialogs.
 
-```sh
-umbriel config validate -c ~/.config/umbriel/config.toml
-noctalia config validate ~/.config/noctalia/config.toml
-```
+Flatpaks install synchronously during Home Manager activation, under the current
+user. Download failures fail activation visibly. No systemd user service is
+required. Existing unmanaged apps, remotes and data are preserved. Reapplying
+updates declared apps with `--or-update`; network access is required. Initial
+Steam/game/runtime downloads can be large. The Flatpak sandbox uses distro GPU
+support; it does not install the NixOS NVIDIA driver.
 
-Choose Umbriel at login; it starts Noctalia directly. The defaults include
-English/Arabic input, a bottom bar that reserves space, and a right dock.
-Noctalia's native Umbriel template handles compositor colors. Kitty uses its
-normal palette until a `noctalia*.conf` palette is present. Starship is configured
-statically; Zsh initializes it only when the native executable exists. Zsh also
-loads the installed Nix profile and adds `~/.local/bin` to `PATH`. Start `zsh` to use it; selecting it as the login
-shell is your choice. Machine-specific shell additions belong in `.zshrc.local`.
+Disable Flatpaks in `home/default.nix` with `desktop.flatpak.enable = false;`, or
+set `desktop.flatpak.packages = [ ... ];` to change the list. A disabled or empty
+list requires no native Flatpak setup. Direct `home-manager switch` expects host
+prerequisites to be installed already; `config-apply` handles that preflight.
+Build-only mode never installs host packages or runs Flatpak operations. The
+installer evaluates the effective prerequisite once before activation.
 
 ## Apply and update
 
-```sh
-~/.local/bin/config-apply
-~/.local/bin/config-apply --update
-```
+| Command | Action |
+| --- | --- |
+| `config-apply` / `rebuild` | Apply the current checkout, including declared Flatpaks |
+| `up` | Update this flake's lockfile, then apply |
+| `config-apply --build-only` | Build a home generation without activating |
+| `home-manager generations` | List generations and activation paths |
 
-In a new Zsh session, `up` updates and applies. `config-apply` uses
-the checkout as-is. `up` runs `git pull --ff-only` and applies unedited defaults;
-it refuses tracked source edits or a diverged checkout. Native app updates stay
-with your distro. The launcher re-enters the checkout's locked Nix environment,
-so they work without system Git/Python packages after the first activation.
-Nix profiles and project shells can still provide development tools independently.
+`up` preserves source edits and does not pull Git commits. Receive source changes
+with `git -C ~/config pull --ff-only`, then run `up`. Restart Zsh or log out/in
+after the first activation so desktop launchers and session variables refresh.
+In another shell, source `~/.nix-profile/etc/profile.d/hm-session-vars.sh`.
 
-Existing files are backed up on first apply. Later applies preserve local edits
-and deletions; unrelated files remain untouched. Old Home Manager directory links
-are backed up and materialized as writable directories. Source files removed from
-the repo are not automatically deleted. VSCodium extensions and keybindings stay
-yours. Mason and Tree-sitter compilation start disabled; project tooling belongs
-in project environments or native packages.
-
-State and backups live under `$XDG_STATE_HOME/non-nixos-config/`, default
-`~/.local/state/non-nixos-config/`. Restore files by copying from a backup after
-closing the app. To reseed defaults, move aside `files.json` and apply again;
-current conflicts will be backed up. Launcher replacements are backed up too.
-
-The independent dotfiles flake is also available directly:
+Use `--repo-dir DIR` for a different checkout, `-- OWNER/REPO` for a fork, and
+`--ref BRANCH` only for a new clone. Select that branch in the initial `nix run`
+URL too when testing an unmerged branch. Existing branches are never reset.
+The independent entry point is:
 
 ```sh
 nix run 'github:OmarDardery/config?dir=non-nixos'
-nix run 'github:OmarDardery/config?dir=non-nixos' -- --update
 ```
 
-Use `-- --repo-dir ~/dotfiles` for another checkout, `-- OWNER/REPO` for a fork,
-and `--ref BRANCH` only for a new clone. Source URLs must identify the same branch
-as `--ref` when testing an unmerged launcher. The small flake is independent of the
-NixOS system and installs only its Git/Python launcher dependencies into the Nix store.
+Direct use after bootstrapping:
+
+```sh
+home-manager switch --flake "path:$HOME/config/non-nixos#$(id -un)"
+```
+
+`local-profile.json` records identity, architecture, checkout, XDG config/data/state
+paths, Zsh directory and initial state version. It stays out of Git. Keep
+`stateVersion` when updating; moving a checkout refreshes `configRepo` on apply.
+Invalid local profiles are rejected without replacement. Flake evaluation stays
+pure; `nix flake check --no-build` evaluates both supported home architectures.
+No shared development shells or global project
+language runtimes are added.
+
+## Migration, edits and recovery
+
+Home Manager owns configured files as store symlinks. Edit their sources in this
+repository and reapply. Conflicting files receive unique `.before-home-manager-*`
+backups. Earlier copier backups remain in `~/.local/state/non-nixos-config/backups`.
+Extra Neovim Lua files, VSCodium keybindings and `.zshrc.local` remain yours.
+LazyVim fetches plugins on first use; project language tools belong in project
+environments. Mason and Tree-sitter compilation start disabled.
+
+No GUI apps are started or restarted during activation. For Nix GUI driver
+integration, follow `targets.genericLinux.gpu` guidance printed by Home Manager.
+Proprietary NVIDIA library versions must match the distro driver.
+
+To roll back managed files/Nix packages, run an older generation's `activate`
+script shown by `home-manager generations`. Flatpaks update outside the Nix store;
+rolling back a Nix generation does not roll back Flatpak application versions.
+
+The layout follows [Misterio77's starter](https://github.com/Misterio77/nix-starter-configs/tree/main/minimal),
+[standalone configurations](https://github.com/GooseRooster/home-manager), and the
+[Home Manager manual](https://nix-community.github.io/home-manager/installation/standalone.html).

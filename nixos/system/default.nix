@@ -6,7 +6,12 @@
     ./networking.nix
     ./nix.nix
     ./performance.nix
-    ./features.nix
+    ./gaming.nix
+    ./engineering.nix
+    ./containers.nix
+    ./printing.nix
+    ./diagnostics.nix
+    ./tailscale.nix
     ./flatpak.nix
     ./desktop.nix
     ./greeter.nix

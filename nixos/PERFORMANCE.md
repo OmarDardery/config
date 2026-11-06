@@ -13,5 +13,6 @@ Nix builds are limited to two parallel jobs and four cores, with lower schedulin
 priority. Store cleanup uses NixOS's standard garbage-collection and optimisation
 jobs. There is no second package updater or desktop activation daemon.
 
-The existing kernel/NVIDIA pair and suspend policy remain in `hardware.nix`.
+The latest pinned-input kernel is selected in `system/performance.nix`.
+The ASUS NVIDIA driver and suspend policy remain in `hardware.nix`.
 Changes to drivers, display behavior and suspend/resume require physical testing.

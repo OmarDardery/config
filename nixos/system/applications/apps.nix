@@ -1,22 +1,28 @@
 { pkgs, inputs, ... }:
 {
-  environment.systemPackages = with pkgs; [
-    inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default
-    (callPackage ../../pkgs/zen-browser.nix { zenInput = inputs.zen-browser; })
-    discord
-    proton-vpn
-    libreoffice
-    hunspell
-    hunspellDicts.en_US
-    xournalpp
-    mpv
-    imv
-    gimp
-  ];
+  environment.systemPackages =
+    (import ../../../non-nixos/packages.nix { inherit pkgs; }).desktop
+    ++ (with pkgs; [
+      inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default
+      (callPackage ../../pkgs/zen-browser.nix { zenInput = inputs.zen-browser; })
+      discord
+      proton-vpn
+      imagemagick
+      gnome-disk-utility
+      seahorse
+      sshfs
+      glib
+    ]);
 
   environment.sessionVariables = {
     BROWSER = "zen";
     # GTK3 preserves output selection for Impress presentations over HDMI.
     SAL_USE_VCLPLUGIN = "gtk3";
   };
+  qt = {
+    enable = true;
+    platformTheme = "kde";
+    style = "breeze";
+  };
+  programs.ssh.askPassword = "${pkgs.seahorse}/libexec/seahorse/ssh-askpass";
 }

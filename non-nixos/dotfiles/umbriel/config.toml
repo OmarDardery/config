@@ -1,4 +1,4 @@
-# Native apps only. Install kitty, codium, Umbriel and Noctalia through your distro.
+# Home Manager supplies the apps. The distro owns the Umbriel/Noctalia session.
 [include.optional]
 files = ["noctalia.toml"]
 

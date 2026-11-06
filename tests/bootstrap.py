@@ -29,7 +29,7 @@ class Bootstrap(unittest.TestCase):
         self.home = self.root/'home with spaces'; self.home.mkdir()
         self.bin = self.root/'bin'; self.bin.mkdir()
         self.template = self.root/'template'; (self.template/'non-nixos').mkdir(parents=True)
-        (self.template/'flake.nix').touch(); (self.template/'non-nixos/apply.py').touch()
+        (self.template/'flake.nix').touch(); (self.template/'non-nixos/apply.sh').touch()
         self.marker = self.root/'NIXOS'
         self.source = (ROOT/'setup.sh').read_text().replace('/etc/NIXOS', str(self.marker))
         self.env = dict(os.environ, HOME=str(self.home), TEST_ROOT=str(self.root), PATH=f'{self.bin}:/usr/bin:/bin')
@@ -65,6 +65,29 @@ class Bootstrap(unittest.TestCase):
         self.assertEqual(len(calls), 1)
         self.assertEqual(calls[0][0], 'nix')
         self.assertEqual(calls[0][-2:], ['--hardware', 'generic'])
+
+
+class CheckIsolation(unittest.TestCase):
+    def test_check_runners_do_not_follow_local_profile_or_hardware_symlinks(self):
+        for runner in ['check-nixos.sh', 'check-native.sh']:
+            with self.subTest(runner=runner), tempfile.TemporaryDirectory() as tmp:
+                root = Path(tmp)
+                for directory in ['tests', 'nixos', 'non-nixos', 'scripts', '.github', 'bin']:
+                    (root/directory).mkdir()
+                for file in ['flake.nix', 'flake.lock', '.github/ci-hardware.nix']:
+                    (root/file).write_text('{}')
+                protected = root/'protected'; protected.write_text('keep my machine settings')
+                if runner == 'check-nixos.sh':
+                    (root/'nixos/hardware-configuration.nix').symlink_to(protected)
+                else:
+                    (root/'non-nixos/local-profile.json').symlink_to(protected)
+                shutil.copyfile(ROOT/'tests'/runner, root/'tests'/runner)
+                nix = root/'bin/nix'; nix.write_text('#!/bin/sh\nexit 77\n'); nix.chmod(0o755)
+                result = subprocess.run(['bash', str(root/'tests'/runner)],
+                    env=dict(os.environ, PATH=f'{root}/bin:/usr/bin:/bin'),
+                    capture_output=True, text=True)
+                self.assertEqual(result.returncode, 77, result.stdout+result.stderr)
+                self.assertEqual(protected.read_text(), 'keep my machine settings')
 
 
 if __name__ == '__main__': unittest.main(verbosity=2)

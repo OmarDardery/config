@@ -1,9 +1,7 @@
 {
   pkgs,
-  inputs,
   profile,
   lib,
-  isLaptop,
   ...
 }:
 {
@@ -28,19 +26,6 @@
   programs.zsh.enable = true;
   # Home Manager owns completion initialization.
   programs.zsh.enableGlobalCompInit = false;
-
-  home-manager = {
-    useGlobalPkgs = true;
-    useUserPackages = true;
-    extraSpecialArgs = {
-      inherit inputs profile;
-      inherit isLaptop;
-    };
-    backupFileExtension = "bak";
-    users.${profile.username}.imports = [
-      ../home
-    ];
-  };
 
   # Cairo timezone with English application formats.
   time.timeZone = "Africa/Cairo";

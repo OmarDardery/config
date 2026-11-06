@@ -1,11 +1,30 @@
 # Entry point. Identity is in profile.nix; machine details stay in hardware*.nix.
-{ lib, profile, ... }:
+{
+  lib,
+  inputs,
+  profile,
+  isLaptop,
+  ...
+}:
 {
   imports = [
     ./hardware-configuration.nix
     ./system
   ]
   ++ lib.optional (profile.hardwareProfile == "asus-tuf-a14") ./hardware.nix;
+
+  home-manager = {
+    useGlobalPkgs = true;
+    useUserPackages = true;
+    extraSpecialArgs = {
+      inherit inputs profile;
+      inherit isLaptop;
+    };
+    backupFileExtension = "bak";
+    users.${profile.username}.imports = [
+      ./home
+    ];
+  };
 
   # Complete desktop setup. Set individual bundles to false here to opt out.
   workstation = {

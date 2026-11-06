@@ -123,10 +123,11 @@ Kitty uses Ctrl+Shift, keeping terminal commands separate from desktop controls.
 | Ctrl+Shift+PageUp/PageDown | Previous-next tab |
 | Ctrl+Shift+W / Ctrl+Shift+Q | Close pane / tab |
 | Ctrl+Shift+F5 | Reload configuration |
-| Ctrl+Shift+F2 | Edit home/kitty.nix in a Neovim overlay |
+| Ctrl+Shift+F2 | Edit the shared kitty.conf in a Neovim overlay |
 
 Kitty's command palette exposes remaining built-in actions. Settings and
-shortcuts belong in `home/kitty.nix`; colours come from Noctalia's generated palette.
+shortcuts live in `../non-nixos/dotfiles/kitty/kitty.conf`, with NixOS integration
+in `home/kitty.nix`. Colours come from Noctalia's generated palette.
 
 ## Editors
 

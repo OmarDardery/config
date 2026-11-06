@@ -1,8 +1,7 @@
 # Native kernel scheduling and power profiles.
-{ pkgs, isLaptop, ... }:
+{ pkgs, ... }:
 {
-  # Keep the tested laptop driver/kernel policy; other hosts use the stable kernel.
-  boot.kernelPackages = if isLaptop then pkgs.linuxPackages_latest else pkgs.linuxPackages;
+  boot.kernelPackages = pkgs.linuxPackages_latest;
 
   services.power-profiles-daemon.enable = true;
   # Compressed RAM first; generated hardware config retains disk-swap fallback.
