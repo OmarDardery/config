@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - name: Exercise NixOS deployment and native dotfile preservation
+      - name: Exercise NixOS and standalone Home Manager bootstraps
         run: |
           python3 tests/bootstrap.py
           python3 tests/deploy.py
@@ -40,7 +40,11 @@ jobs:
           nix build "$flake" --no-link --no-write-lock-file
           nix build path:./non-nixos --no-link --no-write-lock-file
           nix run path:./non-nixos -- --help
+          nix eval --impure --json --expr 'import ./tests/native.nix { flake = builtins.getFlake ("path:" + toString ./non-nixos); }'
           nix flake check path:./non-nixos --all-systems --no-build --no-write-lock-file
+          native_home=$(nix build path:./non-nixos#homeConfigurations.oad.activationPackage --no-link --no-write-lock-file --print-out-paths)
+          HOME=$(mktemp -d) "$native_home/home-path/bin/nvim" --clean --headless '+quit'
+          HOME=$(mktemp -d) "$native_home/home-path/bin/codium" --version
           nix run "$flake" -- --help
           nix run "$flake#nixos-apply" -- --help
           nix flake check "$flake" --all-systems --no-build --no-write-lock-file

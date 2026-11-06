@@ -5,7 +5,7 @@ One setup command, two scopes:
 | System | Managed here |
 | --- | --- |
 | NixOS, x86_64 | Full desktop, apps, services, hardware integration and Home Manager |
-| Other Linux distros | LazyVim, VSCodium, Umbriel, Noctalia, Kitty, Starship and Zsh dotfiles only |
+| Other Linux distros | Standalone Home Manager: VSCodium/Neovim packages and desktop/shell dotfiles |
 
 ## Install
 
@@ -23,20 +23,17 @@ not modify `/etc/nixos`. It supports the normal installed GRUB and systemd-boot
 layouts; custom bootloader modules may need manual configuration.
 
 The same command detects the operating system. No clone, separate Home Manager
-installation, native Git or native Python installation is required beforehand.
+installation or native Git installation is required beforehand.
 Once flakes are enabled, the command shortens to `nix run github:OmarDardery/config`.
 
-**Other distros:** Nix supplies the small Git/Python activation environment.
-Only dotfiles are applied; desktop applications remain installed through your
-distro's package manager. Your Nix profiles and project development environments
-remain available for development tools. The installer does not enable services,
-change your login shell or select a desktop session. Select your distro's Umbriel
-session to use the desktop. See [native requirements and files](non-nixos/README.md).
+**Other distros:** standalone Home Manager installs VSCodium, Neovim and their
+helper tools, and manages desktop/shell dotfiles. Umbriel, Noctalia, Kitty,
+Starship and Zsh remain native distro packages. No system services or login-shell
+changes are made. See [standalone setup and migration](non-nixos/README.md).
 
-Existing file conflicts are backed up. On non-NixOS, subsequent applies preserve
-local edits and deletions. NixOS preferences are managed directly by Home Manager;
-edit their source and rebuild. LazyVim downloads its plugins on first launch;
-project tools belong in each project's `shell.nix` or native environment.
+Home Manager owns configured preferences on both paths. Existing file conflicts
+are backed up; edit sources in the repository and apply again. LazyVim downloads
+plugins on first launch. Project tools belong in each project's environment.
 
 ## Apply and update
 
@@ -44,28 +41,28 @@ After restarting Zsh:
 
 | Command | NixOS | Other Linux |
 | --- | --- | --- |
-| `up` | Refresh flake inputs, then rebuild | Fast-forward the checkout, then apply dotfiles |
-| `config-apply` / `rebuild` | Apply local config | Apply local dotfiles |
+| `up` | Refresh flake inputs, then rebuild | Refresh flake inputs, then apply Home Manager |
+| `config-apply` / `rebuild` | Apply local config | Apply local Home Manager config |
 | `nupdate` | Refresh only the flake lock | — |
 | `nbuild` | Build without activating | — |
 | `cnf` / `cconf` | Edit / enter the checkout | — |
 
-The commands also work outside Zsh. Native launchers live in `~/.local/bin`; use
-the full path if your current shell has not added it to `PATH` yet.
+The `config-apply` command also works outside Zsh. Home Manager installs it in
+your Nix profile; reload the Nix environment if it is not yet on `PATH`.
 
 NixOS `up` runs `nix flake update` against the local checkout and keeps your
 source edits. It does not pull Git commits. To receive repository changes, run
 `git -C ~/config pull --ff-only`, then `up`. Review and commit changed lockfiles.
 An input with an explicit commit/tag stays pinned until its URL is changed.
-Native `up` refuses tracked source edits or a diverged checkout; it does not
-update native packages. The launchers use Nix for their Git/Python runtime. Use your distro's normal package updater.
+Non-NixOS `up` also updates its local lockfile without pulling Git commits.
+Use your distro's updater for native packages.
 
 ## Hardware and optional features
 
 NixOS uses Ly with its built-in Matrix animation for login, then starts Umbriel.
-The non-NixOS path configures only user dotfiles; use your distro to manage Ly.
+The non-NixOS path uses standalone Home Manager; use your distro to manage Ly.
 
-All machines use the latest kernel available in the pinned Nixpkgs input.
+All NixOS machines use the latest kernel available in the pinned Nixpkgs input.
 Generic machines use their generated hardware settings.
 The ASUS TUF A14 (FA401) is detected automatically and uses the existing tested
 NVIDIA/PRIME and display policy. Override detection with `--hardware
@@ -97,7 +94,7 @@ From a checkout, `bash setup.sh` selects the appropriate installer. Examples:
 bash setup.sh YOURNAME/config --repo-dir ~/dotfiles
 # NixOS: inspect a full build without switching
 bash setup.sh --build-only
-# Native Linux: apply without pulling
+# Other Linux: apply standalone Home Manager
 nix run "path:$HOME/config/non-nixos" -- --repo-dir "$HOME/config"
 ```
 
@@ -114,8 +111,8 @@ sudo nixos-rebuild switch --flake "path:$HOME/config#nixos"
 sudo nixos-rebuild switch --rollback
 ```
 
-Home Manager backs up initial conflicts with `.bak`; move an existing `.bak`
-aside before retrying a conflict. NixOS's normal activation uses systemd.
+On NixOS, Home Manager backs up initial conflicts with `.bak`; move an existing
+`.bak` aside before retrying a conflict. Standalone activation uses unique backup suffixes. NixOS's normal activation uses systemd.
 
 [NixOS notes](nixos/README.md) · [Manual Nix apps](nixos/APPS.md) ·
 [Shortcuts](nixos/SHORTCUTS.md) · [Theming](nixos/THEMING.md)

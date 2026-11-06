@@ -4,6 +4,8 @@ if [[ -r /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh ]]; then
 elif [[ -r $HOME/.nix-profile/etc/profile.d/nix.sh ]]; then
   source "$HOME/.nix-profile/etc/profile.d/nix.sh"
 fi
+# Load Home Manager environment variables, including native Linux integration.
+[[ ! -r $HOME/.nix-profile/etc/profile.d/hm-session-vars.sh ]] || source "$HOME/.nix-profile/etc/profile.d/hm-session-vars.sh"
 # Desktop programs use native packages; every integration below is optional.
 typeset -U path
 path=("$HOME/.local/bin" $path)

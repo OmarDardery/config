@@ -25,7 +25,7 @@ Repository accepts OWNER/REPO, github:OWNER/REPO, or an HTTPS GitHub URL.
 Existing checkouts keep your source edits; pull source changes with Git.
 up updates the checkout's flake.lock and applies the result.
 Generated identity, bootloader, state versions and hardware stay local.
-Other distros: the root nix run command automatically applies native dotfiles.
+Other distros: the root nix run command automatically applies standalone Home Manager.
 HELP
 }
 while (($#)); do

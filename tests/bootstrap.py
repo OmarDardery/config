@@ -29,7 +29,7 @@ class Bootstrap(unittest.TestCase):
         self.home = self.root/'home with spaces'; self.home.mkdir()
         self.bin = self.root/'bin'; self.bin.mkdir()
         self.template = self.root/'template'; (self.template/'non-nixos').mkdir(parents=True)
-        (self.template/'flake.nix').touch(); (self.template/'non-nixos/apply.py').touch()
+        (self.template/'flake.nix').touch(); (self.template/'non-nixos/apply.sh').touch()
         self.marker = self.root/'NIXOS'
         self.source = (ROOT/'setup.sh').read_text().replace('/etc/NIXOS', str(self.marker))
         self.env = dict(os.environ, HOME=str(self.home), TEST_ROOT=str(self.root), PATH=f'{self.bin}:/usr/bin:/bin')

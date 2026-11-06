@@ -1,39 +1,53 @@
 {
-  description = "Dotfiles only for native Linux apps; independent of the NixOS configuration";
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+  description = "Standalone Home Manager for Linux: editors and desktop dotfiles";
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    home-manager = {
+      url = "github:nix-community/home-manager/release-26.05";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
   outputs =
-    { nixpkgs, ... }:
+    { nixpkgs, home-manager, ... }:
     let
-      systems = [
+      profile = import ./profile.nix;
+      forSystems = nixpkgs.lib.genAttrs [
         "x86_64-linux"
         "aarch64-linux"
       ];
-      forSystems = nixpkgs.lib.genAttrs systems;
-      packages = forSystems (
-        system:
-        let
-          pkgs = nixpkgs.legacyPackages.${system};
-          apply = pkgs.writeShellApplication {
-            name = "dotfiles-apply";
+      packages = forSystems (system: {
+        default =
+          let
+            pkgs = nixpkgs.legacyPackages.${system};
+          in
+          pkgs.writeShellApplication {
+            name = "home-apply";
             runtimeInputs = [
               pkgs.gitMinimal
-              pkgs.python3
+              pkgs.coreutils
+              pkgs.util-linux
+              pkgs.jq
+              home-manager.packages.${system}.home-manager
             ];
-            text = ''exec python3 ${./apply.py} "$@"'';
+            text = builtins.readFile ./apply.sh;
           };
-        in
-        {
-          default = apply;
-        }
-      );
+      });
     in
     {
       inherit packages;
+      homeConfigurations.${profile.username} = home-manager.lib.homeManagerConfiguration {
+        pkgs = import nixpkgs {
+          inherit (profile) system;
+          config.allowUnfree = true;
+        };
+        extraSpecialArgs = { inherit profile; };
+        modules = [ ./home ];
+      };
       apps = forSystems (system: {
         default = {
           type = "app";
-          program = "${packages.${system}.default}/bin/dotfiles-apply";
-          meta.description = "Apply desktop and shell dotfiles";
+          program = "${packages.${system}.default}/bin/home-apply";
+          meta.description = "Apply standalone Home Manager editors and dotfiles";
         };
       });
     };

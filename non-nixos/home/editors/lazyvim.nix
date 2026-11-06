@@ -1,4 +1,4 @@
-# The native and NixOS editors share one starter; Nix tools stay NixOS-only.
+# Shared editor packages and configuration for NixOS and standalone Home Manager.
 { pkgs, ... }:
 {
   programs.neovim = {
@@ -17,9 +17,9 @@
     pkgs.nixfmt
   ];
   xdg.configFile = {
-    "nvim/init.lua".source = ../../../non-nixos/dotfiles/nvim/init.lua;
-    "nvim/lua/config/options.lua".source = ../../../non-nixos/dotfiles/nvim/lua/config/options.lua;
-    "nvim/lua/plugins/tools.lua".source = ../../../non-nixos/dotfiles/nvim/lua/plugins/tools.lua;
+    "nvim/init.lua".source = ../../dotfiles/nvim/init.lua;
+    "nvim/lua/config/options.lua".source = ../../dotfiles/nvim/lua/config/options.lua;
+    "nvim/lua/plugins/tools.lua".source = ../../dotfiles/nvim/lua/plugins/tools.lua;
     "nvim/lua/plugins/nix.lua".text = ''
       return {
         { "neovim/nvim-lspconfig", opts = { servers = { nixd = { cmd = { "nixd" } } } } },

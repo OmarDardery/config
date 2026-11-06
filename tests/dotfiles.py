@@ -1,211 +1,144 @@
 #!/usr/bin/env python3
-"""Exercise the native dotfile installer against disposable homes and Git stubs."""
-import contextlib
-import importlib.util
-import io
+"""Exercise standalone Home Manager bootstrap without changing the live home."""
 import json
 import os
 from pathlib import Path
 import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
-from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location("dotfiles", ROOT / "non-nixos/apply.py")
-dotfiles = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(dotfiles)
+MOCK = r'''
+import json, os, pathlib, shutil, sys
+name = pathlib.Path(sys.argv[0]).name
+args = sys.argv[1:]
+root = pathlib.Path(os.environ['TEST_ROOT'])
+with (root/'events').open('a') as stream: stream.write(json.dumps([name, *args])+'\n')
+if name == 'id': print(os.environ.get('TEST_UID','1000') if args == ['-u'] else 'tester')
+elif name == 'uname': print(os.environ.get('TEST_ARCH','x86_64'))
+elif name == 'git':
+    if args[0] == 'clone': shutil.copytree(root/'template', args[-1])
+    elif 'get-url' in args: print(os.environ.get('TEST_ORIGIN','https://github.com/OmarDardery/config.git'))
+elif name == 'nix' and 'update' in args and os.environ.get('TEST_UPDATE_FAIL'): sys.exit(43)
+elif name == 'home-manager' and os.environ.get('TEST_SWITCH_FAIL'): sys.exit(44)
+'''
 
 
-class Dotfiles(unittest.TestCase):
+class StandaloneHome(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
-        self.config = self.root / "home with spaces/config"
-        self.home = self.root / "home with spaces"
-        self.state = self.root / "state"
-        self.state.mkdir()
-        self.source = self.root / "source"
-        shutil.copytree(ROOT / "non-nixos/dotfiles", self.source)
+        self.home = self.root/'home with spaces'; self.home.mkdir()
+        self.bin = self.root/'bin'; self.bin.mkdir()
+        self.template = self.root/'template'
+        (self.template/'.git').mkdir(parents=True)
+        shutil.copytree(ROOT/'non-nixos', self.template/'non-nixos',
+                        ignore=shutil.ignore_patterns('local-profile.json'))
+        self.marker = self.root/'NIXOS'
+        self.script = self.root/'apply.sh'
+        self.script.write_text((ROOT/'non-nixos/apply.sh').read_text().replace('/etc/NIXOS', str(self.marker)))
+        self.env = dict(os.environ, HOME=str(self.home), TEST_ROOT=str(self.root),
+                        PATH=f'{self.bin}:/usr/bin:/bin', XDG_STATE_HOME=str(self.root/'state'),
+                        XDG_CONFIG_HOME=str(self.home/'custom config'), ZDOTDIR=str(self.home/'shell'))
+        for name in ['id','uname','git','nix','home-manager']:
+            path = self.bin/name; path.write_text(f'#!{sys.executable}\n'+MOCK); path.chmod(0o755)
+        self.repo = self.home/'config'
 
-    def apply(self):
-        with contextlib.redirect_stdout(io.StringIO()) as output:
-            dotfiles.install(self.source, self.config, self.state, self.home)
-        return output.getvalue()
+    def apply(self, *args, success=True):
+        result = subprocess.run(['bash', str(self.script), *args], env=self.env, capture_output=True, text=True)
+        if success: self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
+        else: self.assertNotEqual(result.returncode, 0)
+        return result
 
-    def test_exact_scope_and_writable_copies(self):
+    def events(self, name):
+        p = self.root/'events'
+        return [entry for line in p.read_text().splitlines() if (entry := json.loads(line))[0] == name] if p.exists() else []
+
+    def test_switch_uses_standard_home_manager_and_unique_backups(self):
         self.apply()
-        expected = {p.relative_to(self.source) for p in self.source.rglob("*") if p.is_file() and p.relative_to(self.source) != Path("zsh/.zshrc")}
-        actual = {p.relative_to(self.config) for p in self.config.rglob("*") if p.is_file()}
-        self.assertEqual(expected, actual)
-        self.assertEqual({p.parts[0] for p in actual}, {"nvim", "VSCodium", "umbriel", "noctalia", "kitty", "starship.toml"})
-        self.assertEqual((self.home / ".zshrc").read_text(), (self.source / "zsh/.zshrc").read_text())
-        self.assertFalse(any(p.is_symlink() for p in self.config.rglob("*")))
-        self.assertFalse((self.root / "home with spaces/.bashrc").exists())
+        command = self.events('home-manager')[0]
+        self.assertEqual(command[1], 'switch')
+        self.assertIn(f'path:{self.repo}/non-nixos#tester', command)
+        self.assertIn('--no-write-lock-file', command)
+        self.assertTrue(command[command.index('-b')+1].startswith('before-home-manager-'))
+        profile = json.loads((self.repo/'non-nixos/local-profile.json').read_text())
+        self.assertEqual(profile['homeDirectory'], str(self.home))
+        self.assertEqual(profile['configHome'], self.env['XDG_CONFIG_HOME'])
+        self.assertEqual(profile['zshHome'], self.env['ZDOTDIR'])
+        self.assertEqual(profile['system'], 'x86_64-linux')
+        self.assertFalse((self.home/'custom config').exists())  # activation belongs to HM
 
-    def test_initial_conflicts_backed_up_and_unrelated_settings_preserved(self):
-        user = self.config / "VSCodium/User"
-        user.mkdir(parents=True)
-        (user / "settings.json").write_text("previous settings")
-        (user / "keybindings.json").write_text("my keybindings")
+    def test_reapply_preserves_identity_state_version_and_source_edits(self):
         self.apply()
-        backups = list((self.state / "backups").rglob("settings.json"))
-        self.assertEqual(len(backups), 1)
-        self.assertEqual(backups[0].read_text(), "previous settings")
-        self.assertEqual((user / "keybindings.json").read_text(), "my keybindings")
+        path = self.repo/'non-nixos/local-profile.json'
+        profile = json.loads(path.read_text()); profile['stateVersion'] = '25.11'
+        path.write_text(json.dumps(profile))
+        source = self.repo/'non-nixos/home/default.nix'; source.write_text('# local edit')
+        self.apply('--update')
+        self.assertEqual(json.loads(path.read_text())['stateVersion'], '25.11')
+        self.assertEqual(source.read_text(), '# local edit')
+        self.assertFalse(any('pull' in call for call in self.events('git')))
+        self.assertIn('update', self.events('nix')[0])
 
-    def test_repeated_apply_no_changes_or_backups(self):
+    def test_build_only_does_not_activate(self):
+        self.apply('--build-only')
+        self.assertFalse(self.events('home-manager'))
+        self.assertIn('build', self.events('nix')[0])
+        self.assertIn(f'path:{self.repo}/non-nixos#homeConfigurations.tester.activationPackage', self.events('nix')[0])
+
+    def test_failed_update_and_activation_propagate(self):
+        self.env['TEST_UPDATE_FAIL'] = '1'
+        self.apply('--update', success=False)
+        self.assertFalse(self.events('home-manager'))
+        del self.env['TEST_UPDATE_FAIL']
+        self.env['TEST_SWITCH_FAIL'] = '1'
+        self.apply(success=False)
+
+    def test_origin_mismatch_existing_ref_and_invalid_arguments_stop(self):
         self.apply()
-        before = (self.config / "nvim/init.lua").stat().st_mtime_ns
+        self.apply('someone/else', success=False)
+        self.apply('--ref','another-branch', success=False)
+        self.apply('--repo-dir', success=False)
+        self.apply('--unknown', success=False)
+        self.assertEqual(len(self.events('home-manager')), 1)
+
+    def test_fork_ref_and_aarch64(self):
+        self.env['TEST_ARCH'] = 'aarch64'
+        self.apply('someone/config', '--ref','feature/native')
+        self.assertIn('https://github.com/someone/config.git', self.events('git')[0])
+        self.assertIn('checkout', self.events('git')[1])
+        profile = json.loads((self.repo/'non-nixos/local-profile.json').read_text())
+        self.assertEqual(profile['system'], 'aarch64-linux')
+
+    def test_mismatched_identity_is_rejected(self):
         self.apply()
-        self.assertEqual((self.config / "nvim/init.lua").stat().st_mtime_ns, before)
-        self.assertFalse((self.state / "backups").exists())
+        path = self.repo/'non-nixos/local-profile.json'
+        profile = json.loads(path.read_text()); profile['homeDirectory'] = '/home/someone-else'
+        path.write_text(json.dumps(profile))
+        self.apply(success=False)
+        self.assertEqual(len(self.events('home-manager')), 1)
 
-    def test_updates_unedited_files_preserves_edits_and_deletions(self):
-        self.apply()
-        (self.config / "nvim/init.lua").write_text("-- my starter\n")
-        (self.config / "VSCodium/User/settings.json").unlink()
-        (self.source / "umbriel/config.toml").write_text("# updated source\n")
-        result = self.apply()
-        self.assertEqual((self.config / "nvim/init.lua").read_text(), "-- my starter\n")
-        self.assertFalse((self.config / "VSCodium/User/settings.json").exists())
-        self.assertEqual((self.config / "umbriel/config.toml").read_text(), "# updated source\n")
-        self.assertIn("Keep local edit", result)
-        self.assertIn("Keep local deletion", result)
+    def test_root_nixos_unsupported_arch_and_relative_xdg_rejected(self):
+        self.env['TEST_UID'] = '0'; self.apply(success=False)
+        self.env['TEST_UID'] = '1000'; self.marker.touch(); self.apply(success=False)
+        self.marker.unlink(); self.env['TEST_ARCH'] = 'riscv64'; self.apply(success=False)
+        self.env['TEST_ARCH'] = 'x86_64'; self.env['XDG_CONFIG_HOME'] = 'relative'; self.apply(success=False)
+        self.assertFalse(self.events('home-manager'))
 
-    def test_old_home_manager_directory_and_file_links_materialized(self):
-        store = self.root / "store"
-        (store / "nvim/lua").mkdir(parents=True)
-        (store / "nvim/init.lua").write_text("old init")
-        (store / "nvim/lua/personal.lua").write_text("personal")
-        (store / "codium.json").write_text("old codium")
-        self.config.mkdir(parents=True)
-        (self.config / "nvim").symlink_to(store / "nvim", target_is_directory=True)
-        (self.config / "VSCodium/User").mkdir(parents=True)
-        (self.config / "VSCodium/User/settings.json").symlink_to(store / "codium.json")
-        self.apply()
-        self.assertFalse((self.config / "nvim").is_symlink())
-        self.assertFalse((self.config / "VSCodium/User/settings.json").is_symlink())
-        self.assertEqual((self.config / "nvim/lua/personal.lua").read_text(), "personal")
-        self.assertEqual((store / "nvim/init.lua").read_text(), "old init")
-        self.assertEqual((store / "codium.json").read_text(), "old codium")
+    def test_help_needs_no_nix_or_home_manager(self):
+        self.env['TEST_UID'] = '0'
+        self.assertIn('Home Manager', self.apply('--help').stdout)
+        self.assertFalse(self.events('home-manager'))
 
-    def test_different_xdg_roots_are_independent(self):
-        self.apply()
-        self.config = self.root / "other xdg config"
-        self.apply()
-        self.assertTrue((self.config / "nvim/init.lua").is_file())
-
-    def test_bad_source_rejected_before_dotfile_writes(self):
-        (self.source / "unrequested").mkdir()
-        (self.source / "unrequested/extra").write_text("bad")
-        with self.assertRaises(ValueError): self.apply()
-        self.assertFalse(self.config.exists())
-
-    def run_main(self, *arguments, dirty=False, fail_pull=False):
-        repo = self.root / "checkout"
-        repo.mkdir(exist_ok=True)
-        if not (repo / "non-nixos").exists():
-            (repo / "non-nixos").mkdir()
-            shutil.copytree(self.source, repo / "non-nixos/dotfiles")
-        calls = []
-
-        def git(directory, *args):
-            calls.append(args)
-            if args[0] == "remote": return "https://github.com/OmarDardery/config.git"
-            if args[0] == "status": return " M non-nixos/dotfiles/nvim/init.lua" if dirty else ""
-            if args[0] == "pull" and fail_pull: raise OSError("offline")
-            return ""
-
-        with patch.object(dotfiles.os, "getuid", return_value=1000), \
-             patch.object(dotfiles.Path, "home", return_value=self.home), \
-             patch.object(dotfiles, "git", side_effect=git), \
-             patch.dict(os.environ, HOME=str(self.home), ZDOTDIR=str(self.home), XDG_CONFIG_HOME=str(self.config), XDG_STATE_HOME=str(self.state)), \
-             patch.object(dotfiles.sys, "argv", ["dotfiles-apply", "--repo-dir", str(repo), *arguments]), \
-             contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
-            dotfiles.main()
-        return calls
-
-    def test_apply_never_pulls_or_invokes_an_app_manager(self):
-        self.assertEqual(self.run_main(), [("remote", "get-url", "origin")])
-
-    def test_update_fast_forwards_then_installs(self):
-        self.assertIn(("pull", "--ff-only"), self.run_main("--update"))
-        self.assertTrue((self.config / "noctalia/config.toml").exists())
-
-    def test_dirty_or_failed_pull_stops_before_config_changes(self):
-        with self.assertRaises(SystemExit): self.run_main("--update", dirty=True)
-        self.assertFalse(self.config.exists())
-        with self.assertRaises(OSError): self.run_main("--update", fail_pull=True)
-        self.assertFalse(self.config.exists())
-
-    def test_origin_mismatch_rejected(self):
-        with self.assertRaises(SystemExit): self.run_main("someone/else")
-        self.assertFalse(self.config.exists())
-
-    def test_shell_conflicts_and_edits_are_preserved(self):
-        self.home.mkdir(parents=True)
-        zsh = self.home / ".zshrc"
-        zsh.write_text("# old shell")
-        self.apply()
-        backups = list((self.state / "backups").rglob(".zshrc"))
-        self.assertEqual(backups[0].read_text(), "# old shell")
-        zsh.write_text("# local changes")
-        self.apply()
-        self.assertEqual(zsh.read_text(), "# local changes")
-
-    def test_commands_bind_checkout_with_spaces(self):
-        import subprocess
-        from unittest.mock import patch
-        self.run_main()
-        launcher = self.home / ".local/bin/config-apply"
-        self.assertTrue(launcher.stat().st_mode & 0o111)
-        subprocess.run(["bash", "-n", str(launcher)], check=True)
-        self.assertFalse((self.home / ".local/bin/config-update").exists())
-        self.assertIn("--repo-dir", launcher.read_text())
-        self.assertNotIn("python3", launcher.read_text())
-        self.assertIn("nix-command flakes", launcher.read_text())
-        self.assertIn("path:", launcher.read_text())
-        # Exercise the generated launcher with no Git/Python commands on PATH.
-        bindir = self.root / "only-nix"
-        bindir.mkdir()
-        nix = bindir / "nix"
-        nix.write_text("#!/bin/sh\nprintf '%s\\n' \"$@\"\n")
-        nix.chmod(0o755)
-        result = subprocess.run(["/bin/bash", str(launcher), "--update"], env={"PATH": str(bindir)}, text=True, capture_output=True, check=True)
-        self.assertIn("run", result.stdout)
-        self.assertIn("--update", result.stdout)
-        self.assertIn(str(self.root / "checkout/non-nixos"), result.stdout)
-
-    def test_up_updates_without_separate_update_alias(self):
-        shell = (self.source / "zsh/.zshrc").read_text()
-        self.assertIn("alias up='config-apply --update'", shell)
-        self.assertNotIn("alias update=", shell)
-
-    def test_retire_only_generated_update_command(self):
-        import shlex
-        self.run_main()
-        repo = self.root / "checkout"
-        retired = self.home / ".local/bin/config-update"
-        old = "#!/usr/bin/env bash\nset -euo pipefail\nexec " + shlex.join([
-            "nix", "--extra-experimental-features", "nix-command flakes", "run",
-            "--no-write-lock-file", f"path:{repo / 'non-nixos'}", "--", "--repo-dir", str(repo), "--update"
-        ]) + ' "$@"\n'
-        retired.write_text(old)
-        self.run_main()
-        self.assertFalse(retired.exists())
-        self.assertEqual(next((self.state / "non-nixos-config/backups").rglob("config-update")).read_text(), old)
-        retired.write_text("# personal updater\n")
-        self.run_main()
-        self.assertEqual(retired.read_text(), "# personal updater\n")
-
-    def test_configs_are_valid_json_and_toml(self):
-        import tomllib
-        json.loads((self.source / "VSCodium/User/settings.json").read_text())
-        for file in self.source.rglob("*.toml"):
-            tomllib.loads(file.read_text())
+    def test_lock_blocks_second_apply(self):
+        import fcntl
+        state = Path(self.env['XDG_STATE_HOME'])/'non-nixos-config'; state.mkdir(parents=True)
+        with (state/'apply.lock').open('w') as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            self.assertIn('another home apply', self.apply(success=False).stderr)
 
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+if __name__ == '__main__': unittest.main(verbosity=2)

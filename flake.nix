@@ -1,5 +1,5 @@
 {
-  description = "NixOS desktop and native Linux dotfiles";
+  description = "NixOS desktop and standalone Linux home configuration";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     nix-flatpak.url = "github:gmodena/nix-flatpak";
@@ -78,7 +78,7 @@
         default = {
           type = "app";
           program = "${packages.${system}.default}/bin/config-apply";
-          meta.description = "Apply the NixOS desktop or native Linux dotfiles";
+          meta.description = "Apply the NixOS desktop or standalone Linux home configuration";
         };
       });
       formatter = forSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-tree);
