@@ -5,14 +5,18 @@
   ...
 }:
 {
-  imports = [ ./editors ];
+  imports = [
+    ./editors
+    ./desktop.nix
+    ./flatpak.nix
+  ];
   home = {
     inherit (profile) username homeDirectory stateVersion;
     sessionPath = [ "${profile.homeDirectory}/.local/bin" ];
   };
   xdg = {
     enable = true;
-    inherit (profile) configHome stateHome;
+    inherit (profile) configHome stateHome dataHome;
     configFile = {
       "umbriel/config.toml".source = ../dotfiles/umbriel/config.toml;
       "noctalia/config.toml".source = ../dotfiles/noctalia/config.toml;

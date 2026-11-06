@@ -12,6 +12,7 @@ rec {
   system = local.system or "x86_64-linux";
   configRepo = local.configRepo or "${homeDirectory}/config";
   stateVersion = local.stateVersion or "26.05";
+  dataHome = local.dataHome or "${homeDirectory}/.local/share";
   configHome = local.configHome or "${homeDirectory}/.config";
   stateHome = local.stateHome or "${homeDirectory}/.local/state";
   zshHome = local.zshHome or homeDirectory;

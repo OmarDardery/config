@@ -12,13 +12,13 @@ die() { printf 'Error: %s\n' "$*" >&2; exit 1; }
 usage() {
   cat <<'HELP'
 Usage: nix run github:OmarDardery/config -- [OWNER/REPO] [OPTIONS]
-Install Neovim/VSCodium and apply desktop dotfiles with standalone Home Manager.
+Install the desktop essentials and apply standalone Home Manager.
   --repo-dir DIR  Checkout location (default: ~/config)
   --ref REF       Branch, tag or commit for a NEW checkout
   --update        Refresh the non-NixOS flake inputs before applying
   --build-only    Build the home generation without activating
   -h, --help      Show help
-Run as your normal user on non-NixOS Linux. Native desktop apps stay native.
+Run as your normal user on non-NixOS Linux. Missing native Flatpak needs sudo.
 Existing checkouts keep source edits; pull repository changes with Git.
 HELP
 }
@@ -48,10 +48,11 @@ repository=${repository%/}; repository=${repository%.git}
 [[ "$repository" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]] || die 'expected a GitHub OWNER/REPO'
 repo_dir=$(realpath -m -- "$repo_dir")
 [[ "$repo_dir" != *[\?#]* ]] || die 'checkout path cannot contain ? or #'
+data_home="${XDG_DATA_HOME:-$HOME/.local/share}"
 state_home="${XDG_STATE_HOME:-$HOME/.local/state}"
 config_home="${XDG_CONFIG_HOME:-$HOME/.config}"
 zsh_home="${ZDOTDIR:-$HOME}"
-for directory in "$HOME" "$state_home" "$config_home" "$zsh_home"; do
+for directory in "$HOME" "$data_home" "$state_home" "$config_home" "$zsh_home"; do
   [[ "$directory" == /* ]] || die 'HOME, XDG and ZDOTDIR paths must be absolute'
 done
 mkdir -p -- "$state_home/non-nixos-config"
@@ -75,11 +76,15 @@ if [[ ! -e "$profile" ]]; then
   trap 'rm -f -- "$temporary"' EXIT
   jq -n --arg username "$(id -un)" --arg homeDirectory "$HOME" \
     --arg system "$system" --arg configRepo "$repo_dir" \
-    --arg configHome "$config_home" --arg stateHome "$state_home" --arg zshHome "$zsh_home" \
+    --arg dataHome "$data_home" --arg configHome "$config_home" --arg stateHome "$state_home" --arg zshHome "$zsh_home" \
     '{username:$username,homeDirectory:$homeDirectory,system:$system,configRepo:$configRepo,
-      configHome:$configHome,stateHome:$stateHome,zshHome:$zshHome,stateVersion:"26.05"}' > "$temporary"
+      dataHome:$dataHome,configHome:$configHome,stateHome:$stateHome,zshHome:$zshHome,stateVersion:"26.05"}' > "$temporary"
   mv -T -- "$temporary" "$profile"
 fi
+temporary=$(mktemp "$repo_dir/non-nixos/.local-profile.XXXXXXXX")
+trap 'rm -f -- "$temporary"' EXIT
+jq --arg repo "$repo_dir" '.configRepo = $repo' "$profile" > "$temporary"
+mv -T -- "$temporary" "$profile"
 username=$(jq -er '.username' "$profile")
 jq -e --arg username "$(id -un)" --arg home "$HOME" --arg system "$system" \
   '.username == $username and .homeDirectory == $home and .system == $system' "$profile" >/dev/null \
@@ -89,6 +94,11 @@ if [[ "$update_inputs" == true ]]; then nix "${nixflags[@]}" flake update --flak
 if [[ "$build_only" == true ]]; then
   nix "${nixflags[@]}" build --no-write-lock-file --no-link "$flake#homeConfigurations.$username.activationPackage"
 else
+  flatpak_enabled=$(nix "${nixflags[@]}" eval --json --no-write-lock-file "$flake#homeConfigurations.$username.config.desktop.flatpak.enable")
+  flatpak_count=$(nix "${nixflags[@]}" eval --json --no-write-lock-file "$flake#homeConfigurations.$username.config.desktop.flatpak.packages" | jq length)
+  if [[ "$flatpak_enabled" == true && "$flatpak_count" != 0 ]]; then
+    bash "$repo_dir/non-nixos/host-deps.sh"
+  fi
   home-manager switch --flake "$flake#$username" --no-write-lock-file \
     --extra-experimental-features 'nix-command flakes' -b "before-home-manager-$(date +%s%N)"
 fi

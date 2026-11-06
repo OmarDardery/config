@@ -5,7 +5,7 @@ One setup command, two scopes:
 | System | Managed here |
 | --- | --- |
 | NixOS, x86_64 | Full desktop, apps, services, hardware integration and Home Manager |
-| Other Linux distros | Standalone Home Manager: VSCodium/Neovim packages and desktop/shell dotfiles |
+| Other Linux distros | Standalone Home Manager: desktop essentials, editors, fonts, user Flatpaks and dotfiles |
 
 ## Install
 
@@ -26,10 +26,13 @@ The same command detects the operating system. No clone, separate Home Manager
 installation or native Git installation is required beforehand.
 Once flakes are enabled, the command shortens to `nix run github:OmarDardery/config`.
 
-**Other distros:** standalone Home Manager installs VSCodium, Neovim and their
-helper tools, and manages desktop/shell dotfiles. Umbriel, Noctalia, Kitty,
-Starship and Zsh remain native distro packages. No system services or login-shell
-changes are made. See [standalone setup and migration](non-nixos/README.md).
+**Other distros:** standalone Home Manager installs Firefox, the editors,
+LibreOffice, Xournal++, file/media/password tools, Kitty/Zsh/Starship and fonts.
+On x86_64 it also installs Steam, ProtonPlus, OrcaSlicer and Discord as user
+Flatpaks. Missing native Flatpak/portal support is installed through the distro
+package manager with sudo; build-only mode skips host changes. The distro keeps
+its desktop session, drivers and login shell selection. See
+[standalone setup and migration](non-nixos/README.md).
 
 Home Manager owns configured preferences on both paths. Existing file conflicts
 are backed up; edit sources in the repository and apply again. LazyVim downloads

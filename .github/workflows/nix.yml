@@ -21,6 +21,7 @@ jobs:
           python3 tests/bootstrap.py
           python3 tests/deploy.py
           python3 tests/dotfiles.py
+          python3 tests/native_install.py
       - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31
         with:
           extra_nix_config: |
@@ -38,13 +39,6 @@ jobs:
           cp .github/ci-hardware.nix "$work/nixos/hardware-configuration.nix"
           flake="path:$work"
           nix build "$flake" --no-link --no-write-lock-file
-          nix build path:./non-nixos --no-link --no-write-lock-file
-          nix run path:./non-nixos -- --help
-          nix eval --impure --json --expr 'import ./tests/native.nix { flake = builtins.getFlake ("path:" + toString ./non-nixos); }'
-          nix flake check path:./non-nixos --all-systems --no-build --no-write-lock-file
-          native_home=$(nix build path:./non-nixos#homeConfigurations.oad.activationPackage --no-link --no-write-lock-file --print-out-paths)
-          HOME=$(mktemp -d) "$native_home/home-path/bin/nvim" --clean --headless '+quit'
-          HOME=$(mktemp -d) "$native_home/home-path/bin/codium" --version
           nix run "$flake" -- --help
           nix run "$flake#nixos-apply" -- --help
           nix flake check "$flake" --all-systems --no-build --no-write-lock-file
@@ -73,3 +67,37 @@ jobs:
           shell_settings=$(nix build --no-link --print-out-paths --no-write-lock-file "$flake#nixosConfigurations.$host.config.home-manager.users.$profile_user.xdg.configFile.\"noctalia/config.toml\".source")
           "$shell_package/bin/noctalia" config validate "$shell_settings"
           "$shell_package/bin/noctalia" config validate non-nixos/dotfiles/noctalia/config.toml
+
+  native:
+    name: Standalone Linux (${{ matrix.system }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        system: [x86_64-linux, aarch64-linux]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31
+        with:
+          extra_nix_config: experimental-features = nix-command flakes
+      - name: Evaluate desktop, custom identity and Flatpak recovery mode
+        shell: bash
+        env:
+          TARGET_SYSTEM: ${{ matrix.system }}
+        run: |
+          work=$(mktemp -d)
+          cp -R non-nixos/. "$work/"
+          jq -n --arg system "$TARGET_SYSTEM" '{username:"ciuser",homeDirectory:"/srv/ci home",system:$system,configHome:"/srv/ci home/settings",dataHome:"/srv/ci home/data",zshHome:"/srv/ci home/shell"}' > "$work/local-profile.json"
+          echo "NATIVE_FLAKE=path:$work" >> "$GITHUB_ENV"
+          NATIVE_FLAKE="path:$work" nix eval --impure --json --expr 'import ./tests/native.nix { flake = builtins.getFlake (builtins.getEnv "NATIVE_FLAKE"); }'
+          nix flake check "path:$work" --all-systems --no-build --no-write-lock-file
+      - name: Build bootstrap, Flatpak installer and editor smoke tests
+        if: matrix.system == 'x86_64-linux'
+        shell: bash
+        run: |
+          nix build "$NATIVE_FLAKE" --no-link --no-write-lock-file
+          nix run "$NATIVE_FLAKE" -- --help
+          nix build "$NATIVE_FLAKE#homeConfigurations.ciuser.config.desktop.flatpak.installer" --no-link --no-write-lock-file
+          editors=$(nix build --no-link --print-out-paths --impure --expr 'let h = (builtins.getFlake (builtins.getEnv "NATIVE_FLAKE")).homeConfigurations.ciuser; in h.pkgs.symlinkJoin { name = "editor-smoke"; paths = [ h.config.programs.neovim.finalPackage h.config.programs.vscodium.package ]; }')
+          HOME=$(mktemp -d) "$editors/bin/nvim" --clean --headless '+quit'
+          HOME=$(mktemp -d) "$editors/bin/codium" --version
