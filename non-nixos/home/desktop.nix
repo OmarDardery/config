@@ -1,7 +1,6 @@
 { pkgs, ... }:
 {
   home.packages = with pkgs; [
-    firefox
     kitty
     starship
     zsh
@@ -36,16 +35,12 @@
   ];
   fonts.fontconfig.enable = true;
   home.sessionVariables = {
-    BROWSER = "firefox";
     TERMINAL = "kitty";
     SAL_USE_VCLPLUGIN = "gtk3";
   };
   xdg.mimeApps = {
     enable = true;
     defaultApplications = {
-      "text/html" = [ "firefox.desktop" ];
-      "x-scheme-handler/http" = [ "firefox.desktop" ];
-      "x-scheme-handler/https" = [ "firefox.desktop" ];
       "inode/directory" = [ "thunar.desktop" ];
       "application/pdf" = [ "org.gnome.Papers.desktop" ];
       "application/zip" = [ "org.gnome.FileRoller.desktop" ];

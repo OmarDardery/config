@@ -11,7 +11,6 @@ standalone Home Manager. From an existing checkout use `bash setup.sh`.
 | Use | Provided apps |
 | --- | --- |
 | Editors/development | VSCodium, Neovim/LazyVim, Git, ripgrep, fd, nixd, nixfmt |
-| Browser | Firefox |
 | Office, notes and PDFs | LibreOffice, Xournal++, Papers, English spellchecking |
 | Files and archives | Thunar, File Roller, unzip, 7-Zip |
 | Images, audio and video | GIMP, imv, mpv |
@@ -21,7 +20,8 @@ standalone Home Manager. From an existing checkout use `bash setup.sh`.
 | Fonts | Inter, JetBrainsMono Nerd Font, Noto, emoji |
 | x86_64 user Flatpaks | Steam, ProtonPlus, OrcaSlicer, Discord |
 
-Home Manager installs the Nix apps, fonts, associations and dotfiles. The distro
+Home Manager installs the Nix apps, fonts, associations and dotfiles.
+Use your preferred browser; this configuration does not install or select one. The distro
 continues to own its desktop session, drivers, audio services, portals and login
 manager. Umbriel/Noctalia settings remain available if you use that session;
 existing GNOME/KDE/Xfce sessions are not replaced. Zsh is installed without

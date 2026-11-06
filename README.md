@@ -26,7 +26,7 @@ The same command detects the operating system. No clone, separate Home Manager
 installation or native Git installation is required beforehand.
 Once flakes are enabled, the command shortens to `nix run github:OmarDardery/config`.
 
-**Other distros:** standalone Home Manager installs Firefox, the editors,
+**Other distros:** standalone Home Manager installs the editors,
 LibreOffice, Xournal++, file/media/password tools, Kitty/Zsh/Starship and fonts.
 On x86_64 it also installs Steam, ProtonPlus, OrcaSlicer and Discord as user
 Flatpaks. Missing native Flatpak/portal support is installed through the distro

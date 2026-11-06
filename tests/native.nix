@@ -15,7 +15,6 @@ let
     fd
     nixd
     nixfmt
-    firefox
     kitty
     zsh
     starship
@@ -36,7 +35,8 @@ assert home.programs.neovim.enable && home.programs.vscodium.enable;
 assert !home.programs.neovim.withPython3 && !home.programs.neovim.withNodeJs;
 assert builtins.all (package: builtins.elem package home.home.packages) required;
 assert home.fonts.fontconfig.enable;
-assert home.xdg.mimeApps.defaultApplications."text/html" == [ "firefox.desktop" ];
+assert !(home.home.sessionVariables ? BROWSER);
+assert !(home.xdg.mimeApps.defaultApplications ? "text/html");
 assert home.xdg.configFile ? "nvim/init.lua";
 assert home.xdg.configFile ? "umbriel/config.toml";
 assert home.home.file ? ".zshrc";
