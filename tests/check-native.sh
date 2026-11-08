@@ -38,10 +38,11 @@ printf '%s\n' 'Checking Zen and the configured interactive Zsh prompt...'
 browser=$(nix build --no-link --print-out-paths --impure --expr 'let f = builtins.getFlake (builtins.getEnv "NATIVE_FLAKE"); h = f.homeConfigurations.ciuser; in h.pkgs.callPackage (f.outPath + "/pkgs/zen-browser.nix") { zenInput = f.inputs.zen-browser; }')
 HOME="$work/editor-home" "$browser/bin/zen" --version
 shells=$(nix build --no-link --print-out-paths --impure --expr 'let h = (builtins.getFlake (builtins.getEnv "NATIVE_FLAKE")).homeConfigurations.ciuser; in h.pkgs.symlinkJoin { name = "shell-smoke"; paths = [ h.pkgs.zsh h.pkgs.starship h.pkgs.zoxide h.pkgs.direnv h.pkgs.fzf ]; }')
-nix eval --raw "$NATIVE_FLAKE#homeConfigurations.ciuser.config.home.file.\".zshrc\".text" > "$work/editor-home/.zshrc"
-HOME="$work/editor-home" ZDOTDIR="$work/editor-home" PATH="$shells/bin:$PATH" \
+shellrc=$(nix build --no-link --print-out-paths "$NATIVE_FLAKE#homeConfigurations.ciuser.config.home.file.\".zshrc\".source")
+cp "$shellrc" "$work/editor-home/.zshrc"
+HOME="$work/editor-home" ZDOTDIR="$work/editor-home" TERM=xterm-256color PATH="$shells/bin:$PATH" \
   STARSHIP_CONFIG="$PWD/non-nixos/dotfiles/starship.toml" "$shells/bin/zsh" -i -c \
-  '[[ $STARSHIP_SHELL == zsh ]] && (( $+functions[starship_precmd] )) && (( $+functions[_zsh_autosuggest_start] ))'
+  '[[ $STARSHIP_SHELL == zsh ]] && (( $+functions[prompt_starship_precmd] )) && (( $+functions[_zsh_autosuggest_start] )) && (( $+functions[_zsh_highlight] ))'
 
 printf '%s\n' 'Checking an actual Kitty window with software rendering...'
 # Execute the real activation fragment, rather than repairing the host outside HM.
