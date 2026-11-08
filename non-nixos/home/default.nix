@@ -8,6 +8,8 @@
   imports = [
     ./editors
     ./desktop.nix
+    ./terminal.nix
+    ./graphics.nix
     ./flatpak.nix
   ];
   home = {
@@ -20,13 +22,7 @@
     configFile = {
       "umbriel/config.toml".source = ../dotfiles/umbriel/config.toml;
       "noctalia/config.toml".source = ../dotfiles/noctalia/config.toml;
-      "kitty/kitty.conf".source = ../dotfiles/kitty/kitty.conf;
-      "starship.toml".source = ../dotfiles/starship.toml;
     };
-  };
-  home.file.".zshrc" = {
-    target = "${profile.zshHome}/.zshrc";
-    source = ../dotfiles/zsh/.zshrc;
   };
   targets.genericLinux.enable = true;
   programs.home-manager.enable = true;
