@@ -24,7 +24,7 @@
       "nvim/lua/config/options.lua".source = ../dotfiles/nvim/lua/config/options.lua;
       "nvim/lua/plugins/tools.lua".source = ../dotfiles/nvim/lua/plugins/tools.lua;
       "VSCodium/User/settings.json".source = ../dotfiles/VSCodium/User/settings.json;
-      "ly/config.ini".text = "animation = matrix\n";
+      "noctalia-greeter/greeter.toml".source = ../dotfiles/noctalia-greeter/greeter.toml;
     };
   };
   home.file.".zshenv".text = "export ZDOTDIR=${lib.escapeShellArg profile.zshHome}\n";

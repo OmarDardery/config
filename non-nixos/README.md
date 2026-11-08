@@ -19,9 +19,10 @@ If an earlier configuration set your login shell to the Nix profile's Zsh, chang
 it to a distro-provided shell before applying this configuration, or removing that
 profile package can leave the account with an unavailable login shell.
 
-The Ly Matrix configuration is provided at `~/.config/ly/config.ini` for review.
-Ly is a system display manager and normally reads `/etc/ly/config.ini`; installing,
-enabling and applying that system configuration requires distro administration.
+The Noctalia Greeter template is managed at `~/.config/noctalia-greeter/greeter.toml`.
+The greeter reads `/var/lib/noctalia-greeter/greeter.toml`; installing the greeter,
+configuring greetd, and applying the template there require system administration.
+The default session is Umbriel, if its desktop entry is installed.
 
 Edit this checkout and use `config-apply` to reapply, or `up` to update the
 standalone lock file first. Existing user Flatpaks and application data are not
