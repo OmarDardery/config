@@ -8,9 +8,12 @@ nix --extra-experimental-features 'nix-command flakes' run github:OmarDardery/co
 
 Home Manager manages user dotfiles, the Bibata cursor and user Flatpaks. The
 application list is in `home/flatpak.nix`: Zen, Xournal++, LibreOffice, Steam,
-ProtonPlus, OrcaSlicer and Discord (availability varies by architecture).
+ProtonPlus, OrcaSlicer, Discord, Papers, File Roller and KeePassXC
+(availability varies by architecture).
 Flatpaks install under the current user; no sudo is used during activation.
-The distro supplies the compositor, shell, terminal, editors, Flatpak and drivers.
+The distro supplies the compositor, terminal, editors, Flatpak and drivers.
+Zsh and Starship remain user-installed Nix packages; activation does not change
+the account login shell.
 
 The Ly Matrix configuration is provided at `~/.config/ly/config.ini` for review.
 Ly is a system display manager and normally reads `/etc/ly/config.ini`; installing,
