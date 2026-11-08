@@ -7,6 +7,7 @@
 {
   imports = [
     ./flatpak.nix
+    ./file-manager.nix
   ];
   home = {
     inherit (profile) username homeDirectory stateVersion;

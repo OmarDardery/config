@@ -7,6 +7,9 @@ in
 assert !h.targets.genericLinux.gpu.enable;
 assert !(h.home.activation ? setLoginShell);
 assert !(h.home.activation ? setupHostGraphics);
+assert builtins.elem pkgs.thunar h.home.packages;
+assert h.xdg.mimeApps.defaultApplications."inode/directory" == [ "thunar.desktop" ];
+assert h.xdg.dataFile ? "dbus-1/services/org.freedesktop.FileManager1.service";
 assert h.home.pointerCursor.name == "Bibata-Modern-Classic";
 assert !(h.xdg.configFile ? "ly/config.ini");
 assert h.xdg.configFile ? "noctalia-greeter/greeter.toml";

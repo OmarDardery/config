@@ -6,7 +6,8 @@ Install Nix and Flatpak through your distro first, then run:
 nix --extra-experimental-features 'nix-command flakes' run github:OmarDardery/config
 ```
 
-Home Manager manages user dotfiles, the Bibata cursor and user Flatpaks. The
+Home Manager manages user dotfiles, the Bibata cursor, Thunar and user Flatpaks.
+Thunar is installed as a Nix user package and selected as the default file manager. The
 application list is in `home/flatpak.nix`: Zen, Xournal++, LibreOffice, Steam,
 ProtonPlus, OrcaSlicer, Discord, Papers, File Roller and KeePassXC
 (availability varies by architecture).
