@@ -1,4 +1,10 @@
-{ profile, config, pkgs, lib, ... }:
+{
+  profile,
+  config,
+  pkgs,
+  lib,
+  ...
+}:
 let
   shared = import ../packages.nix { inherit pkgs; };
   # Fedora's newer XML rules cannot be parsed by the pinned Fontconfig.
@@ -20,6 +26,7 @@ in
     starship
     zsh
     zoxide
+    fzf
     direnv
   ];
   programs.kitty = {
@@ -41,14 +48,36 @@ in
       '';
       meta.mainProgram = "kitty";
     };
+    settings = {
+      shell = "${lib.getExe pkgs.zsh} -l";
+      env = "ZDOTDIR=${profile.zshHome}";
+    };
     extraConfig = builtins.readFile ../dotfiles/kitty/kitty.conf;
   };
-  home.sessionVariables.TERMINAL = "kitty";
+  home.sessionVariables = {
+    TERMINAL = "kitty";
+    SHELL = "${config.home.profileDirectory}/bin/zsh";
+    ZDOTDIR = profile.zshHome;
+  };
+  home.activation.setLoginShell = lib.hm.dag.entryAfter [ "installPackages" "linkGeneration" ] ''
+    run ${pkgs.coreutils}/bin/env PATH=${
+      lib.makeBinPath [ pkgs.coreutils ]
+    }:/usr/bin:/bin:/usr/sbin:/sbin \
+      ${pkgs.bash}/bin/bash ${../login-shell.sh} \
+      ${lib.escapeShellArg profile.username} \
+      ${lib.escapeShellArg "${config.home.profileDirectory}/bin/zsh"}
+  '';
   xdg.configFile = {
     "starship.toml".source = ../dotfiles/starship.toml;
   };
+  home.file.".zshenv".text = ''
+    export ZDOTDIR=${lib.escapeShellArg profile.zshHome}
+  '';
   home.file.".zshrc" = {
     target = "${profile.zshHome}/.zshrc";
-    source = ../dotfiles/zsh/.zshrc;
+    text = builtins.readFile ../dotfiles/zsh/.zshrc + ''
+      source ${pkgs.zsh-autosuggestions}/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+      source ${pkgs.zsh-syntax-highlighting}/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+    '';
   };
 }

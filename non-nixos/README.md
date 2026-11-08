@@ -12,6 +12,7 @@ Graphics integration may request sudo even when Flatpak is already installed.
 
 | Use | Provided apps |
 | --- | --- |
+| Browser | Zen, default for web links and HTML |
 | Editors/development | VSCodium, Neovim/LazyVim, Git, ripgrep, fd, nixd, nixfmt |
 | Office, notes and PDFs | LibreOffice, Xournal++, Papers, English spellchecking |
 | Files and archives | Thunar, File Roller, unzip, 7-Zip |
@@ -24,11 +25,14 @@ Graphics integration may request sudo even when Flatpak is already installed.
 
 Shared apps/fonts are selected in `packages.nix`; standalone-only apps and
 associations live in `home/desktop.nix`. Home Manager installs them and the dotfiles.
-Use your preferred browser; this configuration does not install or select one. The distro
-continues to own its desktop session, drivers, audio services, portals and login
+Zen is installed and selected for web links; Thunar is selected for directories
+and file-manager D-Bus requests. The distro continues to own its desktop session, drivers, audio services, portals and login
 manager. Umbriel/Noctalia settings remain available if you use that session;
-existing GNOME/KDE/Xfce sessions are not replaced. Zsh is installed without
-changing your login shell; run `zsh` to use the configured shell.
+existing GNOME/KDE/Xfce sessions are not replaced. Kitty and VSCodium open Zsh login shells with the existing Starship prompt,
+autosuggestions and syntax highlighting. Activation registers the stable profile
+Zsh path in `/etc/shells` and selects it for your account, requesting sudo only
+when a change is needed. Log out/in after the first apply for the login shell
+and file-manager D-Bus selection to take effect.
 
 ## Flatpak installation
 
@@ -136,3 +140,11 @@ rolling back a Nix generation does not roll back Flatpak application versions.
 The layout follows [Misterio77's starter](https://github.com/Misterio77/nix-starter-configs/tree/main/minimal),
 [standalone configurations](https://github.com/GooseRooster/home-manager), and the
 [Home Manager manual](https://nix-community.github.io/home-manager/installation/standalone.html).
+
+## Desktop shortcuts
+
+`Mod` is Super. `Mod+Q` and `Alt+F4` close the focused window; `Mod+T` opens Kitty,
+`Mod+I` VSCodium, `Mod+B` Zen, and `Mod+E` Thunar. `Mod+Escape` toggles shortcut
+passthrough and remains available while an app inhibits shortcuts. `Mod+F`
+toggles fullscreen, and `Mod+D` switches dwindle/stacking. Volume and brightness
+keys use Noctalia's controls.

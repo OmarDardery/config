@@ -59,6 +59,12 @@ assert !(home.home.shellAliases ? update);
 assert !(flake.packages.x86_64-linux ? update);
 assert !(flake.apps.x86_64-linux ? update);
 assert home.programs.zsh.enable && home.programs.direnv.enableZshIntegration;
+assert
+  home.programs.kitty.settings.shell
+  == "${os.users.users.${flake.lib.deployment.username}.shell}/bin/zsh -l";
+assert
+  home.programs.vscodium.profiles.default.userSettings."terminal.integrated.defaultProfile.linux"
+  == "zsh";
 assert home.programs.yazi.enableZshIntegration && home.programs.yazi.enableBashIntegration;
 
 {

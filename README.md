@@ -17,6 +17,9 @@ identity without committing machine-specific files.
 NixOS captures the installed hardware, bootloader and state versions before its
 first rebuild. Other distros keep their existing desktop session and drivers;
 missing native Flatpak prerequisites use the distro's package manager with sudo.
+Both setups provide Zen, Thunar, Kitty and Zsh with the shared Starship prompt.
+Standalone activation configures graphics integration and the account's Zsh
+login shell automatically; first-time host changes may request sudo.
 Configured files are backed up before Home Manager takes ownership.
 
 ## Daily use

@@ -4,7 +4,7 @@
     (import ../../../non-nixos/packages.nix { inherit pkgs; }).desktop
     ++ (with pkgs; [
       inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default
-      (callPackage ../../pkgs/zen-browser.nix { zenInput = inputs.zen-browser; })
+      (callPackage ../../../non-nixos/pkgs/zen-browser.nix { zenInput = inputs.zen-browser; })
       discord
       proton-vpn
       imagemagick

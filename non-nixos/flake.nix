@@ -2,13 +2,17 @@
   description = "Standalone Home Manager desktop essentials for Linux";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    zen-browser = {
+      url = "github:youwen5/zen-browser-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     home-manager = {
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
   outputs =
-    { nixpkgs, home-manager, ... }:
+    { nixpkgs, home-manager, ... }@inputs:
     let
       profile = import ./profile.nix;
       forSystems = nixpkgs.lib.genAttrs [
@@ -22,8 +26,11 @@
             inherit system;
             config.allowUnfree = true;
           };
-          extraSpecialArgs.profile = profile // {
-            inherit system;
+          extraSpecialArgs = {
+            inherit inputs;
+            profile = profile // {
+              inherit system;
+            };
           };
           modules = [ ./home ];
         };

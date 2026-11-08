@@ -8,6 +8,7 @@
   imports = [
     ./editors
     ./desktop.nix
+    ./browser.nix
     ./terminal.nix
     ./graphics.nix
     ./flatpak.nix
