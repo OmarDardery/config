@@ -9,6 +9,7 @@
     ./editors
     ./desktop.nix
     ./terminal.nix
+    ./graphics.nix
     ./flatpak.nix
   ];
   home = {

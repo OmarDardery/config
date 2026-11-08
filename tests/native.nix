@@ -15,7 +15,6 @@ let
     fd
     nixd
     nixfmt
-    kitty
     zsh
     starship
     xournalpp
@@ -31,6 +30,15 @@ let
 in
 assert home.targets.genericLinux.enable;
 assert home.targets.genericLinux.gpu.enable;
+assert home.home.activation ? setupHostGraphics;
+assert builtins.elem "writeBoundary" home.home.activation.setupHostGraphics.after;
+assert builtins.elem "linkGeneration" home.home.activation.setupHostGraphics.before;
+assert builtins.elem "checkExistingGpuDrivers" home.home.activation.setupHostGraphics.before;
+assert home.programs.kitty.enable;
+assert builtins.elem home.programs.kitty.package home.home.packages;
+assert !((configuration.extendModules {
+  modules = [ { targets.genericLinux.gpu.enable = false; } ];
+}).config.home.activation ? setupHostGraphics);
 assert
   flake.lib.hostRequirements.graphics.drivers == toString home.targets.genericLinux.gpu.drivers;
 assert

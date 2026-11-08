@@ -97,11 +97,6 @@ else
   requirements=$(nix "${nixflags[@]}" eval --json --no-write-lock-file "$flake#lib.hostRequirements")
   printf '%s\n' 'Building desktop essentials before changing the host...'
   nix "${nixflags[@]}" build --no-write-lock-file --no-link "$flake#homeConfigurations.$username.activationPackage"
-  if [[ $(jq -r '.graphics != null' <<< "$requirements") == true ]]; then
-    bash "$repo_dir/non-nixos/graphics.sh" \
-      "$(jq -r '.graphics.drivers' <<< "$requirements")" \
-      "$(jq -r '.graphics.setup' <<< "$requirements")"
-  fi
   if [[ $(jq -r '.flatpak' <<< "$requirements") == true ]]; then
     bash "$repo_dir/non-nixos/host-deps.sh"
   fi

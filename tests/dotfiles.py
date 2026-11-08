@@ -190,10 +190,11 @@ class StandaloneHome(unittest.TestCase):
         self.assertFalse((self.root/'host-preflight').exists())
         self.assertFalse(self.events('home-manager'))
 
-    def test_graphics_failure_prevents_activation(self):
+    def test_graphics_is_owned_by_home_manager_activation(self):
         (self.template/'non-nixos/graphics.sh').write_text('#!/bin/bash\nexit 48\n')
-        self.apply(success=False)
-        self.assertFalse(self.events('home-manager'))
+        self.apply()
+        self.assertFalse((self.root/'graphics').exists())
+        self.assertTrue(self.events('home-manager'))
 
     def test_help_needs_no_nix_or_home_manager(self):
         self.env['TEST_UID'] = '0'
