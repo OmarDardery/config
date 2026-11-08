@@ -174,15 +174,6 @@ class StandaloneHome(unittest.TestCase):
         self.assertFalse(self.events('home-manager'))
         self.assertFalse((self.root/'host-preflight').exists())
 
-    def test_host_setup_failure_prevents_activation(self):
-        (self.template/'non-nixos/host-deps.sh').write_text('#!/bin/bash\nexit 46\n')
-        self.apply(success=False)
-        self.assertFalse(self.events('home-manager'))
-
-    def test_x86_runs_host_preflight_and_aarch_skips_empty_flatpak_list(self):
-        self.apply()
-        self.assertTrue((self.root/'host-preflight').exists())
-
     def test_failed_build_prevents_host_mutations(self):
         self.env['TEST_BUILD_FAIL'] = '1'
         self.apply(success=False)

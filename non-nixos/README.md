@@ -1,150 +1,28 @@
-# Standalone Linux desktop essentials
+# Standalone Linux configuration
+
+Install Nix and Flatpak through your distro first, then run:
 
 ```sh
 nix --extra-experimental-features 'nix-command flakes' run github:OmarDardery/config
 ```
 
-Run as your normal Linux user with Nix installed. Supports x86_64 and aarch64.
-The launcher clones into `~/config`, records the local identity, and applies
-standalone Home Manager. From an existing checkout use `bash setup.sh`.
-The normal installer builds first, then sets up native Flatpak prerequisites, then activates.
-Graphics integration may request sudo even when Flatpak is already installed.
+Home Manager manages user dotfiles, the Bibata cursor and user Flatpaks. The
+application list is in `home/flatpak.nix`: Zen, Xournal++, LibreOffice, Steam,
+ProtonPlus, OrcaSlicer, Discord, Papers, File Roller and KeePassXC
+(availability varies by architecture).
+Flatpaks install under the current user; no sudo is used during activation.
+The distro supplies Neovim, VSCodium, Zsh, Starship, Kitty, the compositor,
+Flatpak and drivers. Home Manager manages their dotfiles without installing the
+applications or changing the account login shell.
 
-| Use | Provided apps |
-| --- | --- |
-| Browser | Zen, default for web links and HTML |
-| Editors/development | VSCodium, Neovim/LazyVim, Git, ripgrep, fd, nixd, nixfmt |
-| Office, notes and PDFs | LibreOffice, Xournal++, Papers, English spellchecking |
-| Files and archives | Thunar, File Roller, unzip, 7-Zip |
-| Images, audio and video | GIMP, imv, mpv |
-| Passwords | KeePassXC |
-| Terminal and shell | Kitty, Zsh, Starship, zoxide, direnv, btop |
-| Desktop helpers | Calculator, volume mixer, clipboard/screenshot tools, brightness/media controls |
-| Fonts | Inter, JetBrainsMono Nerd Font, Noto, emoji |
-| x86_64 user Flatpaks | Steam, ProtonPlus, OrcaSlicer, Discord |
+If an earlier configuration set your login shell to the Nix profile's Zsh, change
+it to a distro-provided shell before applying this configuration, or removing that
+profile package can leave the account with an unavailable login shell.
 
-Shared apps/fonts are selected in `packages.nix`; standalone-only apps and
-associations live in `home/desktop.nix`. Home Manager installs them and the dotfiles.
-Zen is installed and selected for web links; Thunar is selected for directories
-and file-manager D-Bus requests. The distro continues to own its desktop session, drivers, audio services, portals and login
-manager. Umbriel/Noctalia settings remain available if you use that session;
-existing GNOME/KDE/Xfce sessions are not replaced. Kitty and VSCodium open Zsh login shells with the existing Starship prompt,
-autosuggestions and syntax highlighting. Activation registers the stable profile
-Zsh path in `/etc/shells` and selects it for your account, requesting sudo only
-when a change is needed. Log out/in after the first apply for the login shell
-and file-manager D-Bus selection to take effect.
+The Ly Matrix configuration is provided at `~/.config/ly/config.ini` for review.
+Ly is a system display manager and normally reads `/etc/ly/config.ini`; installing,
+enabling and applying that system configuration requires distro administration.
 
-## Flatpak installation
-
-Steam and ProtonPlus use the native Flatpak sandbox and GPU integration. Their
-Flathub IDs, along with OrcaSlicer and Discord, are declared in `home/flatpak.nix`.
-They are enabled on x86_64; ARM gets the remaining desktop essentials without
-trying to install unsupported gaming apps.
-
-If Flatpak is missing, the normal installer uses sudo to install native Flatpak
-and portal support on apt, dnf, pacman or zypper systems. On other systems it
-stops with instructions to install the host prerequisite. If Flatpak is already
-installed, no host package operation is performed. Keep your distro desktop's
-portal backend available for screen sharing and file dialogs.
-
-Flatpaks install synchronously during Home Manager activation, under the current
-user. Download failures fail activation visibly. No systemd user service is
-required. Existing unmanaged apps, remotes and data are preserved. Reapplying
-updates declared apps with `--or-update`; network access is required. Initial
-Steam/game/runtime downloads can be large. The Flatpak sandbox uses distro GPU
-support; it does not install the NixOS NVIDIA driver.
-
-Disable Flatpaks in `home/default.nix` with `desktop.flatpak.enable = false;`, or
-set `desktop.flatpak.packages = [ ... ];` to change the list. A disabled or empty
-list requires no native Flatpak setup. Direct `home-manager switch` expects native Flatpak to be installed already;
-`config-apply` handles that preflight. Graphics setup belongs to Home Manager activation.
-Build-only mode never installs host packages or runs Flatpak operations. The
-installer evaluates the effective prerequisites once before activation.
-
-## Apply and update
-
-| Command | Action |
-| --- | --- |
-| `config-apply` / `rebuild` | Apply the current checkout, including declared Flatpaks |
-| `up` | Update this flake's lockfile, then apply |
-| `config-apply --build-only` | Build a home generation without activating |
-| `home-manager generations` | List generations and activation paths |
-
-`up` preserves source edits and does not pull Git commits. Receive source changes
-with `git -C ~/config pull --ff-only`, then run `up`. Restart Zsh or log out/in
-after the first activation so desktop launchers and session variables refresh.
-In another shell, source `~/.nix-profile/etc/profile.d/hm-session-vars.sh`.
-
-Use `--repo-dir DIR` for a different checkout, `-- OWNER/REPO` for a fork, and
-`--ref BRANCH` only for a new clone. Select that branch in the initial `nix run`
-URL too when testing an unmerged branch. Existing branches are never reset.
-The independent entry point is:
-
-```sh
-nix run 'github:OmarDardery/config?dir=non-nixos'
-```
-
-Direct use after bootstrapping:
-
-```sh
-home-manager switch --flake "path:$HOME/config/non-nixos#$(id -un)"
-```
-
-`local-profile.json` records identity, architecture, checkout, XDG config/data/state
-paths, Zsh directory and initial state version. It stays out of Git. Keep
-`stateVersion` when updating; moving a checkout refreshes `configRepo` on apply.
-Invalid local profiles are rejected without replacement. Flake evaluation stays
-pure; `nix flake check --no-build` evaluates both supported home architectures.
-No shared development shells or global project
-language runtimes are added.
-
-## Migration, edits and recovery
-
-Home Manager owns configured files as store symlinks. Edit their sources in this
-repository and reapply. Conflicting files receive unique `.before-home-manager-*`
-backups. Earlier copier backups remain in `~/.local/state/non-nixos-config/backups`.
-Extra Neovim Lua files, VSCodium keybindings and `.zshrc.local` remain yours.
-LazyVim fetches plugins on first use; project language tools belong in project
-environments. Mason and Tree-sitter compilation start disabled.
-
-No GUI apps are started or restarted during activation. Home Manager activation runs
-`non-nixos-gpu-setup` when graphics integration is missing or outdated, before
-linking the new generation. This also covers direct `home-manager switch`, not
-just the installer. Setup failures abort activation.
-It registers `/run/opengl-driver` through tmpfiles so Kitty and other Nix GUI apps
-can find Mesa libraries after reboot, without exporting driver paths into every
-app. Matching setups are reused without sudo. Build-only mode skips this step.
-The distro retains its kernel drivers; the default suits AMD/Intel graphics,
-including the integrated AMD GPU in the ASUS TUF A14. Proprietary NVIDIA use
-requires matching the exact host driver version in `targets.genericLinux.gpu.nvidia`;
-do not copy the NixOS driver version onto another distro.
-
-If Kitty still fails after applying and logging back in, run `kitty --debug-rendering`
-from a working terminal and keep its output. For comparison run `kitty --config NONE`;
-this separates configuration errors from graphics or display-session failures.
-Do not launch graphical apps with sudo.
-
-Terminal packages and dotfiles live together in `home/terminal.nix`; general
-apps and file associations remain in `home/desktop.nix`. Kitty keeps a fallback
-palette and optionally loads Noctalia's generated colors. Kitty uses a Nix-generated Fontconfig configuration with the installed fonts
-and user rules, avoiding Fedora XML rules newer than its pinned Fontconfig.
-Its beam cursor and
-zoom shortcuts take inspiration from
-[JellyDotFiles](https://codeberg.org/JellyCat/JellyDotFiles), whose per-app layout
-and explicit dependency checks also informed the installer changes.
-
-To roll back managed files/Nix packages, run an older generation's `activate`
-script shown by `home-manager generations`. Flatpaks update outside the Nix store;
-rolling back a Nix generation does not roll back Flatpak application versions.
-
-The layout follows [Misterio77's starter](https://github.com/Misterio77/nix-starter-configs/tree/main/minimal),
-[standalone configurations](https://github.com/GooseRooster/home-manager), and the
-[Home Manager manual](https://nix-community.github.io/home-manager/installation/standalone.html).
-
-## Desktop shortcuts
-
-`Mod` is Super. `Mod+Q` and `Alt+F4` close the focused window; `Mod+T` opens Kitty,
-`Mod+I` VSCodium, `Mod+B` Zen, and `Mod+E` Thunar. `Mod+Escape` toggles shortcut
-passthrough and remains available while an app inhibits shortcuts. `Mod+F`
-toggles fullscreen, and `Mod+D` switches dwindle/stacking. Volume and brightness
-keys use Noctalia's controls.
+Edit this checkout and use `config-apply` to reapply, or `up` to update the
+standalone lock file first. Existing user Flatpaks and application data are not
+removed. Log out and back in for cursor and desktop integration changes.

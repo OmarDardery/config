@@ -1,107 +1,21 @@
-# Validate the complete desktop and the explicit no-Flatpak recovery mode.
 { flake }:
 let
-  configuration = builtins.head (builtins.attrValues flake.homeConfigurations);
-  home = configuration.config;
-  inherit (configuration) pkgs;
-  lib = flake.inputs.nixpkgs.lib;
-  withoutFlatpaks =
-    (configuration.extendModules {
-      modules = [ { desktop.flatpak.enable = false; } ];
-    }).config;
-  required = with pkgs; [
-    gitMinimal
-    ripgrep
-    fd
-    nixd
-    nixfmt
-    zsh
-    starship
-    xournalpp
-    libreoffice
-    thunar
-    file-roller
-    keepassxc
-    mpv
-    imv
-    gimp
-  ];
-  ids = home.desktop.flatpak.packages;
-  compositor = builtins.fromTOML (builtins.readFile home.xdg.configFile."umbriel/config.toml".source);
+  h = (builtins.head (builtins.attrValues flake.homeConfigurations)).config;
+  ids = h.desktop.flatpak.packages;
+  pkgs = (builtins.head (builtins.attrValues flake.homeConfigurations)).pkgs;
 in
-assert home.targets.genericLinux.enable;
-assert home.targets.genericLinux.gpu.enable;
-assert home.home.activation ? setupHostGraphics;
-assert builtins.elem "writeBoundary" home.home.activation.setupHostGraphics.after;
-assert builtins.elem "linkGeneration" home.home.activation.setupHostGraphics.before;
-assert builtins.elem "checkExistingGpuDrivers" home.home.activation.setupHostGraphics.before;
-assert home.programs.kitty.enable;
-assert compositor.keybinds."Mod+Q".action == "window-close";
-assert compositor.keybinds."Mod+E".action == "spawn thunar";
-assert compositor.keybinds."Mod+B".action == "spawn zen";
-assert compositor.keybinds."Mod+Escape".allow_when_inhibited;
-assert builtins.elem home.programs.kitty.package home.home.packages;
-assert
-  !(
-    (configuration.extendModules {
-      modules = [ { targets.genericLinux.gpu.enable = false; } ];
-    }).config.home.activation
-      ? setupHostGraphics
-  );
-assert
-  flake.lib.hostRequirements.graphics.drivers == toString home.targets.genericLinux.gpu.drivers;
-assert
-  flake.lib.hostRequirements.graphics.setup == lib.getExe home.targets.genericLinux.gpu.setupPackage;
-assert flake.lib.hostRequirements.flatpak == (home.desktop.flatpak.enable && ids != [ ]);
-assert
-  flake.checks.${flake.lib.deployment.system}.home.drvPath == home.home.activationPackage.drvPath;
-assert home.programs.home-manager.enable;
-assert home.programs.neovim.enable && home.programs.vscodium.enable;
-assert !home.programs.neovim.withPython3 && !home.programs.neovim.withNodeJs;
-assert builtins.all (package: builtins.elem package home.home.packages) required;
-assert home.fonts.fontconfig.enable;
-assert home.home.sessionVariables.BROWSER == "zen";
-assert home.xdg.mimeApps.defaultApplications."text/html" == [ "zen.desktop" ];
-assert home.xdg.mimeApps.defaultApplications."inode/directory" == [ "thunar.desktop" ];
-assert home.xdg.dataFile ? "dbus-1/services/org.freedesktop.FileManager1.service";
-assert builtins.elem (pkgs.callPackage ../non-nixos/pkgs/zen-browser.nix {
-  zenInput = flake.inputs.zen-browser;
-}) home.home.packages;
-assert home.programs.kitty.settings.shell == "${lib.getExe pkgs.zsh} -l";
-assert
-  home.programs.vscodium.profiles.default.userSettings."terminal.integrated.defaultProfile.linux"
-  == "zsh";
-assert home.home.activation ? setLoginShell;
-assert builtins.elem "installPackages" home.home.activation.setLoginShell.after;
-assert builtins.elem "linkGeneration" home.home.activation.setLoginShell.after;
-assert lib.hasInfix "/bin/zsh" home.home.sessionVariables.SHELL;
-assert lib.hasInfix "starship init zsh" home.home.file.".zshrc".text;
-assert lib.hasInfix "zsh-autosuggestions" home.home.file.".zshrc".text;
-assert lib.hasInfix "ZDOTDIR=" home.home.file.".zshenv".text;
-assert home.xdg.configFile ? "nvim/init.lua";
-assert home.xdg.configFile ? "umbriel/config.toml";
-assert home.home.file ? ".zshrc";
-assert home.systemd.user.services == { };
-assert home.desktop.flatpak.enable && home.home.activation ? desktopFlatpaks;
-assert !(withoutFlatpaks.home.activation ? desktopFlatpaks);
-assert lib.hasInfix (
-  "XDG_DATA_HOME=" + lib.escapeShellArg home.xdg.dataHome
-) home.home.activation.desktopFlatpaks.data;
-assert lib.hasInfix (
-  "XDG_STATE_HOME=" + lib.escapeShellArg home.xdg.stateHome
-) home.home.activation.desktopFlatpaks.data;
-assert builtins.length ids == builtins.length (lib.unique ids);
-assert
-  if pkgs.stdenv.hostPlatform.isx86_64 then
-    builtins.all (id: builtins.elem id ids) [
-      "com.valvesoftware.Steam"
-      "com.vysp3r.ProtonPlus"
-      "com.orcaslicer.OrcaSlicer"
-      "com.discordapp.Discord"
-    ]
-  else
-    ids == [ ];
-{
-  activation = home.home.activationPackage.drvPath;
-  flatpakInstaller = home.desktop.flatpak.installer.drvPath;
-}
+assert !h.targets.genericLinux.gpu.enable;
+assert !(h.home.activation ? setLoginShell);
+assert !(h.home.activation ? setupHostGraphics);
+assert h.home.pointerCursor.name == "Bibata-Modern-Classic";
+assert h.xdg.configFile ? "ly/config.ini";
+assert h.xdg.configFile ? "nvim/init.lua";
+assert h.xdg.configFile ? "kitty/kitty.conf";
+assert h.xdg.configFile ? "starship.toml";
+assert h.xdg.configFile ? "VSCodium/User/settings.json";
+assert !(builtins.elem pkgs.zsh h.home.packages);
+assert !(builtins.elem pkgs.starship h.home.packages);
+assert !(builtins.elem pkgs.kitty h.home.packages);
+assert !h.programs.neovim.enable && !h.programs.vscodium.enable;
+assert builtins.all (id: builtins.elem id ids) [ "app.zen_browser.zen" "org.libreoffice.LibreOffice" "com.github.xournalpp.xournalpp" ];
+{ activation = h.home.activationPackage.drvPath; }

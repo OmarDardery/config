@@ -18,7 +18,7 @@ Install the desktop essentials and apply standalone Home Manager.
   --update        Refresh the non-NixOS flake inputs before applying
   --build-only    Build the home generation without activating
   -h, --help      Show help
-Run as your normal user on non-NixOS Linux. Host graphics integration and missing native Flatpak need sudo.
+Run as your normal user on non-NixOS Linux. Flatpak must already be installed by the distro.
 Existing checkouts keep source edits; pull repository changes with Git.
 HELP
 }
@@ -97,8 +97,8 @@ else
   requirements=$(nix "${nixflags[@]}" eval --json --no-write-lock-file "$flake#lib.hostRequirements")
   printf '%s\n' 'Building desktop essentials before changing the host...'
   nix "${nixflags[@]}" build --no-write-lock-file --no-link "$flake#homeConfigurations.$username.activationPackage"
-  if [[ $(jq -r '.flatpak' <<< "$requirements") == true ]]; then
-    bash "$repo_dir/non-nixos/host-deps.sh"
+  if [[ $(jq -r '.flatpak' <<< "$requirements") == true ]] && ! command -v flatpak >/dev/null; then
+    die 'Flatpak is missing. Install it using your distro, then rerun this command.'
   fi
   home-manager switch --flake "$flake#$username" --no-write-lock-file \
     --extra-experimental-features 'nix-command flakes' -b "before-home-manager-$(date +%s%N)"

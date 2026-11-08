@@ -2,10 +2,6 @@
   description = "Standalone Home Manager desktop essentials for Linux";
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-    zen-browser = {
-      url = "github:youwen5/zen-browser-flake";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     home-manager = {
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -59,14 +55,7 @@
       lib.deployment = profile;
       lib.hostRequirements = {
         flatpak = home.config.desktop.flatpak.enable && home.config.desktop.flatpak.packages != [ ];
-        graphics =
-          if home.config.targets.genericLinux.gpu.enable then
-            {
-              drivers = toString home.config.targets.genericLinux.gpu.drivers;
-              setup = nixpkgs.lib.getExe home.config.targets.genericLinux.gpu.setupPackage;
-            }
-          else
-            null;
+
       };
       checks = forSystems (system: {
         home = (mkHome system).activationPackage;
