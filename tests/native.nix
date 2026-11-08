@@ -27,6 +27,7 @@ let
     gimp
   ];
   ids = home.desktop.flatpak.packages;
+  compositor = builtins.fromTOML (builtins.readFile home.xdg.configFile."umbriel/config.toml".source);
 in
 assert home.targets.genericLinux.enable;
 assert home.targets.genericLinux.gpu.enable;
@@ -35,10 +36,18 @@ assert builtins.elem "writeBoundary" home.home.activation.setupHostGraphics.afte
 assert builtins.elem "linkGeneration" home.home.activation.setupHostGraphics.before;
 assert builtins.elem "checkExistingGpuDrivers" home.home.activation.setupHostGraphics.before;
 assert home.programs.kitty.enable;
+assert compositor.keybinds."Mod+Q".action == "window-close";
+assert compositor.keybinds."Mod+E".action == "spawn thunar";
+assert compositor.keybinds."Mod+B".action == "spawn zen";
+assert compositor.keybinds."Mod+Escape".allow_when_inhibited;
 assert builtins.elem home.programs.kitty.package home.home.packages;
-assert !((configuration.extendModules {
-  modules = [ { targets.genericLinux.gpu.enable = false; } ];
-}).config.home.activation ? setupHostGraphics);
+assert
+  !(
+    (configuration.extendModules {
+      modules = [ { targets.genericLinux.gpu.enable = false; } ];
+    }).config.home.activation
+      ? setupHostGraphics
+  );
 assert
   flake.lib.hostRequirements.graphics.drivers == toString home.targets.genericLinux.gpu.drivers;
 assert
@@ -51,8 +60,24 @@ assert home.programs.neovim.enable && home.programs.vscodium.enable;
 assert !home.programs.neovim.withPython3 && !home.programs.neovim.withNodeJs;
 assert builtins.all (package: builtins.elem package home.home.packages) required;
 assert home.fonts.fontconfig.enable;
-assert !(home.home.sessionVariables ? BROWSER);
-assert !(home.xdg.mimeApps.defaultApplications ? "text/html");
+assert home.home.sessionVariables.BROWSER == "zen";
+assert home.xdg.mimeApps.defaultApplications."text/html" == [ "zen.desktop" ];
+assert home.xdg.mimeApps.defaultApplications."inode/directory" == [ "thunar.desktop" ];
+assert home.xdg.dataFile ? "dbus-1/services/org.freedesktop.FileManager1.service";
+assert builtins.elem (pkgs.callPackage ../non-nixos/pkgs/zen-browser.nix {
+  zenInput = flake.inputs.zen-browser;
+}) home.home.packages;
+assert home.programs.kitty.settings.shell == "${lib.getExe pkgs.zsh} -l";
+assert
+  home.programs.vscodium.profiles.default.userSettings."terminal.integrated.defaultProfile.linux"
+  == "zsh";
+assert home.home.activation ? setLoginShell;
+assert builtins.elem "installPackages" home.home.activation.setLoginShell.after;
+assert builtins.elem "linkGeneration" home.home.activation.setLoginShell.after;
+assert lib.hasInfix "/bin/zsh" home.home.sessionVariables.SHELL;
+assert lib.hasInfix "starship init zsh" home.home.file.".zshrc".text;
+assert lib.hasInfix "zsh-autosuggestions" home.home.file.".zshrc".text;
+assert lib.hasInfix "ZDOTDIR=" home.home.file.".zshenv".text;
 assert home.xdg.configFile ? "nvim/init.lua";
 assert home.xdg.configFile ? "umbriel/config.toml";
 assert home.home.file ? ".zshrc";

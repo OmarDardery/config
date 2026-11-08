@@ -56,10 +56,19 @@ enabled = true
 softness = 28
 
 [keybinds]
+"Mod+Q" = { action = "window-close", repeat = false }
+"Alt+F4" = { action = "window-close", repeat = false }
+"Mod+Escape" = { action = "shortcuts-inhibit-toggle", allow_when_inhibited = true, repeat = false }
+"Mod+H" = "window-focus-left"
+"Mod+L" = "window-focus-right"
+"Mod+Left" = "window-focus-left"
+"Mod+Right" = "window-focus-right"
+"Mod+Up" = "workspace-previous"
+"Mod+Down" = "workspace-next"
 "Mod+T" = { action = "spawn kitty", repeat = false }
 "Mod+I" = { action = "spawn codium", repeat = false }
-"Mod+B" = { action = "spawn xdg-open https://duckduckgo.com", repeat = false }
-"Mod+E" = { action = "spawn xdg-open .", repeat = false }
+"Mod+B" = { action = "spawn zen", repeat = false }
+"Mod+E" = { action = "spawn thunar", repeat = false }
 "Mod+Space" = { action = "spawn noctalia msg panel-toggle launcher", repeat = false }
 "Mod+A" = { action = "spawn noctalia msg panel-toggle control-center", repeat = false }
 "Mod+V" = { action = "spawn noctalia msg panel-toggle clipboard", repeat = false }
@@ -75,3 +84,9 @@ softness = 28
 "Mod+Alt+1" = { action = "workspace-set-layout dwindle", repeat = false }
 "Mod+Alt+2" = { action = "workspace-set-layout stacking", repeat = false }
 "Mod+F" = { action = "window-toggle-fullscreen", repeat = false }
+
+"XF86AudioRaiseVolume" = { action = "spawn noctalia msg volume-up", allow_when_locked = true }
+"XF86AudioLowerVolume" = { action = "spawn noctalia msg volume-down", allow_when_locked = true }
+"XF86AudioMute" = { action = "spawn noctalia msg volume-mute-toggle", allow_when_locked = true, repeat = false }
+"XF86MonBrightnessUp" = { action = "spawn noctalia msg brightness-up", allow_when_locked = true }
+"XF86MonBrightnessDown" = { action = "spawn noctalia msg brightness-down", allow_when_locked = true }
