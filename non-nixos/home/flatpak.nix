@@ -35,6 +35,9 @@ in
         "com.github.xournalpp.xournalpp"
         "org.libreoffice.LibreOffice"
         "app.zen_browser.zen"
+        "org.gnome.Papers"
+        "org.gnome.FileRoller"
+        "org.keepassxc.KeePassXC"
       ] ++ lib.optionals pkgs.stdenv.hostPlatform.isx86_64 [
         "com.valvesoftware.Steam"
         "com.vysp3r.ProtonPlus"
