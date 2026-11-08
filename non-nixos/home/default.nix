@@ -27,6 +27,7 @@
       "ly/config.ini".text = "animation = matrix\n";
     };
   };
+  home.file.".zshenv".text = "export ZDOTDIR=${lib.escapeShellArg profile.zshHome}\n";
   home.file.".zshrc" = {
     target = "${profile.zshHome}/.zshrc";
     text = builtins.readFile ../dotfiles/zsh/.zshrc + ''
