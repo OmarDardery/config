@@ -31,7 +31,11 @@ in
     };
     packages = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = lib.optionals pkgs.stdenv.hostPlatform.isx86_64 [
+      default = [
+        "com.github.xournalpp.xournalpp"
+        "org.libreoffice.LibreOffice"
+        "app.zen_browser.zen"
+      ] ++ lib.optionals pkgs.stdenv.hostPlatform.isx86_64 [
         "com.valvesoftware.Steam"
         "com.vysp3r.ProtonPlus"
         "com.orcaslicer.OrcaSlicer"

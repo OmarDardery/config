@@ -4,7 +4,7 @@ set -euo pipefail
 export PATH="$PATH:/usr/local/bin:/usr/bin:/bin"
 if (($# == 0)); then exit 0; fi
 command -v flatpak >/dev/null || {
-  printf '%s\n' 'Native Flatpak is missing. Run config-apply to install host prerequisites.' >&2
+  printf '%s\n' 'Flatpak is missing. Install Flatpak using your distro, then rerun config-apply.' >&2
   exit 1
 }
 state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/non-nixos-config"

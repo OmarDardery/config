@@ -6,11 +6,6 @@
 }:
 {
   imports = [
-    ./editors
-    ./desktop.nix
-    ./browser.nix
-    ./terminal.nix
-    ./graphics.nix
     ./flatpak.nix
   ];
   home = {
@@ -23,9 +18,29 @@
     configFile = {
       "umbriel/config.toml".source = ../dotfiles/umbriel/config.toml;
       "noctalia/config.toml".source = ../dotfiles/noctalia/config.toml;
+      "kitty/kitty.conf".source = ../dotfiles/kitty/kitty.conf;
+      "starship.toml".source = ../dotfiles/starship.toml;
+      "nvim/init.lua".source = ../dotfiles/nvim/init.lua;
+      "nvim/lua/config/options.lua".source = ../dotfiles/nvim/lua/config/options.lua;
+      "nvim/lua/plugins/tools.lua".source = ../dotfiles/nvim/lua/plugins/tools.lua;
+      "VSCodium/User/settings.json".source = ../dotfiles/VSCodium/User/settings.json;
+      "ly/config.ini".text = "animation = matrix\n";
     };
   };
+  home.file.".zshrc" = {
+    target = "${profile.zshHome}/.zshrc";
+    source = ../dotfiles/zsh/.zshrc;
+  };
+  home.pointerCursor = {
+    enable = true;
+    name = "Bibata-Modern-Classic";
+    package = pkgs.bibata-cursors;
+    size = 24;
+    gtk.enable = true;
+    x11.enable = true;
+  };
   targets.genericLinux.enable = true;
+  targets.genericLinux.gpu.enable = false;
   programs.home-manager.enable = true;
   # Follow the distro's session; switching a home generation must not restart apps.
   systemd.user.startServices = false;
@@ -34,8 +49,6 @@
   home.packages =
     (with pkgs; [
       gitMinimal
-      ripgrep
-      fd
     ])
     ++ [
       (pkgs.writeShellScriptBin "config-apply" ''
