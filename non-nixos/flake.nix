@@ -50,8 +50,17 @@
       inherit packages;
       homeConfigurations.${profile.username} = home;
       lib.deployment = profile;
-      lib.hostRequirements.flatpak =
-        home.config.desktop.flatpak.enable && home.config.desktop.flatpak.packages != [ ];
+      lib.hostRequirements = {
+        flatpak = home.config.desktop.flatpak.enable && home.config.desktop.flatpak.packages != [ ];
+        graphics =
+          if home.config.targets.genericLinux.gpu.enable then
+            {
+              drivers = toString home.config.targets.genericLinux.gpu.drivers;
+              setup = nixpkgs.lib.getExe home.config.targets.genericLinux.gpu.setupPackage;
+            }
+          else
+            null;
+      };
       checks = forSystems (system: {
         home = (mkHome system).activationPackage;
       });

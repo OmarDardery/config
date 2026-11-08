@@ -30,6 +30,11 @@ let
   ids = home.desktop.flatpak.packages;
 in
 assert home.targets.genericLinux.enable;
+assert home.targets.genericLinux.gpu.enable;
+assert
+  flake.lib.hostRequirements.graphics.drivers == toString home.targets.genericLinux.gpu.drivers;
+assert
+  flake.lib.hostRequirements.graphics.setup == lib.getExe home.targets.genericLinux.gpu.setupPackage;
 assert flake.lib.hostRequirements.flatpak == (home.desktop.flatpak.enable && ids != [ ]);
 assert
   flake.checks.${flake.lib.deployment.system}.home.drvPath == home.home.activationPackage.drvPath;

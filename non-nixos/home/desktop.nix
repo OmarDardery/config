@@ -7,22 +7,16 @@ in
     shared.desktop
     ++ shared.fonts
     ++ (with pkgs; [
-      kitty
-      starship
-      zsh
       thunar
       keepassxc
       xclip
       pavucontrol
       btop
-      zoxide
-      direnv
       unzip
       _7zz
     ]);
   fonts.fontconfig.enable = true;
   home.sessionVariables = {
-    TERMINAL = "kitty";
     SAL_USE_VCLPLUGIN = "gtk3";
   };
   xdg.mimeApps = {

@@ -18,7 +18,7 @@ Install the desktop essentials and apply standalone Home Manager.
   --update        Refresh the non-NixOS flake inputs before applying
   --build-only    Build the home generation without activating
   -h, --help      Show help
-Run as your normal user on non-NixOS Linux. Missing native Flatpak needs sudo.
+Run as your normal user on non-NixOS Linux. Host graphics integration and missing native Flatpak need sudo.
 Existing checkouts keep source edits; pull repository changes with Git.
 HELP
 }
@@ -94,11 +94,19 @@ if [[ "$update_inputs" == true ]]; then nix "${nixflags[@]}" flake update --flak
 if [[ "$build_only" == true ]]; then
   nix "${nixflags[@]}" build --no-write-lock-file --no-link "$flake#homeConfigurations.$username.activationPackage"
 else
-  needs_flatpak=$(nix "${nixflags[@]}" eval --json --no-write-lock-file "$flake#lib.hostRequirements.flatpak")
-  if [[ "$needs_flatpak" == true ]]; then
+  requirements=$(nix "${nixflags[@]}" eval --json --no-write-lock-file "$flake#lib.hostRequirements")
+  printf '%s\n' 'Building desktop essentials before changing the host...'
+  nix "${nixflags[@]}" build --no-write-lock-file --no-link "$flake#homeConfigurations.$username.activationPackage"
+  if [[ $(jq -r '.graphics != null' <<< "$requirements") == true ]]; then
+    bash "$repo_dir/non-nixos/graphics.sh" \
+      "$(jq -r '.graphics.drivers' <<< "$requirements")" \
+      "$(jq -r '.graphics.setup' <<< "$requirements")"
+  fi
+  if [[ $(jq -r '.flatpak' <<< "$requirements") == true ]]; then
     bash "$repo_dir/non-nixos/host-deps.sh"
   fi
   home-manager switch --flake "$flake#$username" --no-write-lock-file \
     --extra-experimental-features 'nix-command flakes' -b "before-home-manager-$(date +%s%N)"
+  printf '%s\n' 'Desktop essentials applied. Log out and back in after the first install to refresh app launchers.'
 fi
 printf 'Checkout: %s\n' "$repo_dir"

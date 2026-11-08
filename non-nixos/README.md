@@ -7,6 +7,8 @@ nix --extra-experimental-features 'nix-command flakes' run github:OmarDardery/co
 Run as your normal Linux user with Nix installed. Supports x86_64 and aarch64.
 The launcher clones into `~/config`, records the local identity, and applies
 standalone Home Manager. From an existing checkout use `bash setup.sh`.
+The normal installer builds first, then sets up host prerequisites, then activates.
+Graphics integration may request sudo even when Flatpak is already installed.
 
 | Use | Provided apps |
 | --- | --- |
@@ -53,7 +55,7 @@ set `desktop.flatpak.packages = [ ... ];` to change the list. A disabled or empt
 list requires no native Flatpak setup. Direct `home-manager switch` expects host
 prerequisites to be installed already; `config-apply` handles that preflight.
 Build-only mode never installs host packages or runs Flatpak operations. The
-installer evaluates the effective prerequisite once before activation.
+installer evaluates the effective prerequisites once before activation.
 
 ## Apply and update
 
@@ -101,9 +103,27 @@ Extra Neovim Lua files, VSCodium keybindings and `.zshrc.local` remain yours.
 LazyVim fetches plugins on first use; project language tools belong in project
 environments. Mason and Tree-sitter compilation start disabled.
 
-No GUI apps are started or restarted during activation. For Nix GUI driver
-integration, follow `targets.genericLinux.gpu` guidance printed by Home Manager.
-Proprietary NVIDIA library versions must match the distro driver.
+No GUI apps are started or restarted during activation. The installer runs Home
+Manager's `non-nixos-gpu-setup` when graphics integration is missing or outdated.
+It registers `/run/opengl-driver` through tmpfiles so Kitty and other Nix GUI apps
+can find Mesa libraries after reboot, without exporting driver paths into every
+app. Matching setups are reused without sudo. Build-only mode skips this step.
+The distro retains its kernel drivers; the default suits AMD/Intel graphics,
+including the integrated AMD GPU in the ASUS TUF A14. Proprietary NVIDIA use
+requires matching the exact host driver version in `targets.genericLinux.gpu.nvidia`;
+do not copy the NixOS driver version onto another distro.
+
+If Kitty still fails after applying and logging back in, run `kitty --debug-rendering`
+from a working terminal and keep its output. For comparison run `kitty --config NONE`;
+this separates configuration errors from graphics or display-session failures.
+Do not launch graphical apps with sudo.
+
+Terminal packages and dotfiles live together in `home/terminal.nix`; general
+apps and file associations remain in `home/desktop.nix`. Kitty keeps a fallback
+palette and optionally loads Noctalia's generated colors. Its beam cursor and
+zoom shortcuts take inspiration from
+[JellyDotFiles](https://codeberg.org/JellyCat/JellyDotFiles), whose per-app layout
+and explicit dependency checks also informed the installer changes.
 
 To roll back managed files/Nix packages, run an older generation's `activate`
 script shown by `home-manager generations`. Flatpaks update outside the Nix store;

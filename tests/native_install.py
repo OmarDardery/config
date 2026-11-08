@@ -100,4 +100,50 @@ class NativeInstall(unittest.TestCase):
         self.assertEqual(self.events(), [])
 
 
+class GraphicsSetup(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory(); self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.link = self.root/'opengl-driver'
+        self.conf = self.root/'non-nixos-gpu.conf'
+        self.drivers = str(self.root/'drivers')
+        self.setup = str(self.root/'package/bin/non-nixos-gpu-setup')
+        self.script = self.root/'graphics.sh'
+        self.script.write_text((ROOT/'non-nixos/graphics.sh').read_text()
+                               .replace('/run/opengl-driver', str(self.link))
+                               .replace('/etc/tmpfiles.d/non-nixos-gpu.conf', str(self.conf)))
+        self.bin = self.root/'bin'; self.bin.mkdir()
+        self.env = dict(os.environ, PATH=str(self.bin))
+        (self.bin/'readlink').symlink_to('/usr/bin/readlink')
+
+    def sudo(self, body):
+        path = self.bin/'sudo'; path.write_text('#!/bin/bash\n'+body); path.chmod(0o755)
+
+    def run_setup(self):
+        return subprocess.run(['/bin/bash',str(self.script),self.drivers,self.setup],
+                              env=self.env, capture_output=True, text=True)
+
+    def test_current_driver_and_boot_config_need_no_sudo(self):
+        self.link.symlink_to(self.drivers)
+        self.conf.symlink_to(self.root/'package/lib/tmpfiles.d/non-nixos-gpu.conf')
+        self.assertEqual(self.run_setup().returncode, 0)
+
+    def test_missing_boot_config_requires_setup_even_with_matching_driver(self):
+        self.link.symlink_to(self.drivers)
+        self.assertIn('administrator', self.run_setup().stderr)
+
+    def test_setup_failure_propagates(self):
+        self.sudo('exit 41\n')
+        self.assertEqual(self.run_setup().returncode, 41)
+
+    def test_success_without_driver_link_is_rejected(self):
+        self.sudo('exit 0\n')
+        self.assertIn('did not create', self.run_setup().stderr)
+
+    def test_setup_creates_driver_link_and_receives_exact_executable(self):
+        self.sudo(f'[[ "$1" == -- && "$2" == "{self.setup}" ]] || exit 42\n'
+                  f'/bin/ln -s "{self.drivers}" "{self.link}"\n')
+        self.assertEqual(self.run_setup().returncode, 0)
+
+
 if __name__ == '__main__': unittest.main(verbosity=2)
