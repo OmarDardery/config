@@ -11,9 +11,13 @@ application list is in `home/flatpak.nix`: Zen, Xournal++, LibreOffice, Steam,
 ProtonPlus, OrcaSlicer, Discord, Papers, File Roller and KeePassXC
 (availability varies by architecture).
 Flatpaks install under the current user; no sudo is used during activation.
-The distro supplies the compositor, terminal, editors, Flatpak and drivers.
-Zsh and Starship remain user-installed Nix packages; activation does not change
-the account login shell.
+The distro supplies Neovim, VSCodium, Zsh, Starship, Kitty, the compositor,
+Flatpak and drivers. Home Manager manages their dotfiles without installing the
+applications or changing the account login shell.
+
+If an earlier configuration set your login shell to the Nix profile's Zsh, change
+it to a distro-provided shell before applying this configuration, or removing that
+profile package can leave the account with an unavailable login shell.
 
 The Ly Matrix configuration is provided at `~/.config/ly/config.ini` for review.
 Ly is a system display manager and normally reads `/etc/ly/config.ini`; installing,

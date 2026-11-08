@@ -30,10 +30,7 @@
   home.file.".zshenv".text = "export ZDOTDIR=${lib.escapeShellArg profile.zshHome}\n";
   home.file.".zshrc" = {
     target = "${profile.zshHome}/.zshrc";
-    text = builtins.readFile ../dotfiles/zsh/.zshrc + ''
-      source ${pkgs.zsh-autosuggestions}/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-      source ${pkgs.zsh-syntax-highlighting}/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-    '';
+    source = ../dotfiles/zsh/.zshrc;
   };
   home.pointerCursor = {
     enable = true;
@@ -53,8 +50,6 @@
   home.packages =
     (with pkgs; [
       gitMinimal
-      zsh
-      starship
     ])
     ++ [
       (pkgs.writeShellScriptBin "config-apply" ''
