@@ -26,7 +26,7 @@
       enable = true;
       autosuggestion.enable = true;
       initContent = builtins.readFile ../../non-nixos/dotfiles/zsh/common.zsh + ''
-        [[ ! -r ${ZDOTDIR:-$HOME}/.zshrc.local ]] || source "${ZDOTDIR:-$HOME}/.zshrc.local"
+        [[ ! -r ''${ZDOTDIR:-$HOME}/.zshrc.local ]] || source "''${ZDOTDIR:-$HOME}/.zshrc.local"
       '';
       syntaxHighlighting.enable = true;
       history = {
