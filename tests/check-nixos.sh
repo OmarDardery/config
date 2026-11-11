@@ -16,6 +16,8 @@ nix eval --impure --json --expr "import ./tests/lean.nix { flake = builtins.getF
 nix eval --impure --json --expr "import ./tests/features.nix { flake = builtins.getFlake \"$flake\"; }"
 printf '%s\n' '{ hardwareProfile = "asus-tuf-a14"; }' > "$work/nixos/local-profile.nix"
 nix eval --impure --json --expr "import ./tests/lean.nix { flake = builtins.getFlake \"$flake\"; }"
+# Evaluate the NVIDIA module against the CachyOS kernel before any host activation.
+nix eval --raw --no-write-lock-file "$flake#nixosConfigurations.nixos.config.hardware.nvidia.package.drvPath" >/dev/null
 cat > "$work/nixos/local-profile.nix" <<EOF
 { username = "ciuser"; homeDirectory = "/srv/ciuser"; configRepo = "$work"; }
 EOF
