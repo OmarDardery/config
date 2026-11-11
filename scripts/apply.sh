@@ -6,6 +6,7 @@ revision=
 host=
 hardware=
 build_only=false
+boot_only=false
 update_inputs=false
 repository_selected=false
 nixflags=(--extra-experimental-features 'nix-command flakes')
@@ -20,6 +21,7 @@ Build and apply NixOS with integrated Home Manager. Requires NixOS.
   --hardware NAME generic or asus-tuf-a14 (default: detect the TUF A14)
   --update        Update flake inputs before building (used by up)
   --build-only    Build without switching the running system
+  --boot-only     Install a boot generation without switching the running system
   -h, --help      Show help
 Repository accepts OWNER/REPO, github:OWNER/REPO, or an HTTPS GitHub URL.
 Existing checkouts keep your source edits; pull source changes with Git.
@@ -41,6 +43,7 @@ while (($#)); do
       shift 2 ;;
     --update) update_inputs=true; shift ;;
     --build-only) build_only=true; shift ;;
+    --boot-only) boot_only=true; shift ;;
     --activate) shift ;; # Compatibility with the previous bootstrap command.
     -h|--help) usage; exit 0 ;;
     -*) die "unknown option: $1" ;;
@@ -49,6 +52,7 @@ while (($#)); do
       repository=$1; repository_selected=true; shift ;;
   esac
 done
+[[ "$build_only" != true || "$boot_only" != true ]] || die '--boot-only and --build-only cannot be combined'
 [[ $(id -u) != 0 ]] || die 'run as your normal user, not root or sudo'
 [[ -e /etc/NIXOS ]] || die 'use the non-nixos flake on Fedora, Debian and other Linux distros'
 [[ $(uname -m) == x86_64 ]] || die 'this workstation currently supports x86_64-linux only'
@@ -152,6 +156,11 @@ if [[ "$build_only" == true ]]; then
 else
   command -v sudo >/dev/null || die 'sudo is required to activate NixOS'
   # nixos-rebuild builds before switching; no separate pre-build is needed.
-  sudo nixos-rebuild switch --flake "$flake#$host" --option experimental-features 'nix-command flakes' --no-write-lock-file
+  if [[ "$boot_only" == true ]]; then
+    sudo nixos-rebuild boot --flake "$flake#$host" --option experimental-features 'nix-command flakes' --no-write-lock-file
+    printf '%s\n' 'Boot generation installed; reboot when ready. Current session remains untouched.'
+  else
+    sudo nixos-rebuild switch --flake "$flake#$host" --option experimental-features 'nix-command flakes' --no-write-lock-file
+  fi
 fi
 printf 'Checkout: %s\n' "$repo_dir"
