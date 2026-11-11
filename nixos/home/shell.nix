@@ -17,7 +17,8 @@
     ls = "eza -al";
     la = "eza -a";
     ll = "eza -l";
-    lt = "eza -aT";
+    lt = "eza --tree --level=2";
+    lta = "eza -aT";
     ldot = "eza -a | grep '^[.]'";
     ".." = "cd ..";
     "..." = "cd ../..";
