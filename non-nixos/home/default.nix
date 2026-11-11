@@ -50,9 +50,9 @@
   manual.manpages.enable = false;
   home.packages = [
     (pkgs.writeShellScriptBin "config-apply" ''
-        exec nix --extra-experimental-features 'nix-command flakes' run \
-          --no-write-lock-file ${lib.escapeShellArg "path:${profile.configRepo}/non-nixos"} \
-          -- --repo-dir ${lib.escapeShellArg profile.configRepo} "$@"
-      '')
-    ];
+      exec nix --extra-experimental-features 'nix-command flakes' run \
+        --no-write-lock-file ${lib.escapeShellArg "path:${profile.configRepo}/non-nixos"} \
+        -- --repo-dir ${lib.escapeShellArg profile.configRepo} "$@"
+    '')
+  ];
 }
