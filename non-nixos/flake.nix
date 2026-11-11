@@ -8,7 +8,7 @@
     };
   };
   outputs =
-    { nixpkgs, home-manager, ... }@inputs:
+    { nixpkgs, home-manager, ... }:
     let
       profile = import ./profile.nix;
       forSystems = nixpkgs.lib.genAttrs [
@@ -22,12 +22,7 @@
             inherit system;
             config.allowUnfree = true;
           };
-          extraSpecialArgs = {
-            inherit inputs;
-            profile = profile // {
-              inherit system;
-            };
-          };
+          extraSpecialArgs.profile = profile // { inherit system; };
           modules = [ ./home ];
         };
       home = mkHome profile.system;
@@ -53,10 +48,8 @@
       inherit packages;
       homeConfigurations.${profile.username} = home;
       lib.deployment = profile;
-      lib.hostRequirements = {
-        flatpak = home.config.desktop.flatpak.enable && home.config.desktop.flatpak.packages != [ ];
-
-      };
+      lib.hostRequirements.flatpak =
+        home.config.desktop.flatpak.enable && home.config.desktop.flatpak.packages != [ ];
       checks = forSystems (system: {
         home = (mkHome system).activationPackage;
       });
