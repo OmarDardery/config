@@ -11,6 +11,13 @@
       seahorse
       sshfs
       glib
+      curl
+      jq
+      file
+      rsync
+      zip
+      unzip
+      _7zz
     ]);
 
   environment.sessionVariables = {
