@@ -107,7 +107,7 @@ shells retain aliases from the previous generation. The aliases use checkout-bou
 | `rebuild`, `config-apply` | Apply local settings without updating inputs |
 | `nbuild` | Build without activating |
 | `config-apply --boot-only` | Install a boot generation safely without switching the current session |
-| `config-doctor` | Report read-only post-boot hardware and service status |
+| `config-doctor` | Report read-only post-boot hardware and service status |\n| `config-doctor --hardware` | Inspect suspend support, DRM connectors, Bluetooth, and battery charge threshold |\n| `config-doctor --suspend-test` | Explicitly suspend after confirmation, then inspect resume state |
 | `cnf`, `cconf` | Edit or enter the checkout |
 
 `systemd-run` in rebuild output is part of upstream NixOS activation. It is
@@ -175,7 +175,14 @@ sudo nixos-rebuild switch --rollback
 ```
 
 For kernel/NVIDIA upgrades, use `config-apply --boot-only`, reboot, then run
-`config-doctor`; choose the previous NixOS boot generation if graphics fail.
+`config-doctor --hardware`; choose the previous NixOS boot generation if graphics fail.
+Check an actual external monitor for picture, refresh rate and scaling, then pair
+a Bluetooth device. For a physical suspend/resume test, save your work and run
+`config-doctor --suspend-test`; it explicitly asks for confirmation before
+suspending. On resume verify the display, keyboard, Wi-Fi and Bluetooth still
+function. The battery's `charge_control_end_threshold` should read `80`; a
+missing sysfs entry indicates that kernel/firmware does not expose this control.
+This command does not change the hardware policy or claim a passing physical test.
 Build and validate before changing graphics or display-manager settings. Remote
 evaluation cannot test the laptop's displays, tablet or suspend/resume behavior.
 

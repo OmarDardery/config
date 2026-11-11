@@ -9,6 +9,12 @@ rm -f "$work/nixos/hardware-configuration.nix" "$work/nixos/local-profile.nix" "
 cp .github/ci-hardware.nix "$work/nixos/hardware-configuration.nix"
 flake="path:$work"
 nix build "$flake" --no-link --no-write-lock-file
+# Verify both the normal and hardware-specific diagnostic entry points parse.
+bash -n scripts/doctor.sh
+bash scripts/doctor.sh --invalid >/dev/null 2>&1 && {
+  echo "config-doctor unexpectedly accepted an invalid option" >&2
+  exit 1
+}
 nix run "$flake" -- --help
 nix run "$flake#nixos-apply" -- --help
 nix flake check "$flake" --all-systems --no-build --no-write-lock-file
