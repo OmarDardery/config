@@ -94,6 +94,17 @@ class Deployment(unittest.TestCase):
         self.assertFalse(self.events('sudo'))
         self.assertIn('--no-link', self.builds()[0])
 
+    def test_boot_only_preserves_live_session(self):
+        self.marker.touch()
+        self.apply('--boot-only')
+        self.assertEqual(self.events('sudo')[0][1:3], ['nixos-rebuild', 'boot'])
+        self.assertFalse(self.builds())
+
+    def test_boot_only_and_build_only_are_mutually_exclusive(self):
+        self.marker.touch()
+        self.assertIn('cannot be combined', self.apply('--boot-only', '--build-only', success=False).stderr)
+        self.assertFalse(self.events('sudo'))
+
     def test_existing_checkout_and_hardware_preserved(self):
         shutil.copytree(self.template,self.repo)
         target=self.repo/'nixos/hardware-configuration.nix'; target.write_text('local edits')
