@@ -94,7 +94,7 @@ flake="path:$repo_dir"
 # A new flake input requires a lock entry before any --no-write-lock-file eval.
 # Only refresh automatically on first migration; normal updates remain explicit.
 if ! jq -e '.nodes.root.inputs["nix-cachyos-kernel"]' "$repo_dir/flake.lock" >/dev/null; then
-  nix "${nixflags[@]}" flake lock --flake "$flake"
+  nix "${nixflags[@]}" flake lock "$flake"
 fi
 bash "$repo_dir/scripts/copy-hardware.sh" "$repo_dir" --if-missing
 # Capture the installed system once. Later updates retain these stateful defaults.
