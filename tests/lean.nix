@@ -23,7 +23,9 @@ assert os.programs.steam.enable;
 assert os.services.tailscale.enable;
 assert (os.services.restic.backups ? home) == (flake.lib.deployment.storageUUID != null);
 assert (os.fileSystems ? "/mnt/storage") == (flake.lib.deployment.storageUUID != null);
-assert os.virtualisation.docker.enable && os.services.printing.enable;
+assert os.virtualisation.docker.enable && !os.services.printing.enable;
+assert !os.services.ipp-usb.enable && !os.hardware.sane.enable && !os.services.avahi.enable;
+assert !(builtins.elem "nmap" (map flake.inputs.nixpkgs.lib.getName os.environment.systemPackages));
 assert os.workstation.engineering.enable && os.workstation.diagnostics.enable;
 assert os.programs.gamemode.enable;
 assert
