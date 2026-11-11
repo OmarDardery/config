@@ -6,7 +6,6 @@
       inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default
       (callPackage ../../../non-nixos/pkgs/zen-browser.nix { zenInput = inputs.zen-browser; })
       discord
-      proton-vpn
       imagemagick
       gnome-disk-utility
       seahorse
