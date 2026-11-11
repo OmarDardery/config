@@ -9,7 +9,7 @@
     ./shell.nix
     ./git.nix
     ./nix-tools.nix
-    ./editors
+    ../../non-nixos/home/editors
     inputs.noctalia.homeModules.default
     inputs.umbriel.homeModules.default
     ./desktop.nix
