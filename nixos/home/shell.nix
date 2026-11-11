@@ -1,4 +1,4 @@
-{ pkgs, config, ... }:
+{ pkgs, config, lib, ... }:
 {
   home.sessionPath = [
     "${config.home.homeDirectory}/.local/bin"
@@ -12,6 +12,7 @@
     ripgrep
     fd
     tealdeer
+    libnotify # notify-send, for long-command completion alerts
   ];
   home.shellAliases = {
     edit = "sudo -e";
@@ -24,10 +25,30 @@
     };
     zsh = {
       enable = true;
-      autosuggestion.enable = true;
-      initContent = builtins.readFile ../../non-nixos/dotfiles/zsh/common.zsh + ''
-        [[ ! -r ''${ZDOTDIR:-$HOME}/.zshrc.local ]] || source "''${ZDOTDIR:-$HOME}/.zshrc.local"
-      '';
+      autosuggestion = {
+        enable = true;
+        # Fish-like suggestions from both commands already used and completions.
+        strategy = [ "history" "completion" ];
+        highlight = "fg=#7c8493";
+      };
+      # compinit runs at 570; fzf-tab must load before autosuggestions at 700.
+      initContent = lib.mkMerge [
+        (lib.mkOrder 600 (builtins.readFile ../../non-nixos/dotfiles/zsh/common.zsh))
+        (lib.mkOrder 650 ''
+          source ${pkgs.zsh-fzf-tab}/share/fzf-tab/fzf-tab.plugin.zsh
+          zstyle ':fzf-tab:*' switch-group ',' '.'
+          zstyle ':fzf-tab:*' fzf-flags --height=45% --border
+          zstyle ':fzf-tab:complete:cd:*' fzf-preview 'eza -a --color=always --icons=auto -- "$realpath" 2>/dev/null'
+        '')
+        (lib.mkOrder 720 ''
+          # Ctrl+Space accepts the ghost-text suggestion; Right/End also work.
+          bindkey '^@' autosuggest-accept
+        '')
+        (lib.mkOrder 1200 ''
+          [[ ! -r ''${ZDOTDIR:-$HOME}/.zshrc.local ]] ||
+            source "''${ZDOTDIR:-$HOME}/.zshrc.local"
+        '')
+      ];
       syntaxHighlighting.enable = true;
       history = {
         path = "${config.home.homeDirectory}/.zsh_history";
