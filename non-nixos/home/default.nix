@@ -19,6 +19,7 @@
       "umbriel/config.toml".source = ../dotfiles/umbriel/config.toml;
       "noctalia/config.toml".source = ../dotfiles/noctalia/config.toml;
       "kitty/kitty.conf".source = ../dotfiles/kitty/kitty.conf;
+      "zsh/common.zsh".source = ../dotfiles/zsh/common.zsh;
       "starship.toml".source = ../dotfiles/starship.toml;
       "nvim/init.lua".source = ../dotfiles/nvim/init.lua;
       "nvim/lua/config/options.lua".source = ../dotfiles/nvim/lua/config/options.lua;
