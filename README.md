@@ -64,7 +64,9 @@ A14 profile adds NVIDIA/PRIME, peripherals and an 80% battery cap. Ly supplies t
 Matrix login screen; Umbriel starts Noctalia. Generic hosts use their generated
 hardware configuration.
 
-Gaming, engineering, Docker, printing, diagnostics and Tailscale default to on.
+Gaming, engineering, Docker, diagnostics and Tailscale default to on.
+Printing/scanning are available but disabled by default; set
+`workstation.printing.enable = true;` to enable them.
 Set `workstation.<feature>.enable = false;` in `nixos/configuration.nix` to opt out.
 The personal data mount and backups are enabled only when the disk is detected.
 
