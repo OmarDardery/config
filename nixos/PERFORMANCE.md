@@ -13,6 +13,10 @@ Nix builds are limited to two parallel jobs and four cores, with lower schedulin
 priority. Store cleanup uses NixOS's standard garbage-collection and optimisation
 jobs. There is no second package updater or desktop activation daemon.
 
-The latest pinned-input kernel is selected in `system/performance.nix`.
+CachyOS latest from the release branch is selected via its pinned overlay in
+`system/performance.nix`. Keep the CachyOS flake's nixpkgs input independent to
+maximize cache hits. For kernel upgrades, use `config-apply --boot-only` instead
+of switching the running system in the same session. Run `config-doctor` after
+reboot and compare boot time, power state and driver availability.
 The ASUS NVIDIA driver and suspend policy remain in `hardware.nix`.
 Changes to drivers, display behavior and suspend/resume require physical testing.

@@ -19,7 +19,7 @@
       smartmontools
       nvme-cli
       dnsutils
-        iperf3
+      iperf3
       ethtool
     ];
   };

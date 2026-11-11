@@ -12,10 +12,16 @@ nix build "$flake" --no-link --no-write-lock-file
 nix run "$flake" -- --help
 nix run "$flake#nixos-apply" -- --help
 nix flake check "$flake" --all-systems --no-build --no-write-lock-file
+# Parse the shared shell helpers and native dotfile with the configured Zsh.
+zsh_package=$(nix build --no-link --print-out-paths --no-write-lock-file "$flake#nixosConfigurations.nixos.config.home-manager.users.oad.programs.zsh.package^out")
+"$zsh_package/bin/zsh" -n non-nixos/dotfiles/zsh/common.zsh
+"$zsh_package/bin/zsh" -n non-nixos/dotfiles/zsh/.zshrc
 nix eval --impure --json --expr "import ./tests/lean.nix { flake = builtins.getFlake \"$flake\"; }"
 nix eval --impure --json --expr "import ./tests/features.nix { flake = builtins.getFlake \"$flake\"; }"
 printf '%s\n' '{ hardwareProfile = "asus-tuf-a14"; }' > "$work/nixos/local-profile.nix"
 nix eval --impure --json --expr "import ./tests/lean.nix { flake = builtins.getFlake \"$flake\"; }"
+# Evaluate the NVIDIA module against the CachyOS kernel before any host activation.
+nix eval --raw --no-write-lock-file "$flake#nixosConfigurations.nixos.config.hardware.nvidia.package.drvPath" >/dev/null
 cat > "$work/nixos/local-profile.nix" <<EOF
 { username = "ciuser"; homeDirectory = "/srv/ciuser"; configRepo = "$work"; }
 EOF

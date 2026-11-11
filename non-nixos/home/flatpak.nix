@@ -23,12 +23,6 @@ in
       default = true;
       description = "Install the declared user Flatpaks during Home Manager activation";
     };
-    installer = lib.mkOption {
-      type = lib.types.package;
-      readOnly = true;
-      default = installer;
-      description = "Synchronous native Flatpak installer";
-    };
     packages = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = [

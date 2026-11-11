@@ -3,8 +3,8 @@
 The root flake imports `configuration.nix` and integrates Home Manager as a
 NixOS module. `hardware.nix` is selected automatically only for the ASUS TUF A14 (FA401).
 Generated hardware, account settings, state versions and boot target stay local
-and ignored by Git. Other hosts use generic hardware. All hosts use the latest kernel available in
-the pinned Nixpkgs input.
+and ignored by Git. Other hosts use generic hardware. x86_64 NixOS hosts use the CachyOS release
+kernel via the upstream pinned overlay.
 
 ## Structure
 
@@ -52,6 +52,8 @@ shells retain aliases from the previous generation. The aliases use checkout-bou
 | `up` | Update local flake inputs, then rebuild |
 | `rebuild`, `config-apply` | Apply local settings without updating inputs |
 | `nbuild` | Build without activating |
+| `config-apply --boot-only` | Install a boot generation safely without switching the current session |
+| `config-doctor` | Report read-only post-boot hardware and service status |
 | `cnf`, `cconf` | Edit or enter the checkout |
 
 `systemd-run` in rebuild output is part of upstream NixOS activation. It is
@@ -93,7 +95,7 @@ mount remains for sandbox compatibility.
 The kernel scheduler and power-profiles-daemon handle normal power management.
 Choose power profiles through Noctalia or `powerprofilesctl`; there is no extra
 scheduler daemon or script that changes profiles when the power source changes.
-The latest kernel is selected in `system/performance.nix`; the ASUS NVIDIA
+CachyOS latest is selected in `system/performance.nix`; the ASUS NVIDIA
 driver pin stays in its hardware profile. The installed boot
 target and state versions are captured once in `local-system.json`; updates do
 not advance state versions. The personal data disk is mounted only when detected.
@@ -118,6 +120,8 @@ journalctl --user -b -u UNIT_NAME
 sudo nixos-rebuild switch --rollback
 ```
 
+For kernel/NVIDIA upgrades, use `config-apply --boot-only`, reboot, then run
+`config-doctor`; choose the previous NixOS boot generation if graphics fail.
 Build and validate before changing graphics or display-manager settings. Remote
 evaluation cannot test the laptop's displays, tablet or suspend/resume behavior.
 

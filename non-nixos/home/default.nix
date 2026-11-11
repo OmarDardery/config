@@ -19,6 +19,7 @@
       "umbriel/config.toml".source = ../dotfiles/umbriel/config.toml;
       "noctalia/config.toml".source = ../dotfiles/noctalia/config.toml;
       "kitty/kitty.conf".source = ../dotfiles/kitty/kitty.conf;
+      "zsh/common.zsh".source = ../dotfiles/zsh/common.zsh;
       "starship.toml".source = ../dotfiles/starship.toml;
       "nvim/init.lua".source = ../dotfiles/nvim/init.lua;
       "nvim/lua/config/options.lua".source = ../dotfiles/nvim/lua/config/options.lua;
@@ -47,15 +48,11 @@
   systemd.user.startServices = false;
   programs.man.enable = false;
   manual.manpages.enable = false;
-  home.packages =
-    (with pkgs; [
-      gitMinimal
-    ])
-    ++ [
-      (pkgs.writeShellScriptBin "config-apply" ''
-        exec nix --extra-experimental-features 'nix-command flakes' run \
-          --no-write-lock-file ${lib.escapeShellArg "path:${profile.configRepo}/non-nixos"} \
-          -- --repo-dir ${lib.escapeShellArg profile.configRepo} "$@"
-      '')
-    ];
+  home.packages = [
+    (pkgs.writeShellScriptBin "config-apply" ''
+      exec nix --extra-experimental-features 'nix-command flakes' run \
+        --no-write-lock-file ${lib.escapeShellArg "path:${profile.configRepo}/non-nixos"} \
+        -- --repo-dir ${lib.escapeShellArg profile.configRepo} "$@"
+    '')
+  ];
 }

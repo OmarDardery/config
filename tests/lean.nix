@@ -19,6 +19,8 @@ assert os.services.displayManager.defaultSession == "umbriel";
 assert !os.services.greetd.enable;
 assert os.security.pam.services.ly.enableGnomeKeyring;
 assert !(flake.inputs ? noctalia-greeter);
+assert flake.inputs ? nix-cachyos-kernel;
+assert flake.inputs.nixpkgs.lib.hasPrefix "linux-cachyos" (flake.inputs.nixpkgs.lib.getName os.boot.kernelPackages.kernel);
 assert os.programs.steam.enable;
 assert os.services.tailscale.enable;
 assert (os.services.restic.backups ? home) == (flake.lib.deployment.storageUUID != null);
@@ -61,6 +63,7 @@ assert !(home.home.shellAliases ? update);
 assert !(flake.packages.x86_64-linux ? update);
 assert !(flake.apps.x86_64-linux ? update);
 assert home.programs.zsh.enable && home.programs.direnv.enableZshIntegration;
+assert flake.inputs.nixpkgs.lib.hasInfix "up-line-or-beginning-search" home.programs.zsh.initContent;
 assert
   home.programs.kitty.settings.shell
   == "${os.users.users.${flake.lib.deployment.username}.shell}/bin/zsh -l";

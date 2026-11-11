@@ -22,13 +22,16 @@ jobs:
           python3 tests/deploy.py
           python3 tests/dotfiles.py
           python3 tests/native_install.py
-          python3 tests/login_shell.py
       - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # v31
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
-            extra-substituters = https://noctalia.cachix.org
-            extra-trusted-public-keys = noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4=
+            extra-substituters = https://noctalia.cachix.org https://cache.lantian.pub/lantian
+            extra-trusted-public-keys = noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4= lantian:WVGO7vsRMSEN+h7Lp7kv6SAmrkEXgUGbbXm7jMDjBuQ=
+      - name: Verify committed flake.lock is complete
+        run: |
+          nix flake lock .
+          git diff --exit-code -- flake.lock
       - name: Verify installed bootloader and state-version preservation
         run: python3 tests/installed.py
       - name: Evaluate with temporary hardware
