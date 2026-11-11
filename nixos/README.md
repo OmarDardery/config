@@ -97,7 +97,9 @@ The latest kernel is selected in `system/performance.nix`; the ASUS NVIDIA
 driver pin stays in its hardware profile. The installed boot
 target and state versions are captured once in `local-system.json`; updates do
 not advance state versions. The personal data disk is mounted only when detected.
-Tailscale, Docker, printing/scanning and diagnostics are enabled by default.
+Tailscale, Docker and diagnostics are enabled by default. Printing/scanning,
+including their discovery services, are disabled until
+`workstation.printing.enable = true;` is selected.
 Backups are enabled when the personal storage disk is configured.
 
 OpenTabletDriver manages tablet settings through its GUI. The optional preset
