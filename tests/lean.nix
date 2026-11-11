@@ -64,6 +64,9 @@ assert !(flake.packages.x86_64-linux ? update);
 assert !(flake.apps.x86_64-linux ? update);
 assert home.programs.zsh.enable && home.programs.direnv.enableZshIntegration;
 assert flake.inputs.nixpkgs.lib.hasInfix "up-line-or-beginning-search" home.programs.zsh.initContent;
+assert flake.inputs.nixpkgs.lib.hasInfix "fzf-tab.plugin.zsh" home.programs.zsh.initContent;
+assert flake.inputs.nixpkgs.lib.hasInfix "magic-space" home.programs.zsh.initContent;
+assert home.programs.zsh.autosuggestion.strategy == [ "history" "completion" ];
 assert
   home.programs.kitty.settings.shell
   == "${os.users.users.${flake.lib.deployment.username}.shell}/bin/zsh -l";
