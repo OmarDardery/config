@@ -3,6 +3,8 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     nix-flatpak.url = "github:gmodena/nix-flatpak";
+    # Release branch contains kernels already built and published to the cache.
+    nix-cachyos-kernel.url = "github:xddxdd/nix-cachyos-kernel/release";
 
     zen-browser = {
       url = "github:youwen5/zen-browser-flake";
