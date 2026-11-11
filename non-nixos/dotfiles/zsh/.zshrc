@@ -24,6 +24,22 @@ alias rebuild=config-apply
 [[ ! -r ${XDG_CONFIG_HOME:-$HOME/.config}/zsh/common.zsh ]] ||
   source "${XDG_CONFIG_HOME:-$HOME/.config}/zsh/common.zsh"
 
+# Native distro packages remain optional: no Nix-owned shell binaries.
+for plugin in /usr/share/zsh/plugins/fzf-tab/fzf-tab.plugin.zsh \
+              /usr/share/fzf-tab/fzf-tab.plugin.zsh; do
+  if [[ -r "$plugin" ]] && (( $+commands[fzf] )); then
+    source "$plugin"
+    break
+  fi
+done
+typeset -ga ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+for plugin in /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh \
+              /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh; do
+  if [[ -r "$plugin" ]]; then
+    source "$plugin"
+    break
+  fi
+done
 if (( $+commands[fzf] )); then
   source <(fzf --zsh 2>/dev/null)
 fi
