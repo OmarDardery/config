@@ -6,12 +6,14 @@ Install Nix and Flatpak through your distro first, then run:
 nix --extra-experimental-features 'nix-command flakes' run github:OmarDardery/config
 ```
 
-Home Manager manages user dotfiles, the Bibata cursor and user Flatpaks. The
+Home Manager manages user dotfiles, the Bibata cursor and user Flatpaks.
+Shared Zsh completion, navigation and helpers are installed at
+`~/.config/zsh/common.zsh` and sourced by the managed `.zshrc`. The
 application list is in `home/flatpak.nix`: Zen, Xournal++, LibreOffice, Steam,
 ProtonPlus, OrcaSlicer, Discord, Papers, File Roller and KeePassXC
 (availability varies by architecture).
 Flatpaks install under the current user; no sudo is used during activation.
-The distro supplies Neovim, VSCodium, Zsh, Starship, Kitty, the compositor,
+The distro supplies Neovim, VSCodium, Zsh, Starship, Kitty, Thunar, the compositor,
 Flatpak and drivers. Home Manager manages their dotfiles without installing the
 applications or changing the account login shell.
 
