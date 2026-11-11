@@ -1,11 +1,11 @@
-# Native kernel scheduling and power profiles.
-{ inputs, ... }:
+# CachyOS kernel via its own pinned flake overlay and binary cache.
+{ inputs, pkgs, ... }:
 {
-  # Follow the CachyOS kernel release branch when the flake lock is refreshed.
-  boot.kernelPackages =
-    inputs.nix-cachyos-kernel.legacyPackages.x86_64-linux.linuxPackages-cachyos-latest;
+  # The pinned overlay matches upstream's kernel build environment.
+  # Do not make the CachyOS flake input follow this system's nixpkgs.
+  nixpkgs.overlays = [ inputs.nix-cachyos-kernel.overlays.pinned ];
+  boot.kernelPackages = pkgs.cachyosKernels.linuxPackages-cachyos-latest;
 
   services.power-profiles-daemon.enable = true;
-  # Compressed RAM first; generated hardware config retains disk-swap fallback.
   zramSwap.enable = true;
 }
