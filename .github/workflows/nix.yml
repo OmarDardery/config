@@ -27,8 +27,16 @@ jobs:
         with:
           extra_nix_config: |
             experimental-features = nix-command flakes
-            extra-substituters = https://noctalia.cachix.org
-            extra-trusted-public-keys = noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4=
+            extra-substituters = https://noctalia.cachix.org https://cache.lantian.pub/lantian
+            extra-trusted-public-keys = noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4= lantian:WVGO7vsRMSEN+h7Lp7kv6SAmrkEXgUGbbXm7jMDjBuQ=
+      - name: Resolve pending flake input pin for review
+        run: |
+          nix flake lock --flake .
+          if ! git diff --quiet -- flake.lock; then
+            echo 'LOCKFILE_BEGIN'
+            cat flake.lock
+            echo 'LOCKFILE_END'
+          fi
       - name: Verify installed bootloader and state-version preservation
         run: python3 tests/installed.py
       - name: Evaluate with temporary hardware
