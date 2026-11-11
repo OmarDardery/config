@@ -31,7 +31,7 @@
     gaming.enable = lib.mkDefault true;
     engineering.enable = lib.mkDefault true;
     containers.enable = lib.mkDefault true;
-    printing.enable = lib.mkDefault true;
+    printing.enable = lib.mkDefault false;
     diagnostics.enable = lib.mkDefault true;
     tailscale.enable = lib.mkDefault true;
     # The backup repository lives on the personal storage disk.
