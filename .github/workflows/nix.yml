@@ -31,7 +31,7 @@ jobs:
             extra-trusted-public-keys = noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4= lantian:WVGO7vsRMSEN+h7Lp7kv6SAmrkEXgUGbbXm7jMDjBuQ=
       - name: Resolve pending flake input pin for review
         run: |
-          nix flake lock --flake .
+          nix flake lock .
           if ! git diff --quiet -- flake.lock; then
             echo 'LOCKFILE_BEGIN'
             cat flake.lock
