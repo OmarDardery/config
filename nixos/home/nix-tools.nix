@@ -12,6 +12,11 @@ let
 in
 {
   home.packages = [
+    (pkgs.writeShellApplication {
+      name = "config-doctor";
+      runtimeInputs = with pkgs; [ coreutils gnugrep util-linux systemd ];
+      text = builtins.readFile ../../scripts/doctor.sh;
+    })
     (pkgs.writeShellScriptBin "config-apply" ''
       exec ${
         inputs.self.packages.${profile.system}.nixos-apply
