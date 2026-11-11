@@ -20,8 +20,13 @@ compinit
 
 alias up='config-apply --update'
 alias rebuild=config-apply
-alias ll='ls -lah'
+# Share completion, navigation and aliases with NixOS.
+[[ ! -r ${XDG_CONFIG_HOME:-$HOME/.config}/zsh/common.zsh ]] ||
+  source "${XDG_CONFIG_HOME:-$HOME/.config}/zsh/common.zsh"
 
+if (( $+commands[fzf] )); then
+  source <(fzf --zsh 2>/dev/null)
+fi
 if (( $+commands[starship] )); then eval "$(starship init zsh)"; fi
 if (( $+commands[zoxide] )); then eval "$(zoxide init zsh)"; fi
 if (( $+commands[direnv] )); then eval "$(direnv hook zsh)"; fi
