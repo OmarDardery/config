@@ -20,6 +20,16 @@ assert !os.services.greetd.enable;
 assert os.security.pam.services.ly.enableGnomeKeyring;
 assert !(flake.inputs ? noctalia-greeter);
 assert flake.inputs ? nix-cachyos-kernel;
+assert
+  flake.lib.deployment.hardwareProfile != "asus-tuf-a14"
+  || (
+    os.hardware.bluetooth.enable
+    && os.hardware.nvidia.prime.offload.enable
+    && os.services.logind.settings.Login.HandleLidSwitch == "suspend"
+    && os.services.logind.settings.Login.HandleLidSwitchDocked == "ignore"
+    && flake.inputs.nixpkgs.lib.hasInfix "charge_control_end_threshold"
+      os.services.udev.extraRules
+  );
 assert flake.inputs.nixpkgs.lib.hasPrefix "linux-cachyos" (flake.inputs.nixpkgs.lib.getName os.boot.kernelPackages.kernel);
 assert os.programs.steam.enable;
 assert os.services.tailscale.enable;
