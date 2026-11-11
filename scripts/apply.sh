@@ -91,11 +91,6 @@ else
 fi
 [[ -f "$repo_dir/flake.nix" && -f "$repo_dir/flake.lock" && -f "$repo_dir/nixos/profile.nix" ]] || die 'checkout needs the root flake and nixos/profile.nix; update the checkout with Git first'
 flake="path:$repo_dir"
-# A new flake input requires a lock entry before any --no-write-lock-file eval.
-# Only refresh automatically on first migration; normal updates remain explicit.
-if ! jq -e '.nodes.root.inputs["nix-cachyos-kernel"]' "$repo_dir/flake.lock" >/dev/null; then
-  nix "${nixflags[@]}" flake lock "$flake"
-fi
 bash "$repo_dir/scripts/copy-hardware.sh" "$repo_dir" --if-missing
 # Capture the installed system once. Later updates retain these stateful defaults.
 if [[ ! -s "$repo_dir/nixos/local-system.json" ]]; then
