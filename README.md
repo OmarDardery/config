@@ -12,14 +12,13 @@ identity without committing machine-specific files.
 | System | Scope |
 | --- | --- |
 | NixOS, x86_64 | Desktop, apps, hardware/services and integrated Home Manager |
-| Other Linux, x86_64/aarch64 | Standalone Home Manager apps, fonts, dotfiles and supported user Flatpaks |
+| Other Linux, x86_64/aarch64 | Standalone Home Manager dotfiles, cursor and explicitly selected user Flatpaks |
 
 NixOS captures the installed hardware, bootloader and state versions before its
 first rebuild. Other distros keep their existing desktop session and drivers;
-missing native Flatpak prerequisites use the distro's package manager with sudo.
-Both setups provide Zen, Thunar, Kitty and Zsh with the shared Starship prompt.
-Standalone activation configures graphics integration and the account's Zsh
-login shell automatically; first-time host changes may request sudo.
+native Flatpak and desktop prerequisites must be installed through the distro.
+NixOS installs desktop applications; standalone Home Manager preserves the distro's
+packages, login shell and GPU drivers while managing shared configuration.
 Configured files are backed up before Home Manager takes ownership.
 
 ## Daily use
@@ -29,6 +28,8 @@ Configured files are backed up before Home Manager takes ownership.
 | `config-apply` / `rebuild` | Apply the local checkout |
 | `up` | Update the active flake's lockfile, then apply |
 | `config-apply --build-only` | Build without activating or installing host prerequisites |
+| `config-apply --boot-only` (NixOS) | Install next boot generation without activating it yet |
+| `config-doctor` (NixOS) | Report kernel, NVIDIA, boot time and device state |
 
 `up` preserves source edits and does not pull Git commits. To receive repository
 changes, run `git -C ~/config pull --ff-only`, then `up`. Review and commit changed
@@ -59,7 +60,7 @@ environment; there are no shared development shells or global language runtimes.
 
 ## NixOS defaults and recovery
 
-Every NixOS host uses the latest kernel in the pinned Nixpkgs input. The ASUS TUF
+NixOS x86_64 hosts use CachyOS's latest release kernel via its pinned flake overlay. The ASUS TUF
 A14 profile adds NVIDIA/PRIME, peripherals and an 80% battery cap. Ly supplies the
 Matrix login screen; Umbriel starts Noctalia. Generic hosts use their generated
 hardware configuration.
