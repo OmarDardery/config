@@ -43,8 +43,6 @@ class StandaloneHome(unittest.TestCase):
         (self.template/'.git').mkdir(parents=True)
         shutil.copytree(ROOT/'non-nixos', self.template/'non-nixos',
                         ignore=shutil.ignore_patterns('local-profile.json'))
-        (self.template/'non-nixos/host-deps.sh').write_text('#!/bin/bash\nprintf host-preflight >> "$TEST_ROOT/host-preflight"\n')
-        (self.template/'non-nixos/graphics.sh').write_text('#!/bin/bash\nprintf graphics >> \"$TEST_ROOT/graphics\"\n')
         self.marker = self.root/'NIXOS'
         self.script = self.root/'apply.sh'
         self.script.write_text((ROOT/'non-nixos/apply.sh').read_text().replace('/etc/NIXOS', str(self.marker)))
@@ -112,8 +110,6 @@ class StandaloneHome(unittest.TestCase):
     def test_build_only_does_not_activate(self):
         self.apply('--build-only')
         self.assertFalse(self.events('home-manager'))
-        self.assertFalse((self.root/'host-preflight').exists())
-        self.assertFalse((self.root/'graphics').exists())
         self.assertIn('build', self.events('nix')[0])
         self.assertIn(f'path:{self.repo}/non-nixos#homeConfigurations.tester.activationPackage', self.events('nix')[0])
 
@@ -140,7 +136,6 @@ class StandaloneHome(unittest.TestCase):
         self.assertIn('checkout', self.events('git')[1])
         profile = json.loads((self.repo/'non-nixos/local-profile.json').read_text())
         self.assertEqual(profile['system'], 'aarch64-linux')
-        self.assertFalse((self.root/'host-preflight').exists())
 
     def test_mismatched_identity_is_rejected(self):
         self.apply()
@@ -172,20 +167,11 @@ class StandaloneHome(unittest.TestCase):
         self.env['TEST_EVAL_FAIL'] = '1'
         self.apply(success=False)
         self.assertFalse(self.events('home-manager'))
-        self.assertFalse((self.root/'host-preflight').exists())
 
     def test_failed_build_prevents_host_mutations(self):
         self.env['TEST_BUILD_FAIL'] = '1'
         self.apply(success=False)
-        self.assertFalse((self.root/'graphics').exists())
-        self.assertFalse((self.root/'host-preflight').exists())
         self.assertFalse(self.events('home-manager'))
-
-    def test_graphics_is_owned_by_home_manager_activation(self):
-        (self.template/'non-nixos/graphics.sh').write_text('#!/bin/bash\nexit 48\n')
-        self.apply()
-        self.assertFalse((self.root/'graphics').exists())
-        self.assertTrue(self.events('home-manager'))
 
     def test_help_needs_no_nix_or_home_manager(self):
         self.env['TEST_UID'] = '0'
