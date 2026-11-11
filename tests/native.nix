@@ -14,6 +14,7 @@ assert (builtins.fromTOML (builtins.readFile h.xdg.configFile."noctalia-greeter/
 assert h.xdg.configFile ? "nvim/init.lua";
 assert h.xdg.configFile ? "kitty/kitty.conf";
 assert h.xdg.configFile ? "starship.toml";
+assert h.xdg.configFile ? "zsh/common.zsh";
 assert h.xdg.configFile ? "VSCodium/User/settings.json";
 assert !(builtins.elem pkgs.zsh h.home.packages);
 assert !(builtins.elem pkgs.starship h.home.packages);
