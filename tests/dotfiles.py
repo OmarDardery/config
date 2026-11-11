@@ -26,7 +26,7 @@ elif name == 'nix':
     if 'build' in args and os.environ.get('TEST_BUILD_FAIL'): sys.exit(47)
     if 'eval' in args:
         if os.environ.get('TEST_EVAL_FAIL'): sys.exit(45)
-        print(json.dumps({'flatpak': os.environ.get('TEST_ARCH') != 'aarch64', 'graphics': {'drivers': '/nix/store/test-drivers', 'setup': '/nix/store/test-setup/bin/non-nixos-gpu-setup'}}))
+        print(json.dumps({'flatpak': os.environ.get('TEST_ARCH') != 'aarch64'}))
 elif name == 'flatpak': pass
 elif name == 'home-manager' and os.environ.get('TEST_SWITCH_FAIL'): sys.exit(44)
 '''
