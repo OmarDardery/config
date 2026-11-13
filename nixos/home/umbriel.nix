@@ -180,8 +180,6 @@ in
         "Mod+Ctrl+E" = once "spawn kitty nvim ${lib.escapeShellArg profile.configRepo}";
         "Mod+Shift+D" = once "spawn nwg-displays";
         "Mod+A" = once "spawn noctalia msg panel-toggle control-center";
-        # Promote the focused stack window by swapping it with the master.
-        "Mod+S" = once "window-swap-left";
         "Mod+Ctrl+S" = once "spawn noctalia msg settings-toggle";
         "Mod+V" = once "spawn noctalia msg panel-toggle clipboard";
         "Mod+N" = once "spawn noctalia msg panel-toggle notifications";
