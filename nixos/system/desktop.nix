@@ -15,7 +15,12 @@
     config.umbriel."org.freedesktop.impl.portal.Secret" = "gnome-keyring";
   };
 
-  # One desktop session; retain native integration without a second shell.
+  # XFCE is an optional X11 session alongside the default Umbriel Wayland session.
+  services.xserver = {
+    enable = true;
+    desktopManager.xfce.enable = true;
+  };
+
   programs.xwayland.enable = true;
   services.udisks2.enable = true;
   services.gnome.at-spi2-core.enable = true;
