@@ -77,6 +77,12 @@ in
           0.66667
         ];
         stacking.drop_zones = true;
+        master = {
+          position = "left";
+          default_width_fraction = 0.60;
+          new_on_top = true;
+          new_becomes_master = false;
+        };
         # Keep manual split choices stable when windows and outputs resize.
         dwindle.preserve_split = true;
         tabs = {
@@ -176,7 +182,8 @@ in
         "Mod+Ctrl+E" = once "spawn kitty nvim ${lib.escapeShellArg profile.configRepo}";
         "Mod+Shift+D" = once "spawn nwg-displays";
         "Mod+A" = once "spawn noctalia msg panel-toggle control-center";
-        "Mod+S" = once "spawn noctalia msg screenshot-region";
+        # Promote the focused stack window by swapping it with the master.
+        "Mod+S" = once "window-swap-left";
         "Mod+Ctrl+S" = once "spawn noctalia msg settings-toggle";
         "Mod+V" = once "spawn noctalia msg panel-toggle clipboard";
         "Mod+N" = once "spawn noctalia msg panel-toggle notifications";
@@ -301,8 +308,8 @@ in
         "Mod+Alt+Space" = once "window-restore-from-scratchpad stash";
         "Mod+Alt+Tab" = once "scratchpad-focus-next stash";
         "Mod+Alt+1" = once "workspace-set-layout stacking";
-        "Mod+Alt+2" = once "workspace-set-layout dwindle";
-        "Mod+D" = once "workspace-set-layout toggle stacking dwindle";
+        "Mod+Alt+2" = once "workspace-set-layout master";
+        "Mod+D" = once "workspace-set-layout toggle stacking master";
         "F6" = once "spawn noctalia msg screenshot-region";
         "Ctrl+Shift+2" = once "spawn noctalia msg screenshot-fullscreen";
         "Ctrl+Shift+3" = once "spawn noctalia msg screenshot-window";
