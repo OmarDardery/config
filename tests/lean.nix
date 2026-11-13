@@ -32,16 +32,21 @@ assert os.workstation.engineering.enable && os.workstation.diagnostics.enable;
 assert os.programs.gamemode.enable;
 assert
   flake.lib.deployment.hardwareProfile != "generic" || !os.hardware.nvidia.prime.offload.enable;
-assert home.programs.umbriel.settings.layout.mode == "dwindle";
+assert home.programs.umbriel.settings.layout.mode == "stacking";
 assert home.programs.umbriel.settings.layout.stacking.drop_zones;
 assert home.programs.umbriel.settings.appearance.title_bar.mode == "on";
 assert
   home.programs.umbriel.settings.keybinds."Mod+D".action
-  == "workspace-set-layout toggle dwindle stacking";
+  == "workspace-set-layout toggle stacking master";
 assert !home.programs.noctalia.settings.shell.greeter_sync.auto_sync;
 assert home.programs.vscodium.enable && home.programs.neovim.enable;
 assert !home.programs.noctalia.systemd.enable;
-assert home.programs.noctalia.settings.plugins.enabled == [ ];
+assert home.programs.noctalia.settings.plugins.enabled == [ "omardardery/smart-taskbar" ];
+assert home.programs.noctalia.settings.dock.enabled == false;
+assert builtins.elem "smart_taskbar" home.programs.noctalia.settings.bar.default.start;
+assert home.programs.noctalia.settings.widget.smart_taskbar.type == "omardardery/smart-taskbar:taskbar";
+assert home.programs.noctalia.settings.widget.smart_taskbar.max_width == 420;
+assert builtins.all (x: x.id != "applications") home.programs.noctalia.settings.bar.default.capsule_group;
 assert !(home.home.file ? ".local/bin/desktop-apply");
 assert !(home.home.activation ? mutableVSCodium);
 assert !(home.home.activation ? mutableLazyVim);
