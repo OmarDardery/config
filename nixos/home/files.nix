@@ -11,7 +11,7 @@ in
   xdg.mimeApps = {
     enable = true;
     defaultApplications = {
-      "inode/directory" = [ "org.kde.dolphin.desktop" ];
+      "inode/directory" = [ "thunar.desktop" ];
       "text/html" = [ browser ];
       "application/xhtml+xml" = [ browser ];
       "x-scheme-handler/http" = [ browser ];
