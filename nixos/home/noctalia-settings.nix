@@ -31,70 +31,74 @@
     enable_screenshot_sounds = false;
     sound_volume = 0.25;
   };
-  bar = {
-    default = {
-      background_opacity = 0.70;
-      border = "outline_variant";
-      border_width = 1.0;
-      capsule = false;
-      center = [
-        "clock"
-      ];
-      concave_edge_corners = false;
-      end = [
-        "group:activity"
-        "tray"
-        "privacy"
-        "notifications"
-        "group:status"
-      ];
-      margin_edge = 10;
-      margin_ends = 16;
-      padding = 8;
-      widget_spacing = 4;
-      position = "bottom";
-      radius = 20;
-      shadow = true;
-      thickness = 32;
-      reserve_space = true;
-      auto_hide = false;
-      smart_auto_hide = false;
-      start = [
-        "launcher"
-        "workspaces"
-      ];
-      capsule_group = [
-        {
-          id = "activity";
-          enabled = true;
-          members = [ "media" ];
-          fill = "surface_container";
-          foreground = "on_surface";
-          opacity = 0.24;
-          padding = 8.0;
-          radius = 20.0;
-          border = "outline_variant";
-          border_width = 1.0;
-        }
-        {
-          accordion = false;
-          enabled = true;
-          fill = "surface_container";
-          foreground = "on_surface";
-          id = "status";
-          members = [
-            "network"
-            "volume"
-            "keyboard_layout"
-            "battery"
-            "control-center"
-          ];
-          opacity = 0.20;
-          padding = 6.0;
-          radius = 12.0;
-        }
-      ];
-    };
+  # One compact bar; the separate right dock handles application switching.
+  bar.default = {
+    position = "bottom";
+    reserve_space = true;
+    auto_hide = false;
+    smart_auto_hide = false;
+
+    thickness = 36;
+    margin_edge = 8;
+    margin_ends = 12;
+    padding = 8;
+    widget_spacing = 6;
+    radius = 18;
+    background_opacity = 0.78;
+    compositor_blur = true;
+    border = "outline_variant";
+    border_width = 1.0;
+    shadow = true;
+    hover_highlight = true;
+    capsule = false;
+
+    # Navigation / context | clock | activity / status.
+    start = [
+      "launcher"
+      "group:workspaces"
+      "active_window"
+    ];
+    center = [ "clock" ];
+    end = [
+      "group:media"
+      "tray"
+      "privacy"
+      "notifications"
+      "group:status"
+    ];
+    capsule_group = [
+      {
+        id = "workspaces";
+        members = [ "workspaces" ];
+        fill = "surface_container";
+        opacity = 0.26;
+        padding = 6.0;
+        radius = 12.0;
+      }
+      {
+        id = "media";
+        members = [ "media" ];
+        fill = "surface_container";
+        opacity = 0.20;
+        padding = 6.0;
+        radius = 12.0;
+      }
+      {
+        id = "status";
+        members = [
+          "network"
+          "bluetooth"
+          "volume"
+          "keyboard_layout"
+          "battery"
+          "control-center"
+        ];
+        fill = "surface_container";
+        opacity = 0.26;
+        padding = 6.0;
+        radius = 12.0;
+      }
+    ];
   };
   control_center = {
     show_shortcut_labels = true;
@@ -241,6 +245,12 @@
     directory = "~/Pictures/Wallpapers";
   };
   widget = {
+    active_window = {
+      min_length = 0;
+      max_length = 170;
+      display = "icon_and_text";
+      title_scroll = "on_hover";
+    };
     clock = {
       format = "{:%a %d %b  %H:%M}";
     };
@@ -251,7 +261,7 @@
       show_icons = false;
     };
     media = {
-      max_length = 40;
+      max_length = 26;
       hide_artist = true;
       hide_when_no_media = true;
       title_scroll = "on_hover";
