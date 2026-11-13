@@ -3,8 +3,8 @@
   services.displayManager = {
     ly = {
       enable = true;
-      # Umbriel is Wayland; XWayland applications still work inside the session.
-      x11Support = false;
+      # XFCE needs X11; Umbriel remains available as a Wayland session.
+      x11Support = true;
       settings.animation = "matrix";
     };
     defaultSession = "umbriel";
