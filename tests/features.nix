@@ -36,7 +36,7 @@ assert !(os.services.restic.backups ? home);
 assert !(os.systemd.services ? restic-home-password);
 assert !(os.systemd.services ? tailscaled);
 assert !(os.networking.firewall.interfaces ? tailscale0);
-assert os.services.flatpak.packages == [ "com.epicgames.launcher" ];
+assert map (p: p.appId) os.services.flatpak.packages == [ "com.epicgames.launcher" ];
 assert !os.services.desktopManager.plasma6.enable;
 assert !os.services.xserver.enable && !os.programs.xwayland.enable;
 assert os.programs.thunar.enable;
