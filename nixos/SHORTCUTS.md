@@ -58,7 +58,6 @@ optional 60/40 layout, with the primary window on the left.
 | Mod+Shift+Minus/Equal | Decrease/increase height 5% |
 | Mod+Alt+1 / Mod+Alt+2 | Stacking / master |
 | Mod+D | Toggle stacking and master |
-| Mod+S (master layout) | Swap focused stack window into master |
 | Mod+Left/Right or H/L | Focus horizontal neighbor |
 | Mod+J/K | Focus vertical neighbor |
 | Mod+Alt+Left/Right | Focus tabs |
