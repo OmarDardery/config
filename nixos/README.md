@@ -87,8 +87,11 @@ layout. KDE Connect runs without Plasma, with discovery and transfer firewall
 ports opened by its NixOS module. Noctalia handles its own runtime state,
 wallpaper colors and Kitty/Umbriel palettes. There is no `desktop-config`
 service, palette seeder, state reconciler or font-cache refresh service.
-Screenshots use Noctalia's native commands. Community plugins are not enabled
-by this configuration; add them through Noctalia if wanted.
+Screenshots use Noctalia's native commands. Smart Taskbar is configured as a
+Noctalia plugin from OmarDardery/smart-taskbar-noctalia, with a 420 logical-pixel
+maximum width, hover expansion, grouped duplicate badges, and a disabled dock.
+Noctalia fetches and updates its declared Git source on startup. The plugin
+requires Noctalia plugin API 52+; live desktop acceptance remains pending.
 
 Home Manager directly owns editor settings, shell files and desktop dotfiles.
 Edit Nix-managed preferences in `home/` and rebuild. Existing conflicting files
