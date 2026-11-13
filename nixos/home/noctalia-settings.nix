@@ -261,7 +261,9 @@
       show_icons = false;
     };
     media = {
-      max_length = 26;
+      peek = true;
+      min_length = 0;
+      max_length = 150;
       hide_artist = true;
       hide_when_no_media = true;
       title_scroll = "on_hover";
