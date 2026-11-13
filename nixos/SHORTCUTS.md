@@ -6,8 +6,11 @@ or Arabic input. Power actions are available from the session menu.
 
 Open `Mod+O` and type to launch applications directly from the overview.
 
-The bottom bar stays visible and reserves space. The right dock reveals on hover.
-The bar shows essential status; occasional tools remain in panels and shortcuts.
+The bottom bar stays visible and reserves space. Its Applications capsule shows
+only the focused window until hovered, when it expands to a running-app taskbar.
+App windows are grouped per workspace where supported, with small dots showing
+multiple windows. The separate dock is disabled. The native taskbar does not
+currently support a scrollable fixed-width overflow region.
 
 ## Apps and shell
 
