@@ -15,10 +15,15 @@
     config.umbriel."org.freedesktop.impl.portal.Secret" = "gnome-keyring";
   };
 
-  # XFCE is an optional X11 session alongside the default Umbriel Wayland session.
+  # XFCE offers an experimental Wayland session using Labwc.
+  # Keep the X11 server disabled; XWayland still supports legacy applications.
   services.xserver = {
-    enable = true;
-    desktopManager.xfce.enable = true;
+    enable = false;
+    desktopManager.xfce = {
+      enable = true;
+      enableWaylandSession = true;
+      enableXfwm = false;
+    };
   };
 
   programs.xwayland.enable = true;
@@ -31,13 +36,11 @@
 
   services.gvfs.enable = true;
   services.tumbler.enable = true;
-  programs.thunar = {
-    enable = true;
-    plugins = with pkgs; [
+  # XFCE enables Thunar; only retain its additional plugins.
+  programs.thunar.plugins = with pkgs; [
       thunar-archive-plugin
       thunar-volman
     ];
-  };
 
   services.upower.enable = true;
   services.fwupd.enable = true;
