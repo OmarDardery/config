@@ -15,8 +15,19 @@
     gtk.enable = true;
     x11.enable = true;
   };
+  xfconf = {
+    enable = true;
+    settings.xsettings."Net/ThemeName" = "Adwaita-dark";
+  };
+  dconf.settings."org/gnome/desktop/interface".color-scheme = "prefer-dark";
   gtk = {
     enable = true;
+    theme = {
+      name = "Adwaita-dark";
+      package = pkgs.gnome-themes-extra;
+    };
+    gtk3.extraConfig.gtk-application-prefer-dark-theme = true;
+    gtk4.extraConfig.gtk-application-prefer-dark-theme = true;
     iconTheme = {
       name = "Adwaita";
       package = pkgs.adwaita-icon-theme;
