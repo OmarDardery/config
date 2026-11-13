@@ -4,6 +4,7 @@
   imports = [ inputs.nix-flatpak.nixosModules.nix-flatpak ];
   services.flatpak = {
     enable = true;
+    packages = [ "com.epicgames.launcher" ];
     remotes = [
       {
         name = "flathub";
