@@ -4,6 +4,7 @@
 }:
 {
   services.mpris-proxy.enable = true;
+  services.kdeconnect.enable = true;
   home.pointerCursor = {
     enable = true;
     name = "Bibata-Modern-Classic";
