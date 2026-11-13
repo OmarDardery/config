@@ -13,7 +13,6 @@
       wl-mirror
     ]
     ++ lib.optionals isLaptop [
-      xrdb
       (pkgs.writeShellApplication {
         name = "mirror-laptop";
         runtimeInputs = [
