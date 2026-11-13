@@ -136,23 +136,7 @@
   desktop_widgets = {
     enabled = false;
   };
-  dock = {
-    enabled = false;
-    background_opacity = 0.65;
-    border = "outline_variant";
-    border_width = 1.0;
-    icon_size = 32;
-    margin_edge = 10;
-    radius = 22;
-    concave_edge_corners = false;
-    magnification = true;
-    magnification_scale = 1.15;
-    show_dots = true;
-    active_monitor_only = true;
-    position = "right";
-    reserve_space = false;
-    smart_auto_hide = true;
-  };
+  dock.enabled = false;
   notification = {
     follow_focused_output = true;
     max_visible = 2;
