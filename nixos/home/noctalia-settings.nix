@@ -56,7 +56,7 @@
     start = [
       "launcher"
       "group:workspaces"
-      "active_window"
+      "group:applications"
     ];
     center = [ "clock" ];
     end = [
@@ -73,6 +73,19 @@
         fill = "surface_container";
         opacity = 0.26;
         padding = 6.0;
+        radius = 12.0;
+      }
+      {
+        id = "applications";
+        members = [ "active_window" "taskbar" ];
+        accordion = true;
+        accordion_direction = "end";
+        accordion_delay_ms = 150;
+        accordion_duration = 200;
+        widget_spacing = 8;
+        fill = "surface_container";
+        opacity = 0.36;
+        padding = 7.0;
         radius = 12.0;
       }
       {
@@ -124,7 +137,7 @@
     enabled = false;
   };
   dock = {
-    enabled = true;
+    enabled = false;
     background_opacity = 0.65;
     border = "outline_variant";
     border_width = 1.0;
@@ -247,9 +260,22 @@
   widget = {
     active_window = {
       min_length = 0;
-      max_length = 170;
+      max_length = 135;
       display = "icon_and_text";
       title_scroll = "on_hover";
+    };
+    taskbar = {
+      show_running = true;
+      show_all_outputs = false;
+      group_by_workspace = true;
+      group_single_icon_per_app = true;
+      workspace_group_content = "icons";
+      workspace_group_capsule = false;
+      show_workspace_label = false;
+      hide_empty_workspaces = true;
+      only_active_workspace = false;
+      show_active_indicator = true;
+      icon_scale = 0.9;
     };
     clock = {
       format = "{:%a %d %b  %H:%M}";
