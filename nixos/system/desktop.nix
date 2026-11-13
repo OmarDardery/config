@@ -9,24 +9,15 @@
     inputs.umbriel.nixosModules.default
   ];
   programs.umbriel.enable = true;
-  environment.sessionVariables.XKB_CONFIG_ROOT = "${pkgs.xkeyboard-config}/share/X11/xkb";
-  # The upstream Umbriel module supplies its portal and the GTK file chooser.
+  # Umbriel supplies its own portal; Plasma provides KDE portals.
   xdg.portal = {
     config.umbriel."org.freedesktop.impl.portal.Secret" = "gnome-keyring";
   };
 
-  # XFCE offers an experimental Wayland session using Labwc.
-  # Keep the X11 server disabled; XWayland still supports legacy applications.
-  services.xserver = {
-    enable = false;
-    desktopManager.xfce = {
-      enable = true;
-      enableWaylandSession = true;
-      enableXfwm = false;
-    };
-  };
-
-  programs.xwayland.enable = true;
+  # Plasma and Umbriel are Wayland sessions; do not run X11 applications.
+  services.xserver.enable = false;
+  services.desktopManager.plasma6.enable = true;
+  programs.xwayland.enable = pkgs.lib.mkForce false;
   services.udisks2.enable = true;
   services.gnome.at-spi2-core.enable = true;
   services.gnome.gcr-ssh-agent.enable = true;
@@ -34,13 +25,6 @@
   # Ly's NixOS PAM integration unlocks the user keyring.
   services.gnome.gnome-keyring.enable = true;
 
-  services.gvfs.enable = true;
-  services.tumbler.enable = true;
-  # XFCE enables Thunar; only retain its additional plugins.
-  programs.thunar.plugins = with pkgs; [
-      thunar-archive-plugin
-      thunar-volman
-    ];
 
   services.upower.enable = true;
   services.fwupd.enable = true;
