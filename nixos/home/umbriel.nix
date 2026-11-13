@@ -31,6 +31,9 @@ in
         focus_on_activate = true;
       };
       input = {
+        # Desktop-style focus and pointer controls.
+        client_window_drag = true;
+        mod_right_double_click = "maximize";
         keyboard = {
           layout = "us,ara";
           options = "grp:alt_shift_toggle";
@@ -42,9 +45,7 @@ in
         };
         mouse.accel_profile = "flat";
         focus = {
-          follows_mouse = true;
-          # Hovering a partially visible column should not move the whole strip.
-          follows_mouse_max_scroll = 0.0;
+          follows_mouse = false;
         };
         cursor = {
           theme = config.home.pointerCursor.name;
@@ -83,8 +84,6 @@ in
           new_on_top = true;
           new_becomes_master = false;
         };
-        # Keep manual split choices stable when windows and outputs resize.
-        dwindle.preserve_split = true;
         tabs = {
           default_display = "tabbed";
           wrap_focus = false;
@@ -93,7 +92,7 @@ in
       appearance = {
         prefer_no_csd = true;
         title_bar.mode = "on";
-        border_width = 1;
+        border_width = 2;
         outer_border_width = 0;
         corner_radius = 16;
         drag_opacity = 0.95;
@@ -286,18 +285,16 @@ in
         "Mod+Ctrl+F" = once "window-toggle-maximize";
         "Mod+Ctrl+C" = "column-center";
         "Mod+C" = "column-center";
-        "Mod+Minus" = "window-modify-primary-extent -0.1";
-        "Mod+Equal" = "window-modify-primary-extent +0.1";
-        "Mod+Shift+Minus" = "window-modify-secondary-extent -0.1";
-        "Mod+Shift+Equal" = "window-modify-secondary-extent +0.1";
+        "Mod+Minus" = "window-modify-primary-extent -0.05";
+        "Mod+Equal" = "window-modify-primary-extent +0.05";
+        "Mod+Shift+Minus" = "window-modify-secondary-extent -0.05";
+        "Mod+Shift+Equal" = "window-modify-secondary-extent +0.05";
         "Mod+Shift+F" = once "window-toggle-maximize";
         "Mod+F" = once "window-toggle-fullscreen";
         "Mod+W" = once "column-toggle-tabbed";
         "Mod+R" = "window-cycle-primary-extent";
         "Mod+Shift+R" = "window-cycle-primary-extent-back";
         "Mod+Alt+R" = "window-cycle-secondary-extent";
-        "Mod+Alt+T" = once "layout-toggle-split";
-        "Mod+Shift+T" = once "window-focus-switch-floating";
         "Mod+M" = once "window-toggle-maximize-to-edges";
         "Mod+Comma" = "window-consume-or-expel-left";
         "Mod+Period" = "window-consume-or-expel-right";
@@ -310,9 +307,6 @@ in
         "Mod+Alt+1" = once "workspace-set-layout stacking";
         "Mod+Alt+2" = once "workspace-set-layout master";
         "Mod+D" = once "workspace-set-layout toggle stacking master";
-        "F6" = once "spawn noctalia msg screenshot-region";
-        "Ctrl+Shift+2" = once "spawn noctalia msg screenshot-fullscreen";
-        "Ctrl+Shift+3" = once "spawn noctalia msg screenshot-window";
         "Mod+Escape" = (once "shortcuts-inhibit-toggle") // {
           allow_when_inhibited = true;
         };
