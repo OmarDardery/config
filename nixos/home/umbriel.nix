@@ -29,10 +29,6 @@ in
         mod_key = "Super";
         show_cheatsheet = false;
         focus_on_activate = true;
-        # Keep X11 games sharp at the panel resolution despite desktop scaling.
-        # Changing this requires restarting the compositor session.
-        xwayland_native_resolution = true;
-        xwayland_xsettings = true;
       };
       input = {
         keyboard = {
@@ -72,7 +68,7 @@ in
         }
       ];
       layout = {
-        # Stacking is Umbriel\u0027s floating layout.
+        # Stacking is the floating layout.
         mode = "stacking";
         gap = 10;
         extent_presets = [
@@ -287,7 +283,6 @@ in
         "Mod+Equal" = "window-modify-primary-extent +0.1";
         "Mod+Shift+Minus" = "window-modify-secondary-extent -0.1";
         "Mod+Shift+Equal" = "window-modify-secondary-extent +0.1";
-        "Mod+Return" = once "window-toggle-floating";
         "Mod+Shift+F" = once "window-toggle-maximize";
         "Mod+F" = once "window-toggle-fullscreen";
         "Mod+W" = once "column-toggle-tabbed";
