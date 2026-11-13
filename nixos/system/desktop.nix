@@ -9,6 +9,7 @@
     inputs.umbriel.nixosModules.default
   ];
   programs.umbriel.enable = true;
+  programs.kdeconnect.enable = true;
   # Umbriel supplies its own portal and GTK file chooser.
   xdg.portal = {
     config.umbriel."org.freedesktop.impl.portal.Secret" = "gnome-keyring";
