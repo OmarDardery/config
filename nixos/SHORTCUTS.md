@@ -41,54 +41,44 @@ The power button locks first. `Ctrl+Alt+Delete` quits the compositor session.
 
 ## Windows and layouts
 
-| Shortcut | Action |
+Stacking is the default, with overlapping and resizable windows. Master is the
+optional 60/40 layout, with the primary window on the left.
+
+| Shortcut or gesture | Action |
 | --- | --- |
-| Mod+D | Cycle **dwindle → stacking → dwindle** |
-| Mod+Alt+1 / Mod+Alt+2 | Select dwindle / stacking directly |
-| Mod+Left/Right or H/L | Focus horizontally |
-| Mod+J/K or Mod+WheelDown/Up | Focus windows vertically |
-| Mod+Up/Down / Mod+Tab | Previous-next workspace / previous workspace |
-| Mod+1…9 / Mod+Ctrl+1…9 | Select a numbered workspace / move column there |
-| Mod+Ctrl+arrows or H/J/K/L | Move columns or windows |
+| Drag title bar | Move a window |
+| Drag edge or corner | Resize a floating window |
+| Super + left-drag | Move from anywhere on a window |
+| Super + right-drag | Resize from anywhere on a window |
+| Double-click title bar / double Super + right-click | Maximize or restore |
+| Drag to edge or corner | Snap to half or quarter of the available screen |
+| Mod+F | Fullscreen |
+| Mod+Shift+F | Maximize or restore |
+| Mod+Minus/Equal | Decrease/increase width 5% |
+| Mod+Shift+Minus/Equal | Decrease/increase height 5% |
+| Mod+Alt+1 / Mod+Alt+2 | Stacking / master |
+| Mod+D | Toggle stacking and master |
+| Mod+S (master layout) | Swap focused stack window into master |
+| Mod+Left/Right or H/L | Focus horizontal neighbor |
+| Mod+J/K | Focus vertical neighbor |
+| Mod+Alt+Left/Right | Focus tabs |
+| Mod+W | Toggle tabs |
+| Mod+1…9 / Mod+Ctrl+1…9 | Switch workspace / move window group |
+| Mod+Up/Down | Previous/next workspace |
 | Mod+Shift+arrows | Focus another monitor |
-| Mod+Ctrl+Shift+arrows | Move column to another monitor |
-| Mod+Home/End / Mod+Ctrl+Home/End | Focus first-last column / move it there |
-| Mod+Alt+Left/Right | Select previous-next tab |
-| Mod+Return / Mod+Shift+T | Toggle floating / focus floating-tiled windows |
-| Mod+F / Mod+Shift+F or Mod+Ctrl+F / Mod+M | Fullscreen / maximize / maximize to edges |
-| Mod+C / Mod+Ctrl+C | Center the focused column |
-| Mod+W / Mod+P | Toggle column tabs / pin the window |
-| Mod+R / Mod+Shift+R / Mod+Alt+R | Next width / previous width / height preset |
-| Mod+Minus/Equal / Mod+Shift+Minus/Equal | Adjust width / height |
-| Mod+Alt+T | Toggle the dwindle split direction |
-| Mod+Comma/Period | Consume or expel a window left-right |
-| Mod+Ctrl+Comma/Period | Pull a window from the left-right column |
-| Mod+Shift+Space | Send window to scratchpad |
-| Mod+Ctrl+Space / Mod+Alt+Space / Mod+Alt+Tab | Show-hide / restore / cycle scratchpad |
-| Mod+O / Mod+Q | Overview / close window |
+| Mod+Q / Mod+O | Close / overview |
 
-Horizontal wheel actions focus horizontally; adding Ctrl moves the column.
-Shift+vertical wheel has the same horizontal behavior. Ctrl+vertical wheel
-moves the column between workspaces. Master is absent from the configured cycle
-and direct shortcuts.
-
-Stacking opens overlapping windows. Drag title bars to move them and use the
-edge/corner previews to snap to halves or quarters. Switching back to dwindle
-re-tiles layout-floated windows. `Mod+Return` applies to tiling layouts; Umbriel
-rejects toggling floating in stacking.
+Clicking a window activates it; hovering does not steal focus.
+Mouse resizing and snapping are built into Umbriel.
 
 ## Capture
 
-Noctalia handles screenshots directly:
-
 | Shortcut | Action |
 | --- | --- |
-| Mod+S / Print / F6 | Capture a region |
-| Shift+Print / Ctrl+Shift+2 | Capture the screen |
-| Ctrl+Print / Ctrl+Shift+3 | Capture the focused window |
+| Print | Capture region |
+| Shift+Print | Capture full screen |
+| Ctrl+Print | Capture window |
 | Alt+Print | Annotate |
-
-The Screen Toolkit plugin and its OCR/recording submap are removed.
 
 ## XP-Pen Deco mini7
 
