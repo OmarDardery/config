@@ -24,7 +24,7 @@
 
   # Ly's NixOS PAM integration unlocks the user keyring.
   services.gnome.gnome-keyring.enable = true;
-
+  services.gvfs.enable = true;
 
   services.upower.enable = true;
   services.fwupd.enable = true;
@@ -48,5 +48,4 @@
   };
 
   services.udev.packages = [ pkgs.libmtp.out ];
-
 }
