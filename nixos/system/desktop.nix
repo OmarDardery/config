@@ -9,14 +9,13 @@
     inputs.umbriel.nixosModules.default
   ];
   programs.umbriel.enable = true;
-  # Umbriel supplies its own portal; Plasma provides KDE portals.
+  # Umbriel supplies its own portal and GTK file chooser.
   xdg.portal = {
     config.umbriel."org.freedesktop.impl.portal.Secret" = "gnome-keyring";
   };
 
-  # Plasma and Umbriel are Wayland sessions; do not run X11 applications.
+  # Umbriel is the sole Wayland desktop session.
   services.xserver.enable = false;
-  services.desktopManager.plasma6.enable = true;
   programs.xwayland.enable = pkgs.lib.mkForce false;
   services.udisks2.enable = true;
   services.gnome.at-spi2-core.enable = true;
@@ -25,6 +24,14 @@
   # Ly's NixOS PAM integration unlocks the user keyring.
   services.gnome.gnome-keyring.enable = true;
   services.gvfs.enable = true;
+  services.tumbler.enable = true;
+  programs.thunar = {
+    enable = true;
+    plugins = with pkgs; [
+      thunar-archive-plugin
+      thunar-volman
+    ];
+  };
 
   services.upower.enable = true;
   services.fwupd.enable = true;
