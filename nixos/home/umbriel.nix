@@ -85,7 +85,7 @@ in
           new_becomes_master = false;
         };
         tabs = {
-          default_display = "tabbed";
+          default_display = "normal";
           wrap_focus = false;
         };
       };
@@ -122,7 +122,6 @@ in
       };
       animation = {
         enabled = true;
-        # Keep move/resize timelines identical so tiles stay aligned during reflow.
         curve = "spring:1,1100";
         windows_in = {
           style = "popin";
