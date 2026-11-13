@@ -25,10 +25,7 @@ in
       # No independent palette: Noctalia owns colors; native defaults before rendering.
       include.optional.files = [ "${config.xdg.stateHome}/noctalia/theme/umbriel.toml" ];
       general = {
-        autostart = [
-          "noctalia"
-        ]
-        ++ lib.optional isLaptop "xrdb -merge ${lib.escapeShellArg "${config.home.homeDirectory}/.Xresources"}";
+        autostart = [ "noctalia" ];
         mod_key = "Super";
         show_cheatsheet = false;
         focus_on_activate = true;
@@ -75,7 +72,8 @@ in
         }
       ];
       layout = {
-        mode = "dwindle";
+        # Stacking is Umbriel\u0027s floating layout.
+        mode = "stacking";
         gap = 10;
         extent_presets = [
           0.33333
@@ -307,9 +305,9 @@ in
         "Mod+Ctrl+Space" = once "scratchpad-toggle stash";
         "Mod+Alt+Space" = once "window-restore-from-scratchpad stash";
         "Mod+Alt+Tab" = once "scratchpad-focus-next stash";
-        "Mod+Alt+1" = once "workspace-set-layout dwindle";
-        "Mod+Alt+2" = once "workspace-set-layout stacking";
-        "Mod+D" = once "workspace-set-layout toggle dwindle stacking";
+        "Mod+Alt+1" = once "workspace-set-layout stacking";
+        "Mod+Alt+2" = once "workspace-set-layout dwindle";
+        "Mod+D" = once "workspace-set-layout toggle stacking dwindle";
         "F6" = once "spawn noctalia msg screenshot-region";
         "Ctrl+Shift+2" = once "spawn noctalia msg screenshot-fullscreen";
         "Ctrl+Shift+3" = once "spawn noctalia msg screenshot-window";
