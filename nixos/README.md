@@ -47,53 +47,7 @@ switching, so there is no second pre-build or custom activation service.
 Fish-like Zsh behavior is provided by Home Manager: ghost-text suggestions from
 history and command/path completions (Right Arrow or Ctrl+Space to accept),
 fuzzy Tab selection, Ctrl+R history search, Ctrl+T file search, Alt+C
-directory search, prefix-based Up/Down history, and `!!`/`!# NixOS configuration
-
-The root flake imports `configuration.nix` and integrates Home Manager as a
-NixOS module. `hardware.nix` is selected automatically only for the ASUS TUF A14 (FA401).
-Generated hardware, account settings, state versions and boot target stay local
-and ignored by Git. Other hosts use generic hardware. x86_64 NixOS hosts use the CachyOS release
-kernel via the upstream pinned overlay.
-
-## Structure
-
-| Location | Responsibility |
-| --- | --- |
-| `configuration.nix` | Compose the desktop, Home Manager and feature defaults |
-| `profile.nix` | Account and deployment values, with local overrides |
-| `hardware.nix` | ASUS GPU, peripherals and battery policy |
-| `system/default.nix` | Explicit list of system modules |
-| `system/<feature>.nix` | A feature's option, packages, services and permissions |
-| `system/applications/` | Everyday apps, CLI utilities, fonts and display tools |
-| `home/` | User programs and preferences |
-| `../non-nixos/` | Independent native Linux dotfile installer |
-
-Change `workstation.<feature>.enable` in `configuration.nix` to choose bundles.
-Each feature declares its own option beside its implementation and defaults to
-off when imported alone. The desktop entry point enables your usual bundles.
-Diagnostics owns both its tools and MTR; Tailscale owns its VPN and firewall rules.
-Add a system module to `system/default.nix` explicitly; there is no auto-discovery
-or module-generation framework. Keep closely related settings in one file and
-split only when a feature has a separate purpose or switch.
-
-## Apply and update
-
-From any directory, after initial setup:
-
-```sh
-sudo nixos-rebuild switch --flake "path:$HOME/config#nixos"
-```
-
-Use the root flake, not `~/config/nixos`. The explicit `path:` includes ignored
-`nixos/hardware-configuration.nix` and `nixos/local-profile.nix`. A Git-style
-`--flake .` excludes them. Do not stage generated hardware to work around this.
-
-The initial `nix run github:OmarDardery/config` clones once, prepares those
-local files and calls ordinary `nixos-rebuild`. An existing checkout is kept;
-source updates use `git -C ~/config pull --ff-only`. `nixos-rebuild` builds before
-switching, so there is no second pre-build or custom activation service.
-
- expansion
+directory search, prefix-based Up/Down history, and `!!`/`!$ expansion
 on Space. Commands running 10 seconds or longer trigger a low-urgency
 desktop notification when `notify-send` and a graphical session are available.
 The Starship prompt and existing shell aliases remain unchanged.
