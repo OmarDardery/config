@@ -6,11 +6,12 @@ or Arabic input. Power actions are available from the session menu.
 
 Open `Mod+O` and type to launch applications directly from the overview.
 
-The bottom bar stays visible and reserves space. Its Applications capsule shows
-only the focused window until hovered, when it expands to a running-app taskbar.
-App windows are grouped per workspace where supported, with small dots showing
-multiple windows. The separate dock is disabled. The native taskbar does not
-currently support a scrollable fixed-width overflow region.
+The bottom bar stays visible and reserves space. Smart Taskbar (by OmarDardery)
+shows the focused application in a compact capsule. Hovering reveals running
+applications, with numeric badges for duplicate windows and mouse-wheel navigation
+for overflow within a 420px width budget. The old dock and native taskbar are
+disabled. Plugin source, enabled state and appearance are declared in
+`home/noctalia-settings.nix`; Noctalia downloads the source itself.
 
 ## Apps and shell
 
