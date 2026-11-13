@@ -31,7 +31,7 @@
     enable_screenshot_sounds = false;
     sound_volume = 0.25;
   };
-  # One compact bar; the separate right dock handles application switching.
+  # Always-visible desktop taskbar with Smart Taskbar replacing the dock.
   bar.default = {
     position = "bottom";
     reserve_space = true;
@@ -56,7 +56,7 @@
     start = [
       "launcher"
       "group:workspaces"
-      "group:applications"
+      "smart_taskbar"
     ];
     center = [ "clock" ];
     end = [
@@ -73,19 +73,6 @@
         fill = "surface_container";
         opacity = 0.26;
         padding = 6.0;
-        radius = 12.0;
-      }
-      {
-        id = "applications";
-        members = [ "active_window" "taskbar" ];
-        accordion = true;
-        accordion_direction = "end";
-        accordion_delay_ms = 150;
-        accordion_duration = 200;
-        widget_spacing = 8;
-        fill = "surface_container";
-        opacity = 0.36;
-        padding = 7.0;
         radius = 12.0;
       }
       {
@@ -165,7 +152,31 @@
   lockscreen_widgets = {
     enabled = false;
   };
-  plugins.enabled = [ ];
+  # Declarative plugin sources; Noctalia owns fetching, updates and runtime cache.
+  plugins = {
+    enabled = [ "omardardery/smart-taskbar" ];
+    auto_update = "all";
+    source = [
+      {
+        name = "official";
+        kind = "git";
+        location = "https://github.com/noctalia-dev/official-plugins";
+        enabled = true;
+      }
+      {
+        name = "community";
+        kind = "git";
+        location = "https://github.com/noctalia-dev/community-plugins";
+        enabled = true;
+      }
+      {
+        name = "smart-taskbar";
+        kind = "git";
+        location = "https://github.com/OmarDardery/smart-taskbar-noctalia";
+        enabled = true;
+      }
+    ];
+  };
   shell = {
     corner_radius_scale = 1.2;
     font_family = "Inter";
@@ -242,24 +253,46 @@
     directory = "~/Pictures/Wallpapers";
   };
   widget = {
-    active_window = {
-      min_length = 0;
-      max_length = 135;
-      display = "icon_and_text";
-      title_scroll = "on_hover";
-    };
-    taskbar = {
-      show_running = true;
-      show_all_outputs = false;
-      group_by_workspace = true;
-      group_single_icon_per_app = true;
-      workspace_group_content = "icons";
-      workspace_group_capsule = false;
-      show_workspace_label = false;
-      hide_empty_workspaces = true;
-      only_active_workspace = false;
-      show_active_indicator = true;
-      icon_scale = 0.9;
+    # Plugin settings use the manifest's exact field names. No outer capsule
+    # avoids doubling background/padding and preserves the 420px width budget.
+    smart_taskbar = {
+      type = "omardardery/smart-taskbar:taskbar";
+      capsule = false;
+      capsule_padding = 0;
+      scale = 1.0;
+      expand_mode = "hover";
+      hover_delay = 150;
+      collapse_delay = 350;
+      animations = true;
+      animation_duration = 120;
+      display_mode = "running";
+      grouping = "app";
+      workspace_filter = "all";
+      output_filter = "current";
+      show_minimized = true;
+      sorting = "launch";
+      min_width = 64;
+      max_width = 420;
+      collapsed_width = 64;
+      icon_size = 22;
+      icon_spacing = 4;
+      overflow_behavior = "items";
+      scroll_step = 1;
+      show_scroll_indicators = true;
+      auto_reveal_focused = true;
+      collapsed_label = "none";
+      duplicate_indicator = "badge";
+      badge_placement = "after";
+      hover_enlarge = true;
+      hover_scale = 1.15;
+      capsule_radius = 14;
+      opacity = 0.85;
+      border = false;
+      active_indicator = true;
+      minimized_indicator = true;
+      urgent_indicator = true;
+      click_behavior = "cycle";
+      compositor_compatibility = "auto";
     };
     clock = {
       format = "{:%a %d %b  %H:%M}";
