@@ -41,7 +41,7 @@ disabled. Plugin source, enabled state and appearance are declared in
 | Mod+Ctrl+Shift+R | Reload Umbriel configuration |
 
 Media, microphone, volume and brightness keys remain available while locked.
-The power button locks first. `Ctrl+Alt+Delete` quits the compositor session.
+The power button locks first. `Ctrl+Alt+Delete` opens the session/power menu.
 
 ## Windows and layouts
 
