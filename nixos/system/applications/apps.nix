@@ -7,6 +7,11 @@
       (callPackage ../../../non-nixos/pkgs/zen-browser.nix { zenInput = inputs.zen-browser; })
       discord
       imagemagick
+      (writeShellApplication {
+        name = "screenshot-desktop";
+        runtimeInputs = with pkgs; [ grim slurp wl-clipboard coreutils ];
+        text = builtins.readFile ../../scripts/screenshot.sh;
+      })
       gnome-disk-utility
       seahorse
       sshfs
