@@ -7,6 +7,7 @@ trap 'rm -rf -- "$work"' EXIT
 cp -R nixos non-nixos scripts flake.nix flake.lock "$work/"
 rm -f "$work/nixos/hardware-configuration.nix" "$work/nixos/local-profile.nix" "$work/nixos/local-system.json" "$work/non-nixos/local-profile.json"
 cp .github/ci-hardware.nix "$work/nixos/hardware-configuration.nix"
+bash -n nixos/scripts/screenshot.sh
 flake="path:$work"
 nix build "$flake" --no-link --no-write-lock-file
 nix run "$flake" -- --help
