@@ -69,8 +69,8 @@ in
         }
       ];
       layout = {
-        # Stacking is the floating layout.
-        mode = "stacking";
+        # Default to master tiling; switch to floating/stacking with Super+D.
+        mode = "master";
         gap = 10;
         extent_presets = [
           0.33333
@@ -197,8 +197,9 @@ in
         "Mod+Alt+B" = once "spawn noctalia msg panel-toggle control-center bluetooth";
         "Mod+Alt+E" = once "spawn noctalia msg panel-toggle launcher /emo";
         "Mod+Ctrl+Shift+R" = once "config-reload";
-        "Print" = once "spawn noctalia msg screenshot-region";
-        "Shift+Print" = once "spawn noctalia msg screenshot-fullscreen";
+        "Print" = once "spawn screenshot-desktop region";
+        "Mod+Shift+S" = once "spawn screenshot-desktop region";
+        "Shift+Print" = once "spawn screenshot-desktop fullscreen";
         "Ctrl+Print" = once "spawn noctalia msg screenshot-window";
         "Mod+P" = once "window-toggle-pinned";
         "Alt+Print" = once "spawn noctalia msg screenshot-annotate";
@@ -301,9 +302,9 @@ in
         "Mod+Ctrl+Space" = once "scratchpad-toggle stash";
         "Mod+Alt+Space" = once "window-restore-from-scratchpad stash";
         "Mod+Alt+Tab" = once "scratchpad-focus-next stash";
-        "Mod+Alt+1" = once "workspace-set-layout stacking";
-        "Mod+Alt+2" = once "workspace-set-layout master";
-        "Mod+D" = once "workspace-set-layout toggle stacking master";
+        "Mod+Alt+1" = once "workspace-set-layout master";
+        "Mod+Alt+2" = once "workspace-set-layout stacking";
+        "Mod+D" = once "workspace-set-layout toggle master stacking";
         "Mod+Escape" = (once "shortcuts-inhibit-toggle") // {
           allow_when_inhibited = true;
         };
