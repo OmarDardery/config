@@ -31,12 +31,14 @@ assert os.workstation.engineering.enable && os.workstation.diagnostics.enable;
 assert os.programs.gamemode.enable;
 assert
   flake.lib.deployment.hardwareProfile != "generic" || !os.hardware.nvidia.prime.offload.enable;
-assert home.programs.umbriel.settings.layout.mode == "stacking";
+assert home.programs.umbriel.settings.layout.mode == "master";
 assert home.programs.umbriel.settings.layout.stacking.drop_zones;
+assert home.programs.umbriel.settings.keybinds.Print.action == "spawn screenshot-desktop region";
+assert home.programs.umbriel.settings.keybinds."Shift+Print".action == "spawn screenshot-desktop fullscreen";
 assert home.programs.umbriel.settings.appearance.title_bar.mode == "on";
 assert
   home.programs.umbriel.settings.keybinds."Mod+D".action
-  == "workspace-set-layout toggle stacking master";
+  == "workspace-set-layout toggle master stacking";
 assert !home.programs.noctalia.settings.shell.greeter_sync.auto_sync;
 assert home.programs.vscodium.enable && home.programs.neovim.enable;
 assert !home.programs.noctalia.systemd.enable;
