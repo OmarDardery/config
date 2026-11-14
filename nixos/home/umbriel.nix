@@ -279,9 +279,7 @@ in
         "Mod+Ctrl+Shift+WheelUp" = "column-move-left";
         "Mod+Tab" = "workspace-focus-last";
 
-        # Column sizing and placement.
-        "Mod+Ctrl+F" = once "window-toggle-maximize";
-        "Mod+Ctrl+C" = "column-center";
+        # Window sizing and placement.
         "Mod+C" = "column-center";
         "Mod+Minus" = "window-modify-primary-extent -0.05";
         "Mod+Equal" = "window-modify-primary-extent +0.05";
@@ -308,7 +306,7 @@ in
         "Mod+Escape" = (once "shortcuts-inhibit-toggle") // {
           allow_when_inhibited = true;
         };
-        "Ctrl+Alt+Delete" = once "session-quit";
+        "Ctrl+Alt+Delete" = once "spawn noctalia msg panel-toggle session";
         "Mod+Shift+P" = once "dpms-off";
         "Mod+O" = once "overview-toggle";
       }
