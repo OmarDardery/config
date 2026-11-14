@@ -253,8 +253,8 @@
     directory = "~/Pictures/Wallpapers";
   };
   widget = {
-    # Plugin settings use the manifest's exact field names. No outer capsule
-    # avoids doubling background/padding and preserves the 420px width budget.
+    # Override only plugin defaults that matter for this desktop. The plugin
+    # draws its own capsule inside the configured 420px width budget.
     smart_taskbar = {
       type = "omardardery/smart-taskbar:taskbar";
       capsule = false;
@@ -263,36 +263,10 @@
       expand_mode = "hover";
       hover_delay = 150;
       collapse_delay = 350;
-      animations = true;
-      animation_duration = 120;
-      display_mode = "running";
-      grouping = "app";
-      workspace_filter = "all";
       output_filter = "current";
-      show_minimized = true;
-      sorting = "launch";
-      min_width = 64;
       max_width = 420;
-      collapsed_width = 64;
-      icon_size = 22;
-      icon_spacing = 4;
-      overflow_behavior = "items";
-      scroll_step = 1;
-      show_scroll_indicators = true;
-      auto_reveal_focused = true;
-      collapsed_label = "none";
-      duplicate_indicator = "badge";
-      badge_placement = "after";
       hover_enlarge = true;
-      hover_scale = 1.15;
-      capsule_radius = 14;
       opacity = 0.85;
-      border = false;
-      active_indicator = true;
-      minimized_indicator = true;
-      urgent_indicator = true;
-      click_behavior = "cycle";
-      compositor_compatibility = "auto";
     };
     clock = {
       format = "{:%a %d %b  %H:%M}";
