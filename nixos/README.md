@@ -81,13 +81,16 @@ On the first login, select Umbriel if needed. Ly remembers the selected user and
 session. After applying this display-manager change, reboot to enter Ly; restarting
 `display-manager.service` from the desktop would terminate the current session.
 
-Umbriel starts Noctalia directly. Stacking is the default, with edge/corner
-resizing, modifier-dragging and click-to-focus. Master is available as a 60/40
-layout. KDE Connect runs without Plasma, with discovery and transfer firewall
+Umbriel starts Noctalia directly. Master is the default 60/40 left-side
+tiling layout, with Super+D switching to stacking/floating. Sloppy focus follows
+the pointer while retaining focus over empty desktop space. Stacking supports
+edge/corner resizing and modifier-dragging. KDE Connect runs without Plasma, with discovery and transfer firewall
 ports opened by its NixOS module. Noctalia handles its own runtime state,
 wallpaper colors and Kitty/Umbriel palettes. There is no `desktop-config`
 service, palette seeder, state reconciler or font-cache refresh service.
-Screenshots use Noctalia's native commands. Smart Taskbar is configured as a
+Region and fullscreen screenshots use the existing grim/slurp/wl-clipboard
+stack to save under Pictures/Screenshots and copy to the clipboard, independent
+of Noctalia IPC. Window capture and annotation use Noctalia. Smart Taskbar is configured as a
 Noctalia plugin from OmarDardery/smart-taskbar-noctalia, with a 420 logical-pixel
 maximum width, hover expansion, grouped duplicate badges, and a disabled dock.
 Noctalia fetches and updates its declared Git source on startup. The plugin
