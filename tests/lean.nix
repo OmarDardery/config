@@ -32,6 +32,11 @@ assert os.programs.gamemode.enable;
 assert
   flake.lib.deployment.hardwareProfile != "generic" || !os.hardware.nvidia.prime.offload.enable;
 assert home.programs.umbriel.settings.layout.mode == "master";
+assert home.programs.umbriel.settings.input.focus.follows_mouse == "sloppy";
+assert home.programs.umbriel.settings.keybinds."Ctrl+Alt+Delete".action == "spawn noctalia msg panel-toggle session";
+assert os.programs.thunar.enable && os.programs.kdeconnect.enable;
+assert os.services.gvfs.enable && os.services.udisks2.enable && os.services.tumbler.enable;
+assert os.services.pipewire.enable && os.services.gnome.gnome-keyring.enable;
 assert home.programs.umbriel.settings.layout.stacking.drop_zones;
 assert home.programs.umbriel.settings.keybinds.Print.action == "spawn screenshot-desktop region";
 assert home.programs.umbriel.settings.keybinds."Shift+Print".action == "spawn screenshot-desktop fullscreen";
