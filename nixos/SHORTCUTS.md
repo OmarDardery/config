@@ -45,8 +45,8 @@ The power button locks first. `Ctrl+Alt+Delete` quits the compositor session.
 
 ## Windows and layouts
 
-Stacking is the default, with overlapping and resizable windows. Master is the
-optional 60/40 layout, with the primary window on the left.
+Master is the default 60/40 tiled layout, with the primary window on the left.
+Stacking is the optional overlapping, freely resizable desktop layout.
 
 | Shortcut or gesture | Action |
 | --- | --- |
@@ -60,8 +60,8 @@ optional 60/40 layout, with the primary window on the left.
 | Mod+Shift+F | Maximize or restore |
 | Mod+Minus/Equal | Decrease/increase width 5% |
 | Mod+Shift+Minus/Equal | Decrease/increase height 5% |
-| Mod+Alt+1 / Mod+Alt+2 | Stacking / master |
-| Mod+D | Toggle stacking and master |
+| Mod+Alt+1 / Mod+Alt+2 | Master / stacking |
+| Mod+D | Toggle master and stacking |
 | Mod+Left/Right or H/L | Focus horizontal neighbor |
 | Mod+J/K | Focus vertical neighbor |
 | Mod+Alt+Left/Right | Focus tabs |
@@ -71,17 +71,18 @@ optional 60/40 layout, with the primary window on the left.
 | Mod+Shift+arrows | Focus another monitor |
 | Mod+Q / Mod+O | Close / overview |
 
-Clicking a window activates it; hovering does not steal focus.
+Sloppy focus activates a window when the pointer enters it, but keeps the
+last window focused when hovering over empty desktop space.
 Mouse resizing and snapping are built into Umbriel.
 
 ## Capture
 
 | Shortcut | Action |
 | --- | --- |
-| Print | Capture region |
-| Shift+Print | Capture full screen |
-| Ctrl+Print | Capture window |
-| Alt+Print | Annotate |
+| Print / Mod+Shift+S | Capture region with grim/slurp, save to Pictures/Screenshots and copy |
+| Shift+Print | Capture full desktop with grim, save and copy |
+| Ctrl+Print | Capture focused window through Noctalia |
+| Alt+Print | Open Noctalia screenshot annotator |
 
 ## XP-Pen Deco mini7
 
