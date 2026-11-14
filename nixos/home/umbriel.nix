@@ -45,7 +45,7 @@ in
         };
         mouse.accel_profile = "flat";
         focus = {
-          follows_mouse = false;
+          follows_mouse = "off";
         };
         cursor = {
           theme = config.home.pointerCursor.name;
