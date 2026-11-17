@@ -48,6 +48,14 @@ Umbriel palette template supplies matching title-bar colors.
 Noctalia Greeter uses greetd with the same Umbriel session. Appearance Auto-Sync
 is enabled for the NixOS desktop, with a narrowly authorized Polkit helper for
 wallpaper/palette sync (the greeter TOML keeps administrator-controlled defaults).
+The greeter applies a softly blurred and tinted wallpaper behind a centered
+clock, with a dark fallback before the first sync. Its declarative settings
+intentionally leave palette, scheme, wallpaper image path and font unset so
+Noctalia's current theme and selected wallpaper remain in charge. After the
+first login, open Noctalia **Settings → Security → Noctalia Greeter → Sync Now**
+once to transfer the desktop look immediately. Later wallpaper/palette/font
+changes automatically synchronize.
+
 The declarative config/runtime-state split and optional palette includes still
 match the current docs. Keep GUI overrides in state: resetting a changed setting in the UI
 is preferable to introducing another configuration rewrite service.
