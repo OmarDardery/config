@@ -1,8 +1,15 @@
 {
   pkgs,
+  inputs,
   ...
 }:
 {
+  # Install WinBoat per user, without pulling in the obsolete Electron 40
+  # package from the system's stable Nixpkgs.
+  home.packages = [
+    inputs.noctalia.inputs.nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}.winboat
+  ];
+
   services.mpris-proxy.enable = true;
   services.kdeconnect.enable = true;
   home.pointerCursor = {
