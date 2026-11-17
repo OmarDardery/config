@@ -13,6 +13,12 @@
     # Keep the cache branch and independent nixpkgs pin to match cached builds.
     # Cache settings live in system/nix.nix.
     noctalia.url = "github:noctalia-dev/noctalia/cachix";
+    # Stable Nixpkgs does not yet ship the greeter module; use upstream.
+    noctalia-greeter = {
+      url = "github:noctalia-dev/noctalia-greeter";
+      # Reuse Noctalia's pinned unstable package set rather than adding another.
+      inputs.nixpkgs.follows = "noctalia/nixpkgs";
+    };
     # Track upstream; flake.lock records the validated compositor and portal revisions.
     umbriel.url = "github:noctalia-dev/umbriel";
     nix-index-database = {

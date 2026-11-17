@@ -45,9 +45,11 @@ shortcuts on NixOS and native Linux. Title bars respect application decoration
 preferences, and stacking supports edge/corner drop zones. Noctalia's upstream
 Umbriel palette template supplies matching title-bar colors.
 
-Greeter synchronization is disabled because Ly handles login. The declarative
-config/runtime-state split and optional palette includes already match the
-current docs. Keep GUI overrides in state: resetting a changed setting in the UI
+Noctalia Greeter uses greetd with the same Umbriel session. Appearance Auto-Sync
+is enabled for the NixOS desktop, with a narrowly authorized Polkit helper for
+wallpaper/palette sync (the greeter TOML keeps administrator-controlled defaults).
+The declarative config/runtime-state split and optional palette includes still
+match the current docs. Keep GUI overrides in state: resetting a changed setting in the UI
 is preferable to introducing another configuration rewrite service.
 
 For native installs, update Umbriel and Noctalia with the distro package manager

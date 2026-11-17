@@ -1,5 +1,16 @@
+# Compact NixLab-inspired prompt; local sessions keep the existing minimal look.
 add_newline = true
-command_timeout = 1000
+command_timeout = 500
+scan_timeout = 50
+format = "$username$hostname$directory$git_branch$git_status$nix_shell$cmd_duration$line_break$character"
+
+[username]
+show_always = false
+format = "[$user@]($style)"
+
+[hostname]
+ssh_only = true
+format = "[$hostname ]($style)"
 
 [character]
 success_symbol = "[❯](bold green)"
@@ -9,8 +20,17 @@ error_symbol = "[❯](bold red)"
 truncation_length = 3
 truncate_to_repo = true
 
+[git_branch]
+format = " on [$branch]($style)"
+
+[nix_shell]
+disabled = false
+symbol = "nix"
+format = " via [$symbol]($style)"
+
 [cmd_duration]
 min_time = 2000
+format = " took [$duration]($style)"
 
 [package]
 disabled = true

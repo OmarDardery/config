@@ -34,10 +34,16 @@ compositor=$(nix build --no-link --print-out-paths --no-write-lock-file "$flake#
 settings=$(nix build --no-link --print-out-paths --no-write-lock-file "$flake#nixosConfigurations.$host.config.home-manager.users.$profile_user.xdg.configFile.\"umbriel/config.toml\".source")
 "$compositor/bin/umbriel" config validate -c "$settings"
 "$compositor/bin/umbriel" config validate -c non-nixos/dotfiles/umbriel/config.toml
-ly_package=$(nix build --no-link --print-out-paths --no-write-lock-file --impure --expr "let c = (builtins.getFlake \"$flake\").nixosConfigurations.$host.config; in c.services.displayManager.ly.package.override { x11Support = c.services.displayManager.ly.x11Support; }")
-"$ly_package/bin/ly" --version
-ly_settings=$(nix build --no-link --print-out-paths --no-write-lock-file "$flake#nixosConfigurations.$host.config.environment.etc.\"ly/config.ini\".source")
-grep -E '^animation[[:space:]]*=[[:space:]]*matrix$' "$ly_settings"
+greeter_package=$(nix build --no-link --print-out-paths --no-write-lock-file "$flake#nixosConfigurations.$host.config.services.displayManager.noctalia-greeter.package")
+test -x "$greeter_package/bin/noctalia-greeter-session"
+greeter_settings=$(nix build --no-link --print-out-paths --no-write-lock-file --impure --expr "(builtins.getFlake \"$flake\").nixosConfigurations.$host.config.systemd.tmpfiles.settings.\"10-noctalia-greeter\".\"/var/lib/noctalia-greeter/greeter.toml\".\"L+\".argument")
+grep -E '^default[[:space:]]*=[[:space:]]*"umbriel"
+system=$(nix eval --raw "$flake#lib.deployment.system" --no-write-lock-file)
+shell_package=$(nix build --no-link --print-out-paths --impure --expr "(builtins.getFlake \"$flake\").inputs.noctalia.packages.$system.default")
+shell_settings=$(nix build --no-link --print-out-paths --no-write-lock-file "$flake#nixosConfigurations.$host.config.home-manager.users.$profile_user.xdg.configFile.\"noctalia/config.toml\".source")
+"$shell_package/bin/noctalia" config validate "$shell_settings"
+"$shell_package/bin/noctalia" config validate non-nixos/dotfiles/noctalia/config.toml
+ "$greeter_settings"
 system=$(nix eval --raw "$flake#lib.deployment.system" --no-write-lock-file)
 shell_package=$(nix build --no-link --print-out-paths --impure --expr "(builtins.getFlake \"$flake\").inputs.noctalia.packages.$system.default")
 shell_settings=$(nix build --no-link --print-out-paths --no-write-lock-file "$flake#nixosConfigurations.$host.config.home-manager.users.$profile_user.xdg.configFile.\"noctalia/config.toml\".source")

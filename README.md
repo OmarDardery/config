@@ -61,8 +61,8 @@ environment; there are no shared development shells or global language runtimes.
 ## NixOS defaults and recovery
 
 NixOS x86_64 hosts use CachyOS's latest release kernel via its pinned flake overlay. The ASUS TUF
-A14 profile adds NVIDIA/PRIME, peripherals and an 80% battery cap. Ly supplies the
-Matrix login screen; Umbriel starts Noctalia. Generic hosts use their generated
+A14 profile adds NVIDIA/PRIME, peripherals and an 80% battery cap. Noctalia Greeter supplies the
+greetd login screen; Umbriel starts Noctalia. Generic hosts use their generated
 hardware configuration.
 
 Gaming, engineering, Docker, diagnostics and Tailscale default to on.

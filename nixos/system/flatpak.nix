@@ -4,7 +4,10 @@
   imports = [ inputs.nix-flatpak.nixosModules.nix-flatpak ];
   services.flatpak = {
     enable = true;
-    packages = [ "com.epicgames.launcher" ];
+    packages = [
+      "com.epicgames.launcher"
+      "com.discordapp.Discord"
+    ];
     remotes = [
       {
         name = "flathub";

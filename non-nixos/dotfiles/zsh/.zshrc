@@ -33,6 +33,7 @@ for plugin in /usr/share/zsh/plugins/fzf-tab/fzf-tab.plugin.zsh \
   fi
 done
 typeset -ga ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=#7c8493'
 for plugin in /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh \
               /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh; do
   if [[ -r "$plugin" ]]; then

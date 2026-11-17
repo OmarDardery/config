@@ -22,7 +22,7 @@
   services.gnome.at-spi2-core.enable = true;
   services.gnome.gcr-ssh-agent.enable = true;
 
-  # Ly's NixOS PAM integration unlocks the user keyring.
+  # greetd PAM is configured in greeter.nix to unlock the keyring.
   services.gnome.gnome-keyring.enable = true;
   services.gvfs.enable = true;
   services.tumbler.enable = true;

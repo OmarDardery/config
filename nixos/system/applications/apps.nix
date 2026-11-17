@@ -5,7 +5,6 @@
     ++ (with pkgs; [
       inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default
       (callPackage ../../../non-nixos/pkgs/zen-browser.nix { zenInput = inputs.zen-browser; })
-      discord
       imagemagick
       (writeShellApplication {
         name = "screenshot-desktop";
