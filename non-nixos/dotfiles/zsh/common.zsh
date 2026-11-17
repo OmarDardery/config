@@ -1,6 +1,6 @@
 # Shared Zsh navigation, completion and shell utilities.
 setopt AUTO_CD AUTO_PUSHD PUSHD_IGNORE_DUPS PUSHD_SILENT
-setopt INTERACTIVE_COMMENTS HIST_REDUCE_BLANKS HIST_VERIFY HIST_EXPIRE_DUPS_FIRST
+setopt INTERACTIVE_COMMENTS HIST_REDUCE_BLANKS HIST_VERIFY HIST_EXPIRE_DUPS_FIRST HIST_IGNORE_SPACE
 setopt BANG_HIST COMPLETE_IN_WORD AUTO_LIST AUTO_MENU
 
 if [[ -o interactive ]]; then
@@ -18,6 +18,9 @@ if [[ -o interactive ]]; then
   bindkey '^[[1;5D' backward-word
   zmodload zsh/complist
   zstyle ':completion:*' menu select
+  # NixLab's Bash completion favors visible, case-insensitive candidates.
+  zstyle ':completion:*' group-name ''
+  zstyle ':completion:*' verbose yes
   zstyle ':completion:*' completer _complete _match _approximate
   zstyle ':completion:*:approximate:*' max-errors 'reply=(1)'
   zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
@@ -41,6 +44,8 @@ alias ....='cd ../../..'
 alias .....='cd ../../../..'
 alias ......='cd ../../../../..'
 alias jctl='journalctl -p 3 -xb'
+alias failed='systemctl --failed --no-pager'
+alias ufailed='systemctl --user --failed --no-pager'
 alias tarnow='tar -acf'
 alias untar='tar -xvf'
 # Zsh native history with explicit timestamps.

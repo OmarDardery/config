@@ -50,7 +50,9 @@ fuzzy Tab selection, Ctrl+R history search, Ctrl+T file search, Alt+C
 directory search, prefix-based Up/Down history, and `!!`/`!$ expansion
 on Space. Commands running 10 seconds or longer trigger a low-urgency
 desktop notification when `notify-send` and a graphical session are available.
-The Starship prompt and existing shell aliases remain unchanged.
+Starship now shows Nix shell and Git context in a compact prompt, with user/host on SSH.
+The shared shell helpers add `failed` and `ufailed` status commands,
+group completions, and omit commands prefixed with a space from history.
 
 After a successful rebuild, reload the open shell with `exec zsh`. Existing
 shells retain aliases from the previous generation. The aliases use checkout-bound commands:
@@ -70,16 +72,17 @@ reported failed unit is the thing to diagnose; removing systemd would break the 
 
 ## Desktop and apps
 
-Ly provides the login screen using its built-in Matrix animation. This uses the
-native `services.displayManager.ly` NixOS module and the pinned Nixpkgs Ly package;
-no separate greeter flake or theme package is needed. Ly lists Wayland sessions
-and launches Umbriel. Xorg and XWayland are disabled; applications requiring
-X11 compatibility (including some games) need XWayland enabled to work. The
-NixOS module also supplies PAM and GNOME Keyring integration.
+Noctalia Greeter now provides graphical login via greetd, using the pinned
+upstream greeter flake (Nixpkgs 26.05 does not yet include the module).
+The greeter defaults to Umbriel, uses the Bibata cursor and unlocks GNOME Keyring
+through greetd PAM. Noctalia can synchronize colors/wallpaper to the greeter;
+only the dedicated appearance-sync helper is authorized without a password.
+Xorg and XWayland stay disabled; applications requiring X11 compatibility
+(including some games) need XWayland enabled.
 
-On the first login, select Umbriel if needed. Ly remembers the selected user and
-session. After applying this display-manager change, reboot to enter Ly; restarting
-`display-manager.service` from the desktop would terminate the current session.
+Reboot after applying the display-manager change; do not restart
+`display-manager.service` from inside the desktop session. If the greeter fails,
+switch to a TTY and choose the prior NixOS generation from the boot menu.
 
 Umbriel starts Noctalia directly. Master is the default 60/40 left-side
 tiling layout, with Super+D switching to stacking/floating. Sloppy focus follows
@@ -105,8 +108,9 @@ language toolchains belong in each project’s own `shell.nix`.
 
 Steam and GameMode use the normal NixOS modules. There is no Millennium/client
 fork or theme installer. Engineering tools are included by default. FreeCAD and
-PlatformIO use Nix;
-OrcaSlicer and ProtonPlus use the declared Flathub installation. Existing Flatpak
+PlatformIO use Nix. WinBoat is a Home Manager package from Noctalia's already
+pinned newer Nixpkgs (v0.9.2, Electron 43); Docker stays a system service.
+OrcaSlicer, Discord and ProtonPlus use the declared Flathub installation. Existing Flatpak
 apps/data are preserved and configured apps update during activation. The font
 mount remains for sandbox compatibility.
 
@@ -117,7 +121,8 @@ CachyOS latest is selected in `system/performance.nix`; the ASUS NVIDIA
 driver pin stays in its hardware profile. The installed boot
 target and state versions are captured once in `local-system.json`; updates do
 not advance state versions. The personal data disk is mounted only when detected.
-Tailscale, Docker and diagnostics are enabled by default. Printing/scanning,
+Tailscale, Docker and diagnostics are enabled by default. WinBoat no longer
+uses the stable Nixpkgs package with insecure Electron 40. Printing/scanning,
 including their discovery services, are disabled until
 `workstation.printing.enable = true;` is selected.
 Backups are enabled when the personal storage disk is configured.

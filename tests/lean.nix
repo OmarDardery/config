@@ -9,15 +9,27 @@ assert !(os.systemd.user.services ? flatpak-font-cache);
 assert os.systemd.services ? flatpak-managed-install;
 assert os.services.flatpak.enable;
 assert !os.services.flatpak.uninstallUnmanaged;
-assert builtins.elem "com.epicgames.launcher" (map (p: p.appId) os.services.flatpak.packages);
+assert builtins.all (id: builtins.elem id (map (p: p.appId) os.services.flatpak.packages)) [
+  "com.epicgames.launcher"
+  "com.discordapp.Discord"
+];
+assert !(builtins.elem "discord" (map flake.inputs.nixpkgs.lib.getName os.environment.systemPackages));
 assert !os.services.scx.enable;
-assert os.services.displayManager.ly.enable;
-assert !os.services.displayManager.ly.x11Support;
-assert os.services.displayManager.ly.settings.animation == "matrix";
+assert os.services.displayManager.noctalia-greeter.enable;
+assert os.services.displayManager.noctalia-greeter.settings.session.default == "umbriel";
+assert os.services.displayManager.noctalia-greeter.settings.user.default == flake.lib.deployment.username;
+assert os.services.displayManager.noctalia-greeter.settings.appearance.wallpaper.blur == 0.48;
+assert os.services.displayManager.noctalia-greeter.settings.appearance.wallpaper.tint == 0.22;
+assert os.services.displayManager.noctalia-greeter.settings.appearance.wallpaper.fill_color == "#11151e";
+assert !(os.services.displayManager.noctalia-greeter.settings.appearance ? scheme);
+assert !(os.services.displayManager.noctalia-greeter.settings.appearance ? palette);
+assert !(os.services.displayManager.noctalia-greeter.settings.appearance.wallpaper ? path);
 assert os.services.displayManager.defaultSession == "umbriel";
-assert !os.services.greetd.enable;
-assert os.security.pam.services.ly.enableGnomeKeyring;
-assert !(flake.inputs ? noctalia-greeter);
+assert os.services.greetd.enable;
+assert os.services.accounts-daemon.enable;
+assert os.security.pam.services.greetd.enableGnomeKeyring;
+assert os.services.displayManager.noctalia-greeter.passwordless-sync-users == [ flake.lib.deployment.username ];
+assert flake.inputs ? noctalia-greeter;
 assert flake.inputs ? nix-cachyos-kernel;
 assert flake.inputs.nixpkgs.lib.hasPrefix "linux-cachyos" (flake.inputs.nixpkgs.lib.getName os.boot.kernelPackages.kernel);
 assert os.programs.steam.enable;
@@ -27,6 +39,12 @@ assert (os.fileSystems ? "/mnt/storage") == (flake.lib.deployment.storageUUID !=
 assert os.virtualisation.docker.enable && !os.services.printing.enable;
 assert !os.services.ipp-usb.enable && !os.hardware.sane.enable && !os.services.avahi.enable;
 assert !(builtins.elem "nmap" (map flake.inputs.nixpkgs.lib.getName os.environment.systemPackages));
+assert !(builtins.elem "winboat" (map flake.inputs.nixpkgs.lib.getName os.environment.systemPackages));
+assert builtins.any (
+  p:
+  flake.inputs.nixpkgs.lib.getName p == "winboat"
+  && flake.inputs.nixpkgs.lib.getVersion p == "0.9.2"
+) home.home.packages;
 assert os.workstation.engineering.enable && os.workstation.diagnostics.enable;
 assert os.programs.gamemode.enable;
 assert
@@ -44,7 +62,7 @@ assert home.programs.umbriel.settings.appearance.title_bar.mode == "on";
 assert
   home.programs.umbriel.settings.keybinds."Mod+D".action
   == "workspace-set-layout toggle master stacking";
-assert !home.programs.noctalia.settings.shell.greeter_sync.auto_sync;
+assert home.programs.noctalia.settings.shell.greeter_sync.auto_sync;
 assert home.programs.vscodium.enable && home.programs.neovim.enable;
 assert !home.programs.noctalia.systemd.enable;
 assert home.programs.noctalia.settings.plugins.enabled == [ "omardardery/smart-taskbar" ];
@@ -77,6 +95,8 @@ assert home.programs.zsh.enable && home.programs.direnv.enableZshIntegration;
 assert flake.inputs.nixpkgs.lib.hasInfix "up-line-or-beginning-search" home.programs.zsh.initContent;
 assert flake.inputs.nixpkgs.lib.hasInfix "fzf-tab.plugin.zsh" home.programs.zsh.initContent;
 assert flake.inputs.nixpkgs.lib.hasInfix "magic-space" home.programs.zsh.initContent;
+assert flake.inputs.nixpkgs.lib.hasInfix "HIST_IGNORE_SPACE" home.programs.zsh.initContent;
+assert flake.inputs.nixpkgs.lib.hasInfix "alias failed=" home.programs.zsh.initContent;
 assert home.programs.zsh.autosuggestion.strategy == [ "history" "completion" ];
 assert
   home.programs.kitty.settings.shell
