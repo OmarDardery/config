@@ -108,7 +108,8 @@ language toolchains belong in each project’s own `shell.nix`.
 
 Steam and GameMode use the normal NixOS modules. There is no Millennium/client
 fork or theme installer. Engineering tools are included by default. FreeCAD and
-PlatformIO use Nix;
+PlatformIO use Nix. WinBoat is a Home Manager package from Noctalia's already
+pinned newer Nixpkgs (v0.9.2, Electron 43); Docker stays a system service.
 OrcaSlicer, Discord and ProtonPlus use the declared Flathub installation. Existing Flatpak
 apps/data are preserved and configured apps update during activation. The font
 mount remains for sandbox compatibility.
@@ -120,9 +121,8 @@ CachyOS latest is selected in `system/performance.nix`; the ASUS NVIDIA
 driver pin stays in its hardware profile. The installed boot
 target and state versions are captured once in `local-system.json`; updates do
 not advance state versions. The personal data disk is mounted only when detected.
-Tailscale, Docker and diagnostics are enabled by default. WinBoat is not
-installed: it depended on an end-of-life Electron release and a Windows VM
-is not required for the container runtime. Printing/scanning,
+Tailscale, Docker and diagnostics are enabled by default. WinBoat no longer
+uses the stable Nixpkgs package with insecure Electron 40. Printing/scanning,
 including their discovery services, are disabled until
 `workstation.printing.enable = true;` is selected.
 Backups are enabled when the personal storage disk is configured.
