@@ -40,6 +40,11 @@ assert os.virtualisation.docker.enable && !os.services.printing.enable;
 assert !os.services.ipp-usb.enable && !os.hardware.sane.enable && !os.services.avahi.enable;
 assert !(builtins.elem "nmap" (map flake.inputs.nixpkgs.lib.getName os.environment.systemPackages));
 assert !(builtins.elem "winboat" (map flake.inputs.nixpkgs.lib.getName os.environment.systemPackages));
+assert builtins.any (
+  p:
+  flake.inputs.nixpkgs.lib.getName p == "winboat"
+  && flake.inputs.nixpkgs.lib.getVersion p == "0.9.2"
+) home.home.packages;
 assert os.workstation.engineering.enable && os.workstation.diagnostics.enable;
 assert os.programs.gamemode.enable;
 assert
