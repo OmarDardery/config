@@ -120,7 +120,7 @@ CachyOS latest is selected in `system/performance.nix`; the ASUS NVIDIA
 driver pin stays in its hardware profile. The installed boot
 target and state versions are captured once in `local-system.json`; updates do
 not advance state versions. The personal data disk is mounted only when detected.
-Tailscale, Docker and diagnostics are enabled by default. Printing/scanning,
+Tailscale, Docker and diagnostics are enabled by default. WinBoat is not\ninstalled: it depended on an end-of-life Electron release and a Windows VM\nis not required for the container runtime. Printing/scanning,
 including their discovery services, are disabled until
 `workstation.printing.enable = true;` is selected.
 Backups are enabled when the personal storage disk is configured.
