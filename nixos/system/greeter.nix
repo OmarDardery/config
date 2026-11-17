@@ -10,6 +10,25 @@
       settings = {
         session.default = "umbriel";
         user.default = profile.username;
+        # Do not pin a palette or wallpaper: Noctalia's Synced colors and
+        # chosen wallpaper should follow the current desktop appearance.
+        appearance = {
+          wallpaper = {
+            # Gentle frosted-glass backdrop, with a dark fallback until
+            # the first appearance sync has installed the desktop wallpaper.
+            blur = 0.48;
+            tint = 0.22;
+            fill_color = "#11151e";
+          };
+        };
+        clock = {
+          enabled = true;
+          position = "above-panel";
+          time_format = "{:%H:%M}";
+          date_format = "%A, %d %B";
+          time_font_size = 52;
+          date_font_size = 15;
+        };
         keyboard.layout = "us";
         cursor = {
           theme = "Bibata-Modern-Classic";
