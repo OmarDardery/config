@@ -17,10 +17,9 @@ disabled. Plugin source, enabled state and appearance are declared in
 
 | Shortcut | Action |
 | --- | --- |
-| Mod+T / Mod+B / Mod+E | Kitty / Zen / Thunar |
+| Mod+T / Mod+B / Mod+E | Kitty / Zen / Luciole |
 | Mod+grave / Mod+Ctrl+Return | Terminal / calculator scratchpad |
 | Mod+Ctrl+P / Mod+Ctrl+Shift+P | Start / end presentation mode |
-| Mod+Shift+E | Yazi directly in Kitty |
 | Mod+I / Mod+Ctrl+E | VSCodium / edit the Nix configuration tree |
 | Mod+Space | App launcher, search and calculator |
 | Alt+Tab | Window switcher; release Alt to activate |

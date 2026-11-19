@@ -7,6 +7,7 @@
 {
   imports = [
     inputs.umbriel.nixosModules.default
+    inputs.luciole.nixosModules.default
   ];
   programs.umbriel.enable = true;
   programs.kdeconnect.enable = true;
@@ -25,14 +26,8 @@
   # greetd PAM is configured in greeter.nix to unlock the keyring.
   services.gnome.gnome-keyring.enable = true;
   services.gvfs.enable = true;
-  services.tumbler.enable = true;
-  programs.thunar = {
-    enable = true;
-    plugins = with pkgs; [
-      thunar-archive-plugin
-      thunar-volman
-    ];
-  };
+  # Luciole needs GVfs for Trash and remote folders; it renders its own thumbnails.
+  programs.luciole.enable = true;
 
   services.upower.enable = true;
   services.fwupd.enable = true;

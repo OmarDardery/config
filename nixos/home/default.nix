@@ -5,7 +5,6 @@
 }:
 {
   imports = [
-    ./yazi.nix
     ./shell.nix
     ./git.nix
     ./nix-tools.nix

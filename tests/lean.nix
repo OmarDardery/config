@@ -52,8 +52,8 @@ assert
 assert home.programs.umbriel.settings.layout.mode == "master";
 assert home.programs.umbriel.settings.input.focus.follows_mouse == "sloppy";
 assert home.programs.umbriel.settings.keybinds."Ctrl+Alt+Delete".action == "spawn noctalia msg panel-toggle session";
-assert os.programs.thunar.enable && os.programs.kdeconnect.enable;
-assert os.services.gvfs.enable && os.services.udisks2.enable && os.services.tumbler.enable;
+assert os.programs.luciole.enable && os.programs.kdeconnect.enable;
+assert os.services.gvfs.enable && os.services.udisks2.enable;
 assert os.services.pipewire.enable && os.services.gnome.gnome-keyring.enable;
 assert home.programs.umbriel.settings.layout.stacking.drop_zones;
 assert home.programs.umbriel.settings.keybinds.Print.action == "spawn screenshot-desktop region";
@@ -104,7 +104,6 @@ assert
 assert
   home.programs.vscodium.profiles.default.userSettings."terminal.integrated.defaultProfile.linux"
   == "zsh";
-assert home.programs.yazi.enableZshIntegration && home.programs.yazi.enableBashIntegration;
 
 {
   system = os.system.build.toplevel.drvPath;

@@ -39,7 +39,7 @@ assert !(os.networking.firewall.interfaces ? tailscale0);
 assert map (p: p.appId) os.services.flatpak.packages == [ "com.epicgames.launcher" "com.discordapp.Discord" ];
 assert !os.services.desktopManager.plasma6.enable;
 assert !os.services.xserver.enable && !os.programs.xwayland.enable;
-assert os.programs.thunar.enable;
+assert os.programs.luciole.enable;
 assert os.programs.kdeconnect.enable;
 assert builtins.all (name: !(builtins.elem name names)) [
   "freecad"
