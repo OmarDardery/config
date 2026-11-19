@@ -151,7 +151,7 @@ evaluation cannot test the laptop's displays, tablet or suspend/resume behavior.
 ## Manual apps and package ownership
 
 Home Manager installs and configures user tools, including the shell integrations,
-Git, Kitty and Yazi. NixOS owns system services and hardware. Fonts are declared
+Git and Kitty. NixOS owns system services and hardware. Fonts are declared
 once in the system font list. Logisim Evolution and Wireshark are removed.
 
 Use [Nix profiles](APPS.md) for apps you want outside the declarative config.

@@ -21,6 +21,11 @@
     };
     # Track upstream; flake.lock records the validated compositor and portal revisions.
     umbriel.url = "github:noctalia-dev/umbriel";
+    # Noctalia's native file manager; reuse Noctalia's pinned unstable package set.
+    luciole = {
+      url = "github:noctalia-dev/luciole";
+      inputs.nixpkgs.follows = "noctalia/nixpkgs";
+    };
     nix-index-database = {
       url = "github:nix-community/nix-index-database";
       inputs.nixpkgs.follows = "nixpkgs";

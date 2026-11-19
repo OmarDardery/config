@@ -174,8 +174,7 @@ in
           allow_when_inhibited = true;
         };
         "Mod+Shift+F23" = once "spawn kitty";
-        "Mod+E" = once "spawn thunar";
-        "Mod+Shift+E" = once "spawn kitty yazi";
+        "Mod+E" = once "spawn luciole";
         "Mod+I" = once "spawn codium";
         "Mod+Ctrl+E" = once "spawn kitty nvim ${lib.escapeShellArg profile.configRepo}";
         "Mod+Shift+D" = once "spawn nwg-displays";
@@ -347,7 +346,7 @@ in
           blur_optimized = false;
         }
         {
-          match.app_id = "^(thunar|Thunar|org\\.xfce\\.Thunar)$";
+          match.app_id = "^dev\\.noctalia\\.luciole$";
           blur = true;
         }
         {
