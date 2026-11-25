@@ -12,24 +12,35 @@
         user.default = profile.username;
         # Do not pin a palette or wallpaper: Noctalia's Synced colors and
         # chosen wallpaper should follow the current desktop appearance.
+        # macOS-style login: large clock at the top, heavily frosted
+        # wallpaper and a bare password field, without logo or scheme picker.
         appearance = {
+          hide_logo = true;
+          scheme_selector_position = "hidden";
+          power_buttons_position = "bottom-right";
+          password_style = "default";
+          font_family = "Inter";
           wallpaper = {
-            # Gentle frosted-glass backdrop, with a dark fallback until
-            # the first appearance sync has installed the desktop wallpaper.
-            blur = 0.48;
-            tint = 0.22;
+            # Dark fallback until the first appearance sync has installed
+            # the desktop wallpaper.
+            blur = 0.75;
+            tint = 0.15;
             fill_color = "#11151e";
           };
         };
         clock = {
           enabled = true;
-          position = "above-panel";
+          position = "top-center";
           time_format = "{:%H:%M}";
-          date_format = "%A, %d %B";
-          time_font_size = 52;
-          date_font_size = 15;
+          date_format = "%A %-d %B";
+          time_font_size = 96;
+          date_font_size = 18;
         };
-        keyboard.layout = "us";
+        # Same layouts and switch chord as the desktop.
+        keyboard = {
+          layout = "us,ara";
+          options = "grp:alt_shift_toggle";
+        };
         cursor = {
           theme = "Bibata-Modern-Classic";
           size = 24;
