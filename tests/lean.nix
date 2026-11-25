@@ -81,15 +81,13 @@ assert !(home.home.activation ? mutableLazyVim);
 assert !(home.home.activation ? kittyDeclarativeConfig);
 assert !(flake.inputs ? millennium);
 assert !(flake ? devShells) && !(flake ? templates);
-assert !(os.security.wrappers ? dumpcap);
-assert !(os.users.groups ? wireshark);
+assert os.security.wrappers.dumpcap.group == "wireshark";
+assert os.security.wrappers.dumpcap.capabilities == "cap_net_raw,cap_net_admin+eip";
+assert !os.programs.wireshark.usbmon.enable;
+assert os.programs.wireshark.package.pname == "wireshark-qt";
+assert builtins.elem "wireshark" os.users.users.${flake.lib.deployment.username}.extraGroups;
 assert builtins.all (
-  p:
-  !(builtins.elem (flake.inputs.nixpkgs.lib.getName p) [
-    "logisim-evolution"
-    "wireshark"
-    "wireshark-cli"
-  ])
+  p: flake.inputs.nixpkgs.lib.getName p != "logisim-evolution"
 ) os.environment.systemPackages;
 assert home.home.shellAliases.up == "config-apply --update";
 assert !(home.home.shellAliases ? update);

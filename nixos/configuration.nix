@@ -34,6 +34,7 @@
     printing.enable = lib.mkDefault false;
     diagnostics.enable = lib.mkDefault true;
     tailscale.enable = lib.mkDefault true;
+    wireshark.enable = lib.mkDefault true;
     # The backup repository lives on the personal storage disk.
     backups.enable = lib.mkDefault (profile.storageUUID != null);
   };

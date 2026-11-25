@@ -150,7 +150,9 @@ evaluation cannot test the laptop's displays, tablet or suspend/resume behavior.
 
 Home Manager installs and configures user tools, including the shell integrations,
 Git and Kitty. NixOS owns system services and hardware. Fonts are declared
-once in the system font list. Logisim Evolution and Wireshark are removed.
+once in the system font list. Logisim Evolution is removed. Wireshark (`system/wireshark.nix`) captures
+without sudo for members of the `wireshark` group through a setcap `dumpcap`
+wrapper; log out and back in after the first rebuild. USB capture is off.
 
 Use [Nix profiles](APPS.md) for apps you want outside the declarative config.
 There are no shared dev shells or project templates in this repository.
