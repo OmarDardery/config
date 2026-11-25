@@ -23,7 +23,8 @@ The NVIDIA dGPU uses fine-grained runtime power management: it powers off
 (D3cold) whenever nothing uses it and wakes for `nvidia-offload`. `config-doctor`
 shows battery draw, the dGPU runtime state, processes holding `/dev/nvidia*`
 and the panel refresh rate. On battery, the dGPU should read `suspended`; an
-app listed as holding it keeps it awake (several watts). The 80% charge cap in
+app listed as holding it keeps it awake (several watts). Zed is wrapped to see only
+the AMD Vulkan driver, so it never wakes the dGPU. The 80% charge cap in
 `hardware.nix` is intentional and limits runtime by about a fifth.
 
 The AMD iGPU drives the desktop. Use NixOS's `nvidia-offload COMMAND` for selected

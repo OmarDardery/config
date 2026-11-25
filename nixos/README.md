@@ -101,7 +101,7 @@ Home Manager directly owns editor settings, shell files and desktop dotfiles.
 Edit Nix-managed preferences in `home/` and rebuild. Existing conflicting files
 are backed up using Home Manager's `.bak` policy; if a `.bak` already exists,
 move it aside before retrying. Extra local LazyVim files and user-installed
-Codium extensions remain yours. Plugins are downloaded by LazyVim on first use;
+Zed extensions and settings changed in its UI remain yours. Plugins are downloaded by LazyVim on first use;
 language toolchains belong in each project’s own `shell.nix`.
 
 Steam and GameMode use the normal NixOS modules. There is no Millennium/client

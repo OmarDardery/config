@@ -129,7 +129,7 @@
       "dev.noctalia.luciole"
       "zen"
       "kitty"
-      "codium"
+      "dev.zed.Zed"
       "com.discordapp.Discord"
       "libreoffice-writer"
     ];

@@ -213,7 +213,7 @@ in
         };
         "Mod+Shift+F23" = once "spawn kitty";
         "Mod+E" = once "spawn luciole";
-        "Mod+I" = once "spawn codium";
+        "Mod+I" = once "spawn zeditor";
         "Mod+Ctrl+E" = once "spawn kitty nvim ${lib.escapeShellArg profile.configRepo}";
         "Mod+Shift+D" = once "spawn nwg-displays";
         "Mod+A" = once "spawn noctalia msg panel-toggle control-center";

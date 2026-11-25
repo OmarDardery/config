@@ -68,7 +68,8 @@ assert
   home.programs.umbriel.settings.keybinds."Mod+D".action
   == "workspace-set-layout toggle stacking scrolling";
 assert home.programs.noctalia.settings.shell.greeter_sync.auto_sync;
-assert home.programs.vscodium.enable && home.programs.neovim.enable;
+assert home.programs.zed-editor.enable && home.programs.neovim.enable;
+assert !home.programs.vscodium.enable;
 assert !home.programs.noctalia.systemd.enable;
 assert home.programs.noctalia.settings.plugins.enabled == [ ];
 assert home.programs.noctalia.settings.dock.enabled && home.programs.noctalia.settings.dock.magnification;
@@ -105,8 +106,8 @@ assert
   home.programs.kitty.settings.shell
   == "${os.users.users.${flake.lib.deployment.username}.shell}/bin/zsh -l";
 assert
-  home.programs.vscodium.profiles.default.userSettings."terminal.integrated.defaultProfile.linux"
-  == "zsh";
+  home.programs.zed-editor.userSettings.terminal.shell.with_arguments.program
+  == "${os.users.users.${flake.lib.deployment.username}.shell}/bin/zsh";
 
 {
   system = os.system.build.toplevel.drvPath;

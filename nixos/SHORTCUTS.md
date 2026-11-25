@@ -21,7 +21,7 @@ workspaces. Two-finger click opens context menus.
 | Mod+T / Mod+B / Mod+E | Kitty / Zen / Luciole |
 | Mod+grave / Mod+Ctrl+Return | Terminal / calculator scratchpad |
 | Mod+Ctrl+P / Mod+Ctrl+Shift+P | Start / end presentation mode |
-| Mod+I / Mod+Ctrl+E | VSCodium / edit the Nix configuration tree |
+| Mod+I / Mod+Ctrl+E | Zed / edit the Nix configuration tree |
 | Mod+Space | Spotlight: app launcher, search and calculator |
 | Mod+Tab / Alt+Tab | App switcher (most recent first); release the modifier to activate |
 | Mod+A / Mod+Ctrl+S | Control center / Noctalia settings |
@@ -132,6 +132,7 @@ in `home/kitty.nix`. Colours come from Noctalia's generated palette.
 
 ## Editors
 
-Both editors start with Nix support and ordinary built-in themes. Use LazyVim's built-in
-which-key menu for navigation; install language tools and extensions as needed.
+Zed and LazyVim both start with Nix support (nixd, nixfmt) and ordinary built-in
+themes. Zed runs in vim mode; its command palette is Ctrl+Shift+P. Use LazyVim's
+built-in which-key menu for navigation; install language tools and extensions as needed.
 Notebook and custom AI/debugger shortcuts are no longer part of this config.
