@@ -21,6 +21,9 @@ panel; other monitors keep Noctalia's default login box. Change wallpaper,
 theme mode or power profile in Noctalia.
 
 Kitty and Umbriel include the two palette files configured in `home/noctalia.nix`.
+Luciole follows the same palette through `~/.config/luciole/colors.toml`, rendered
+from `assets/templates/luciole/colors.toml` (a copy of Noctalia's upstream Luciole
+template, which the locked Noctalia predates).
 Missing files on the first start use native defaults. Select a wallpaper in
 Noctalia to render them; no startup service seeds or rewrites settings. Bundled
 wallpapers are available under `~/.local/share/noctalia/wallpaper-samples/`.

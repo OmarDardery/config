@@ -26,6 +26,12 @@
               input_path = "${inputs.noctalia}/assets/templates/umbriel/umbriel.toml";
               output_path = "${config.xdg.stateHome}/noctalia/theme/umbriel.toml";
             };
+            # Luciole reads its palette from colors.toml beside its settings
+            # and applies changes live.
+            luciole = {
+              input_path = "${../assets/templates/luciole/colors.toml}";
+              output_path = "${config.xdg.configHome}/luciole/colors.toml";
+            };
           };
         };
       };

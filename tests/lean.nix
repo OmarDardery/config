@@ -74,6 +74,9 @@ assert !home.programs.noctalia.systemd.enable;
 assert home.programs.noctalia.settings.plugins.enabled == [ ];
 assert home.programs.noctalia.settings.dock.enabled && home.programs.noctalia.settings.dock.magnification;
 assert home.programs.noctalia.settings.bar.default.position == "top";
+assert
+  home.programs.noctalia.settings.theme.templates.user.luciole.output_path
+  == "${home.xdg.configHome}/luciole/colors.toml";
 assert !(home.programs.noctalia.settings.widget ? smart_taskbar);
 assert !(home.home.file ? ".local/bin/desktop-apply");
 assert !(home.home.activation ? mutableVSCodium);
