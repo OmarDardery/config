@@ -23,6 +23,11 @@
   dconf.settings."org/gnome/desktop/interface".color-scheme = "prefer-dark";
   gtk = {
     enable = true;
+    # Inter is the closest freely licensed match for the macOS system font.
+    font = {
+      name = "Inter";
+      size = 11;
+    };
     theme = {
       name = "Adwaita-dark";
       package = pkgs.gnome-themes-extra;

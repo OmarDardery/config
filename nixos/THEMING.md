@@ -4,9 +4,14 @@ Noctalia owns the wallpaper palette, bar, dock and shell surfaces. Umbriel owns
 layout, blur, borders and animation settings. Home Manager writes their base
 configs; Noctalia writes runtime state and rendered palette files itself.
 
-`home/noctalia-settings.nix` keeps the translucent bottom bar visible and reserves
-space. `home/umbriel.nix` keeps the rounded, blurred dwindle/stacking desktop and
-160% laptop scaling. Change wallpaper, theme mode or power profile in Noctalia.
+The desktop is styled after macOS. `home/noctalia-settings.nix` sets the
+edge-to-edge translucent top menu bar, the floating magnifying dock, the
+Spotlight-style launcher and the icon app switcher. `home/umbriel.nix` sets
+floating (stacking) windows by default, centered title bars with traffic-light
+buttons on the left (fixed red/yellow/green; bar and text colors still follow the
+palette), vibrant blur, deep soft shadows, the top-left Mission Control hot
+corner and 160% laptop scaling. GTK and the shell use Inter. Change wallpaper,
+theme mode or power profile in Noctalia.
 
 Kitty and Umbriel include the two palette files configured in `home/noctalia.nix`.
 Missing files on the first start use native defaults. Select a wallpaper in

@@ -42,6 +42,8 @@ in
         touchpad = {
           tap = true;
           natural_scroll = true;
+          # Two-finger click opens context menus, as on a Mac trackpad.
+          click_method = "clickfinger";
         };
         mouse.accel_profile = "flat";
         focus = {
@@ -68,9 +70,15 @@ in
           spawn_when_empty = "gnome-calculator";
         }
       ];
+      # Mission Control: rest the pointer in the top-left corner.
+      hot_corners.top_left = {
+        enabled = true;
+        delay_ms = 250;
+        action = "overview-toggle";
+      };
       layout = {
-        # Default to master tiling; switch to floating/stacking with Super+D.
-        mode = "master";
+        # Free-floating windows like macOS; Super+D switches to niri-like scrolling.
+        mode = "stacking";
         gap = 10;
         extent_presets = [
           0.33333
@@ -78,11 +86,9 @@ in
           0.66667
         ];
         stacking.drop_zones = true;
-        master = {
-          position = "left";
-          default_width_fraction = 0.60;
-          new_on_top = true;
-          new_becomes_master = false;
+        scrolling = {
+          default_extent_fraction = 0.5;
+          center_focused = "on_overflow";
         };
         tabs = {
           default_display = "normal";
@@ -91,25 +97,44 @@ in
       };
       appearance = {
         prefer_no_csd = true;
-        title_bar.mode = "on";
-        border_width = 2;
+        # macOS-style title bar: centered title, traffic lights on the left
+        # (listed from the title outward, so close sits at the edge).
+        title_bar = {
+          mode = "on";
+          height = 32;
+          font = "Inter Medium 10";
+          title_align = "center";
+          button_position = "left";
+          buttons = [
+            "maximize"
+            "minimize"
+            "close"
+          ];
+          button_size = 12;
+          button_corner_radius = 6;
+          button_gap = 8;
+          button_padding = 12;
+          button_glyph = "hover";
+        };
+        border_width = 1;
         outer_border_width = 0;
-        corner_radius = 16;
+        corner_radius = 12;
         drag_opacity = 0.95;
         blur = {
           enabled = true;
-          passes = 2;
-          radius = 6;
+          passes = 3;
+          radius = 8;
           noise = 0.015;
           brightness = 1.0;
           contrast = 1.0;
-          saturation = 1.15;
+          # Vibrancy: saturated frosted glass.
+          saturation = 1.4;
         };
         shadow = {
           enabled = true;
-          softness = 28;
+          softness = 40;
           offset_x = 0;
-          offset_y = 8;
+          offset_y = 14;
         };
         tab_bar = {
           style = "indicator";
@@ -120,18 +145,31 @@ in
           corner_radius = 4;
         };
       };
+      # Traffic-light buttons. The main file applies after the Noctalia palette
+      # include, so only these keys override it; bar and text colors stay themed.
+      colors.title_bar = {
+        close = "#FF5F57FF";
+        close_glyph = "#4D0000FF";
+        close_glyph_hover = "#4D0000FF";
+        minimize = "#FEBC2EFF";
+        minimize_glyph = "#995700FF";
+        minimize_glyph_hover = "#995700FF";
+        maximize = "#28C840FF";
+        maximize_glyph = "#006500FF";
+        maximize_glyph_hover = "#006500FF";
+      };
       animation = {
         enabled = true;
         curve = "spring:1,1100";
         windows_in = {
           style = "popin";
           curve = "spring:1,1200";
-          scale = 0.96;
+          scale = 0.92;
         };
         windows_out = {
           style = "popin";
           curve = "spring:1,1200";
-          scale = 0.94;
+          scale = 0.92;
         };
         workspaces = {
           style = "slide";
@@ -224,7 +262,6 @@ in
 
         "Mod+Q" = once "window-close";
         "Mod+Left" = "window-focus-left";
-        "Mod+H" = "window-focus-left";
         "Mod+Right" = "window-focus-right";
         "Mod+L" = "window-focus-right";
         "Mod+Up" = "workspace-previous";
@@ -276,7 +313,7 @@ in
         "Mod+Shift+WheelUp" = "window-focus-left";
         "Mod+Ctrl+Shift+WheelDown" = "column-move-right";
         "Mod+Ctrl+Shift+WheelUp" = "column-move-left";
-        "Mod+Tab" = "workspace-focus-last";
+        "Mod+Ctrl+Tab" = "workspace-focus-last";
 
         # Window sizing and placement.
         "Mod+C" = "column-center";
@@ -290,7 +327,7 @@ in
         "Mod+R" = "window-cycle-primary-extent";
         "Mod+Shift+R" = "window-cycle-primary-extent-back";
         "Mod+Alt+R" = "window-cycle-secondary-extent";
-        "Mod+M" = once "window-toggle-maximize-to-edges";
+        "Mod+Ctrl+M" = once "window-toggle-maximize-to-edges";
         "Mod+Comma" = "window-consume-or-expel-left";
         "Mod+Period" = "window-consume-or-expel-right";
         "Mod+Ctrl+Comma" = "window-consume-from-left";
@@ -299,15 +336,25 @@ in
         "Mod+Ctrl+Space" = once "scratchpad-toggle stash";
         "Mod+Alt+Space" = once "window-restore-from-scratchpad stash";
         "Mod+Alt+Tab" = once "scratchpad-focus-next stash";
-        "Mod+Alt+1" = once "workspace-set-layout master";
-        "Mod+Alt+2" = once "workspace-set-layout stacking";
-        "Mod+D" = once "workspace-set-layout toggle master stacking";
+        "Mod+Alt+1" = once "workspace-set-layout stacking";
+        "Mod+Alt+2" = once "workspace-set-layout scrolling";
+        "Mod+D" = once "workspace-set-layout toggle stacking scrolling";
         "Mod+Escape" = (once "shortcuts-inhibit-toggle") // {
           allow_when_inhibited = true;
         };
         "Ctrl+Alt+Delete" = once "spawn noctalia msg panel-toggle session";
         "Mod+Shift+P" = once "dpms-off";
         "Mod+O" = once "overview-toggle";
+
+        # macOS-style aliases.
+        "Mod+Tab" = once "spawn noctalia msg window-switcher hold";
+        "Mod+H" = once "window-minimize";
+        "Mod+M" = once "window-minimize";
+        "Mod+Alt+M" = once "window-restore-minimized";
+        "Mod+Ctrl+F" = once "window-toggle-fullscreen";
+        "Mod+Shift+3" = once "spawn screenshot-desktop fullscreen";
+        "Mod+Shift+4" = once "spawn screenshot-desktop region";
+        "Mod+Shift+5" = once "spawn noctalia msg screenshot-annotate";
       }
       // lib.listToAttrs (
         lib.concatMap (n: [
