@@ -50,6 +50,9 @@ assert os.programs.gamemode.enable;
 assert
   flake.lib.deployment.hardwareProfile != "generic" || !os.hardware.nvidia.prime.offload.enable;
 assert home.programs.umbriel.settings.layout.mode == "stacking";
+assert
+  flake.lib.deployment.hardwareProfile != "asus-tuf-a14"
+  || (os.hardware.nvidia.powerManagement.finegrained && os.systemd.user.services ? power-policy);
 assert home.programs.umbriel.settings.input.focus.follows_mouse == "sloppy";
 assert home.programs.umbriel.settings.keybinds."Ctrl+Alt+Delete".action == "spawn noctalia msg panel-toggle session";
 assert os.programs.luciole.enable && os.programs.kdeconnect.enable;

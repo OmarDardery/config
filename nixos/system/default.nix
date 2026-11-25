@@ -6,6 +6,7 @@
     ./networking.nix
     ./nix.nix
     ./performance.nix
+    ./power.nix
     ./gaming.nix
     ./engineering.nix
     ./containers.nix

@@ -42,8 +42,9 @@
       # Preserve the working suspend policy; test resume before enabling.
       powerManagement.enable = false;
 
-      # Runtime suspend works without forcing fine-grained power management.
-      powerManagement.finegrained = false;
+      # Power the dGPU off (D3cold) whenever no application uses it. Without
+      # this, NixOS installs no runtime-PM rules and the card idles at 5-10 W.
+      powerManagement.finegrained = true;
 
       # The AMD iGPU drives the desktop; NVIDIA is used through nvidia-offload.
       # Bus IDs use decimal PCI addresses.
