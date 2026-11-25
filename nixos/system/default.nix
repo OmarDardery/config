@@ -13,6 +13,7 @@
     ./printing.nix
     ./diagnostics.nix
     ./tailscale.nix
+    ./wireshark.nix
     ./flatpak.nix
     ./desktop.nix
     ./greeter.nix

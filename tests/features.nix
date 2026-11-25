@@ -17,6 +17,7 @@ let
                 "diagnostics"
                 "tailscale"
                 "backups"
+                "wireshark"
               ]
               (_: {
                 enable = false;
@@ -32,6 +33,7 @@ assert !os.virtualisation.docker.enable;
 assert !os.services.printing.enable && !os.services.ipp-usb.enable;
 assert !os.services.avahi.enable && !os.hardware.sane.enable;
 assert !os.services.tailscale.enable && !os.programs.mtr.enable;
+assert !os.programs.wireshark.enable && !(os.security.wrappers ? dumpcap);
 assert !(os.services.restic.backups ? home);
 assert !(os.systemd.services ? restic-home-password);
 assert !(os.systemd.services ? tailscaled);
@@ -51,6 +53,7 @@ assert builtins.all (name: !(builtins.elem name names)) [
 ];
 assert builtins.all (name: !(builtins.elem name groups)) [
   "docker"
+  "wireshark"
   "gamemode"
   "scanner"
   "lp"
