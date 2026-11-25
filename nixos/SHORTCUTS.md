@@ -8,7 +8,8 @@ Open `Mod+O` and type to launch applications directly from the overview.
 
 The desktop follows macOS conventions: a translucent menu bar at the top (⌘
 menu/Spotlight, focused app, status icons, clock), a magnifying dock at the
-bottom with running-app dots and a Launchpad button, and title bars with
+bottom with running-app dots and a Launchpad button (it hides while windows are
+open; move the pointer to the bottom edge to reveal it), and title bars with
 close/minimize/maximize traffic lights on the left. Click a focused app in the
 dock to minimize it. Rest the pointer in the top-left corner, or swipe up with four
 fingers, for Mission Control (overview); swipe with three fingers between

@@ -10,10 +10,20 @@ Spotlight-style launcher and the icon app switcher. `home/umbriel.nix` sets
 floating (stacking) windows by default, centered title bars with traffic-light
 buttons on the left (fixed red/yellow/green; bar and text colors still follow the
 palette), vibrant blur, deep soft shadows, the top-left Mission Control hot
-corner and 160% laptop scaling. GTK and the shell use Inter. Change wallpaper,
+corner and 160% laptop scaling. GTK and the shell use Inter.
+
+The dock uses smart auto-hide: it shows on an empty desktop, hides while windows
+are open (they keep the full height) and reveals at the bottom edge. The login
+screen (`system/greeter.nix`) and lock screen follow macOS: a large clock at the
+top, heavily frosted wallpaper, a slim password field, no logo or scheme picker,
+and Do Not Disturb while locked. The lock screen layout targets the laptop
+panel; other monitors keep Noctalia's default login box. Change wallpaper,
 theme mode or power profile in Noctalia.
 
 Kitty and Umbriel include the two palette files configured in `home/noctalia.nix`.
+Luciole follows the same palette through `~/.config/luciole/colors.toml`, rendered
+from `assets/templates/luciole/colors.toml` (a copy of Noctalia's upstream Luciole
+template, which the locked Noctalia predates).
 Missing files on the first start use native defaults. Select a wallpaper in
 Noctalia to render them; no startup service seeds or rewrites settings. Bundled
 wallpapers are available under `~/.local/share/noctalia/wallpaper-samples/`.

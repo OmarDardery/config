@@ -18,8 +18,8 @@ assert !os.services.scx.enable;
 assert os.services.displayManager.noctalia-greeter.enable;
 assert os.services.displayManager.noctalia-greeter.settings.session.default == "umbriel";
 assert os.services.displayManager.noctalia-greeter.settings.user.default == flake.lib.deployment.username;
-assert os.services.displayManager.noctalia-greeter.settings.appearance.wallpaper.blur == 0.48;
-assert os.services.displayManager.noctalia-greeter.settings.appearance.wallpaper.tint == 0.22;
+assert os.services.displayManager.noctalia-greeter.settings.appearance.wallpaper.blur == 0.75;
+assert os.services.displayManager.noctalia-greeter.settings.appearance.wallpaper.tint == 0.15;
 assert os.services.displayManager.noctalia-greeter.settings.appearance.wallpaper.fill_color == "#11151e";
 assert !(os.services.displayManager.noctalia-greeter.settings.appearance ? scheme);
 assert !(os.services.displayManager.noctalia-greeter.settings.appearance ? palette);
@@ -74,6 +74,9 @@ assert !home.programs.noctalia.systemd.enable;
 assert home.programs.noctalia.settings.plugins.enabled == [ ];
 assert home.programs.noctalia.settings.dock.enabled && home.programs.noctalia.settings.dock.magnification;
 assert home.programs.noctalia.settings.bar.default.position == "top";
+assert
+  home.programs.noctalia.settings.theme.templates.user.luciole.output_path
+  == "${home.xdg.configHome}/luciole/colors.toml";
 assert !(home.programs.noctalia.settings.widget ? smart_taskbar);
 assert !(home.home.file ? ".local/bin/desktop-apply");
 assert !(home.home.activation ? mutableVSCodium);

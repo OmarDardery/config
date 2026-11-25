@@ -104,7 +104,8 @@
     magnification_scale = 1.6;
     item_spacing = 6;
     main_axis_padding = 10;
-    cross_axis_padding = 6;
+    # Room for magnified icons.
+    cross_axis_padding = 8;
     margin_edge = 8;
     radius = 20;
     background_opacity = 0.5;
@@ -112,7 +113,7 @@
     border = "outline_variant";
     border_width = 1.0;
     shadow = true;
-    icon_shadow = true;
+    icon_shadow = false;
     show_running = true;
     show_dots = true;
     show_instance_count = false;
@@ -120,9 +121,12 @@
     inactive_scale = 1.0;
     active_opacity = 1.0;
     inactive_opacity = 1.0;
+    # Visible on an empty desktop, hidden while windows are open; reveal at
+    # the bottom edge. Windows keep the full height on the 14" panel.
     auto_hide = false;
-    smart_auto_hide = false;
-    reserve_space = true;
+    smart_auto_hide = true;
+    auto_hide_reveal_delay_ms = 150;
+    reserve_space = false;
     launcher_position = "end";
     launcher_icon = "grid-dots";
     pinned = [
@@ -130,6 +134,7 @@
       "zen"
       "kitty"
       "dev.zed.Zed"
+      "steam"
       "com.discordapp.Discord"
       "libreoffice-writer"
     ];
@@ -155,12 +160,55 @@
     hide_delay_ms = 1000;
     background_opacity = 0.78;
   };
+  # macOS-style lock screen: frosted wallpaper, large clock at the top and a
+  # slim password field low on the laptop panel. Other monitors keep the
+  # default login box.
   lockscreen = {
     transition = [ "fade" ];
     transition_duration = 250.0;
+    dnd = true;
+    blur_intensity = 0.75;
+    tint_intensity = 0.15;
   };
   lockscreen_widgets = {
-    enabled = false;
+    enabled = true;
+    schema_version = 2;
+    widget_order = [
+      "lockscreen-clock"
+      "lockscreen-login-box@laptop"
+    ];
+    # Logical coordinates on the 2560x1600 panel at 1.6x scale (1600x1000).
+    widget.lockscreen-clock = {
+      type = "clock";
+      output = "NE140QDM-NX7";
+      cx = 800.0;
+      cy = 170.0;
+      box_width = 520.0;
+      box_height = 160.0;
+      rotation = 0.0;
+      settings = {
+        clock_style = "digital";
+        format = "{:%H:%M}";
+        color = "on_surface";
+        shadow = true;
+        center_text = true;
+        show_seconds = false;
+      };
+    };
+    widget."lockscreen-login-box@laptop" = {
+      type = "login_box";
+      output = "NE140QDM-NX7";
+      cx = 800.0;
+      cy = 800.0;
+      settings = {
+        layout = "compact";
+        show_session_buttons = false;
+        show_media = false;
+        show_weather = false;
+        background_opacity = 0.55;
+        background_radius = 20.0;
+      };
+    };
   };
   # Declarative plugin sources; Noctalia owns fetching, updates and runtime cache.
   plugins = {
