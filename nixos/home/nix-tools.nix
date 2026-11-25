@@ -14,7 +14,7 @@ in
   home.packages = [
     (pkgs.writeShellApplication {
       name = "config-doctor";
-      runtimeInputs = with pkgs; [ coreutils gnugrep util-linux systemd ];
+      runtimeInputs = with pkgs; [ coreutils findutils gnugrep jq util-linux systemd ];
       text = builtins.readFile ../../scripts/doctor.sh;
     })
     (pkgs.writeShellScriptBin "config-apply" ''

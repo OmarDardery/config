@@ -2,6 +2,6 @@
 {
   imports = [
     ./lazyvim.nix
-    ./vscode.nix
+    ./zed.nix
   ];
 }

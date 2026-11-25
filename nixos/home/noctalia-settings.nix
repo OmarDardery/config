@@ -31,73 +31,45 @@
     enable_screenshot_sounds = false;
     sound_volume = 0.25;
   };
-  # Always-visible desktop taskbar with Smart Taskbar replacing the dock.
+  # macOS-style menu bar: edge-to-edge, translucent, at the top.
   bar.default = {
-    position = "bottom";
+    position = "top";
     reserve_space = true;
     auto_hide = false;
     smart_auto_hide = false;
 
-    thickness = 36;
-    margin_edge = 8;
-    margin_ends = 12;
-    padding = 8;
-    widget_spacing = 6;
-    radius = 18;
-    background_opacity = 0.78;
+    thickness = 28;
+    margin_edge = 0;
+    margin_ends = 0;
+    padding = 10;
+    widget_spacing = 4;
+    radius = 0;
+    concave_edge_corners = false;
+    background_opacity = 0.55;
     compositor_blur = true;
-    border = "outline_variant";
-    border_width = 1.0;
-    shadow = true;
+    border_width = 0.0;
+    shadow = false;
     hover_highlight = true;
     capsule = false;
 
-    # Navigation / context | clock | activity / status.
+    # Menu (Spotlight) and focused app | status icons and clock.
     start = [
       "launcher"
-      "group:workspaces"
-      "smart_taskbar"
+      "active_window"
     ];
-    center = [ "clock" ];
+    center = [ ];
     end = [
-      "group:media"
+      "media"
       "tray"
       "privacy"
+      "keyboard_layout"
+      "battery"
+      "bluetooth"
+      "network"
+      "volume"
       "notifications"
-      "group:status"
-    ];
-    capsule_group = [
-      {
-        id = "workspaces";
-        members = [ "workspaces" ];
-        fill = "surface_container";
-        opacity = 0.26;
-        padding = 6.0;
-        radius = 12.0;
-      }
-      {
-        id = "media";
-        members = [ "media" ];
-        fill = "surface_container";
-        opacity = 0.20;
-        padding = 6.0;
-        radius = 12.0;
-      }
-      {
-        id = "status";
-        members = [
-          "network"
-          "bluetooth"
-          "volume"
-          "keyboard_layout"
-          "battery"
-          "control-center"
-        ];
-        fill = "surface_container";
-        opacity = 0.26;
-        padding = 6.0;
-        radius = 12.0;
-      }
+      "control-center"
+      "clock"
     ];
   };
   control_center = {
@@ -123,7 +95,45 @@
   desktop_widgets = {
     enabled = false;
   };
-  dock.enabled = false;
+  # Floating, magnifying dock with running-app dots and a Launchpad button.
+  dock = {
+    enabled = true;
+    position = "bottom";
+    icon_size = 48;
+    magnification = true;
+    magnification_scale = 1.6;
+    item_spacing = 6;
+    main_axis_padding = 10;
+    cross_axis_padding = 6;
+    margin_edge = 8;
+    radius = 20;
+    background_opacity = 0.5;
+    compositor_blur = true;
+    border = "outline_variant";
+    border_width = 1.0;
+    shadow = true;
+    icon_shadow = true;
+    show_running = true;
+    show_dots = true;
+    show_instance_count = false;
+    active_scale = 1.0;
+    inactive_scale = 1.0;
+    active_opacity = 1.0;
+    inactive_opacity = 1.0;
+    auto_hide = false;
+    smart_auto_hide = false;
+    reserve_space = true;
+    launcher_position = "end";
+    launcher_icon = "grid-dots";
+    pinned = [
+      "dev.noctalia.luciole"
+      "zen"
+      "kitty"
+      "dev.zed.Zed"
+      "com.discordapp.Discord"
+      "libreoffice-writer"
+    ];
+  };
   notification = {
     follow_focused_output = true;
     max_visible = 2;
@@ -141,7 +151,7 @@
     };
   };
   osd = {
-    position = "top_center";
+    position = "top_right";
     hide_delay_ms = 1000;
     background_opacity = 0.78;
   };
@@ -154,7 +164,7 @@
   };
   # Declarative plugin sources; Noctalia owns fetching, updates and runtime cache.
   plugins = {
-    enabled = [ "omardardery/smart-taskbar" ];
+    enabled = [ ];
     auto_update = "all";
     source = [
       {
@@ -167,12 +177,6 @@
         name = "community";
         kind = "git";
         location = "https://github.com/noctalia-dev/community-plugins";
-        enabled = true;
-      }
-      {
-        name = "smart-taskbar";
-        kind = "git";
-        location = "https://github.com/OmarDardery/smart-taskbar-noctalia";
         enabled = true;
       }
     ];
@@ -234,13 +238,20 @@
       border_width = 1.0;
       shadow = true;
       control_center_placement = "floating";
-      control_center_position = "bottom_right";
+      control_center_position = "top_right";
       floating_offset = 12;
     };
+    # Spotlight: a compact, centered search field.
     launcher = {
       layout = "simple";
-      category_icons_only = true;
+      categories = false;
       search_position = "top";
+    };
+    # Cmd+Tab: a row of app icons in most-recently-used order.
+    window_switcher = {
+      style = "icons";
+      mru = true;
+      show_caption = true;
     };
     clipboard_history_max_entries = 100;
     clipboard_keep_from_closed_apps = true;
@@ -253,29 +264,19 @@
     directory = "~/Pictures/Wallpapers";
   };
   widget = {
-    # Override only plugin defaults that matter for this desktop. The plugin
-    # draws its own capsule inside the configured 420px width budget.
-    smart_taskbar = {
-      type = "omardardery/smart-taskbar:taskbar";
-      capsule = false;
-      capsule_padding = 0;
-      scale = 1.0;
-      expand_mode = "hover";
-      hover_delay = 150;
-      collapse_delay = 350;
-      output_filter = "current";
-      max_width = 420;
-      hover_enlarge = true;
-      opacity = 0.85;
+    launcher = {
+      glyph = "command";
+    };
+    active_window = {
+      display = "text_only";
+      max_length = 260;
+      title_scroll = "none";
     };
     clock = {
       format = "{:%a %d %b  %H:%M}";
     };
-    workspaces = {
-      style = "minimal";
-      show_labels = true;
-      label_source = "id";
-      show_icons = false;
+    notifications = {
+      hide_when_no_unread = true;
     };
     media = {
       peek = true;

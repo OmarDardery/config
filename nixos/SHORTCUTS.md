@@ -6,12 +6,13 @@ or Arabic input. Power actions are available from the session menu.
 
 Open `Mod+O` and type to launch applications directly from the overview.
 
-The bottom bar stays visible and reserves space. Smart Taskbar (by OmarDardery)
-shows the focused application in a compact capsule. Hovering reveals running
-applications, with numeric badges for duplicate windows and mouse-wheel navigation
-for overflow within a 420px width budget. The old dock and native taskbar are
-disabled. Plugin source, enabled state and appearance are declared in
-`home/noctalia-settings.nix`; Noctalia downloads the source itself.
+The desktop follows macOS conventions: a translucent menu bar at the top (⌘
+menu/Spotlight, focused app, status icons, clock), a magnifying dock at the
+bottom with running-app dots and a Launchpad button, and title bars with
+close/minimize/maximize traffic lights on the left. Click a focused app in the
+dock to minimize it. Rest the pointer in the top-left corner, or swipe up with four
+fingers, for Mission Control (overview); swipe with three fingers between
+workspaces. Two-finger click opens context menus.
 
 ## Apps and shell
 
@@ -20,9 +21,9 @@ disabled. Plugin source, enabled state and appearance are declared in
 | Mod+T / Mod+B / Mod+E | Kitty / Zen / Luciole |
 | Mod+grave / Mod+Ctrl+Return | Terminal / calculator scratchpad |
 | Mod+Ctrl+P / Mod+Ctrl+Shift+P | Start / end presentation mode |
-| Mod+I / Mod+Ctrl+E | VSCodium / edit the Nix configuration tree |
-| Mod+Space | App launcher, search and calculator |
-| Alt+Tab | Window switcher; release Alt to activate |
+| Mod+I / Mod+Ctrl+E | Zed / edit the Nix configuration tree |
+| Mod+Space | Spotlight: app launcher, search and calculator |
+| Mod+Tab / Alt+Tab | App switcher (most recent first); release the modifier to activate |
 | Mod+A / Mod+Ctrl+S | Control center / Noctalia settings |
 | Mod+V / Mod+N | Clipboard history / notifications |
 | Mod+Shift+N / Mod+Ctrl+N | Toggle Do Not Disturb / dismiss active notifications |
@@ -44,8 +45,9 @@ The power button locks first. `Ctrl+Alt+Delete` opens the session/power menu.
 
 ## Windows and layouts
 
-Master is the default 60/40 tiled layout, with the primary window on the left.
-Stacking is the optional overlapping, freely resizable desktop layout.
+Stacking is the default overlapping, freely resizable desktop layout, like macOS.
+Scrolling is the optional niri-like layout: windows form columns on an endless
+horizontal strip. Only floating windows can be minimized.
 
 | Shortcut or gesture | Action |
 | --- | --- |
@@ -55,18 +57,21 @@ Stacking is the optional overlapping, freely resizable desktop layout.
 | Super + right-drag | Resize from anywhere on a window |
 | Double-click title bar / double Super + right-click | Maximize or restore |
 | Drag to edge or corner | Snap to half or quarter of the available screen |
-| Mod+F | Fullscreen |
+| Mod+F / Mod+Ctrl+F | Fullscreen |
 | Mod+Shift+F | Maximize or restore |
+| Mod+Ctrl+M | Maximize to the screen edges |
+| Mod+H / Mod+M / Mod+Alt+M | Hide (minimize) / minimize / restore last minimized |
 | Mod+Minus/Equal | Decrease/increase width 5% |
 | Mod+Shift+Minus/Equal | Decrease/increase height 5% |
-| Mod+Alt+1 / Mod+Alt+2 | Master / stacking |
-| Mod+D | Toggle master and stacking |
-| Mod+Left/Right or H/L | Focus horizontal neighbor |
+| Mod+Alt+1 / Mod+Alt+2 | Stacking / scrolling |
+| Mod+D | Toggle stacking and scrolling |
+| Mod+Left/Right, Mod+L | Focus horizontal neighbor |
 | Mod+J/K | Focus vertical neighbor |
 | Mod+Alt+Left/Right | Focus tabs |
 | Mod+W | Toggle tabs |
 | Mod+1…9 / Mod+Ctrl+1…9 | Switch workspace / move window group |
 | Mod+Up/Down | Previous/next workspace |
+| Mod+Ctrl+Tab | Last workspace |
 | Mod+Shift+arrows | Focus another monitor |
 | Mod+Q / Mod+O | Close / overview |
 
@@ -78,10 +83,13 @@ Mouse resizing and snapping are built into Umbriel.
 
 | Shortcut | Action |
 | --- | --- |
-| Print / Mod+Shift+S | Capture region with grim/slurp, save to Pictures/Screenshots and copy |
-| Shift+Print | Capture full desktop with grim, save and copy |
+| Print / Mod+Shift+S / Mod+Shift+4 | Capture region with grim/slurp, save to Pictures/Screenshots and copy |
+| Shift+Print / Mod+Shift+3 | Capture full desktop with grim, save and copy |
 | Ctrl+Print | Capture focused window through Noctalia |
-| Alt+Print | Open Noctalia screenshot annotator |
+| Alt+Print / Mod+Shift+5 | Open Noctalia screenshot annotator |
+
+Mod+Shift+3/4/5 replace Umbriel's built-in "move to workspace and follow" for
+those three numbers; Mod+Ctrl+3/4/5 still move a window there.
 
 ## XP-Pen Deco mini7
 
@@ -124,6 +132,7 @@ in `home/kitty.nix`. Colours come from Noctalia's generated palette.
 
 ## Editors
 
-Both editors start with Nix support and ordinary built-in themes. Use LazyVim's built-in
-which-key menu for navigation; install language tools and extensions as needed.
+Zed and LazyVim both start with Nix support (nixd, nixfmt) and ordinary built-in
+themes. Zed runs in vim mode; its command palette is Ctrl+Shift+P. Use LazyVim's
+built-in which-key menu for navigation; install language tools and extensions as needed.
 Notebook and custom AI/debugger shortcuts are no longer part of this config.

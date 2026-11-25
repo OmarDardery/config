@@ -30,7 +30,7 @@ in
       "video/webm" = [ "mpv.desktop" ];
       "audio/mpeg" = [ "mpv.desktop" ];
       "audio/flac" = [ "mpv.desktop" ];
-      "text/plain" = [ "codium.desktop" ];
+      "text/plain" = [ "dev.zed.Zed.desktop" ];
     };
   };
 }

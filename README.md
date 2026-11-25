@@ -54,7 +54,7 @@ never reset or switched automatically.
 | `scripts/`, `non-nixos/*.sh` | Installers and native host integration |
 | `tests/` | Isolated regression and CI checks |
 
-Edit sources here and reapply. Extra Neovim Lua files, VSCodium keybindings and
+Edit sources here and reapply. Extra Neovim Lua files, editor keybindings and
 `.zshrc.local` remain available. Project toolchains belong in each project's own
 environment; there are no shared development shells or global language runtimes.
 

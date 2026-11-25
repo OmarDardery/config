@@ -84,8 +84,8 @@ Reboot after applying the display-manager change; do not restart
 `display-manager.service` from inside the desktop session. If the greeter fails,
 switch to a TTY and choose the prior NixOS generation from the boot menu.
 
-Umbriel starts Noctalia directly. Master is the default 60/40 left-side
-tiling layout, with Super+D switching to stacking/floating. Sloppy focus follows
+Umbriel starts Noctalia directly. Stacking (floating, macOS-style) is the
+default layout, with Super+D switching to niri-like scrolling. Sloppy focus follows
 the pointer while retaining focus over empty desktop space. Stacking supports
 edge/corner resizing and modifier-dragging. KDE Connect runs without Plasma, with discovery and transfer firewall
 ports opened by its NixOS module. Noctalia handles its own runtime state,
@@ -93,17 +93,15 @@ wallpaper colors and Kitty/Umbriel palettes. There is no `desktop-config`
 service, palette seeder, state reconciler or font-cache refresh service.
 Region and fullscreen screenshots use the existing grim/slurp/wl-clipboard
 stack to save under Pictures/Screenshots and copy to the clipboard, independent
-of Noctalia IPC. Window capture and annotation use Noctalia. Smart Taskbar is configured as a
-Noctalia plugin from OmarDardery/smart-taskbar-noctalia, with a 420 logical-pixel
-maximum width, hover expansion, grouped duplicate badges, and a disabled dock.
-Noctalia fetches and updates its declared Git source on startup. The plugin
-requires Noctalia plugin API 52+; live desktop acceptance remains pending.
+of Noctalia IPC. Window capture and annotation use Noctalia. Noctalia's native dock replaces the
+Smart Taskbar plugin, and a top menu bar replaces the bottom taskbar; see
+[THEMING.md](THEMING.md).
 
 Home Manager directly owns editor settings, shell files and desktop dotfiles.
 Edit Nix-managed preferences in `home/` and rebuild. Existing conflicting files
 are backed up using Home Manager's `.bak` policy; if a `.bak` already exists,
 move it aside before retrying. Extra local LazyVim files and user-installed
-Codium extensions remain yours. Plugins are downloaded by LazyVim on first use;
+Zed extensions and settings changed in its UI remain yours. Plugins are downloaded by LazyVim on first use;
 language toolchains belong in each project’s own `shell.nix`.
 
 Steam and GameMode use the normal NixOS modules. There is no Millennium/client
