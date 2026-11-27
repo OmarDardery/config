@@ -53,7 +53,7 @@ assert home.programs.umbriel.settings.layout.mode == "stacking";
 assert
   flake.lib.deployment.hardwareProfile != "asus-tuf-a14"
   || (os.hardware.nvidia.powerManagement.finegrained && os.systemd.user.services ? power-policy);
-assert home.programs.umbriel.settings.input.focus.follows_mouse == "sloppy";
+assert home.programs.umbriel.settings.input.focus.follows_mouse == "off";
 assert home.programs.umbriel.settings.keybinds."Ctrl+Alt+Delete".action == "spawn noctalia msg panel-toggle session";
 assert os.programs.luciole.enable && os.programs.kdeconnect.enable;
 assert os.services.gvfs.enable && os.services.udisks2.enable;
@@ -62,7 +62,12 @@ assert home.programs.umbriel.settings.layout.stacking.drop_zones;
 assert home.programs.umbriel.settings.keybinds.Print.action == "spawn screenshot-desktop region";
 assert home.programs.umbriel.settings.keybinds."Shift+Print".action == "spawn screenshot-desktop fullscreen";
 assert home.programs.umbriel.settings.appearance.title_bar.mode == "on";
-assert home.programs.umbriel.settings.appearance.title_bar.button_position == "left";
+assert home.programs.umbriel.settings.appearance.title_bar.button_position == "right";
+assert home.services.kdeconnect.indicator;
+assert builtins.elem "claude-code" (map flake.inputs.nixpkgs.lib.getName home.home.packages);
+assert home.programs.noctalia.settings.desktop_widgets.enabled;
+assert home.programs.noctalia.settings.shell.launcher.app_grid;
+assert builtins.length home.programs.umbriel.settings.include.optional.files == 2;
 assert home.programs.umbriel.settings.hot_corners.top_left.action == "overview-toggle";
 assert
   home.programs.umbriel.settings.keybinds."Mod+D".action

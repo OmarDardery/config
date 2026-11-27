@@ -9,9 +9,12 @@ Open `Mod+O` and type to launch applications directly from the overview.
 The desktop follows macOS conventions: a translucent menu bar at the top (⌘
 menu/Spotlight, focused app, status icons, clock), a magnifying dock at the
 bottom with running-app dots and a Launchpad button (it hides while windows are
-open; move the pointer to the bottom edge to reveal it), and title bars with
-close/minimize/maximize traffic lights on the left. Click a focused app in the
-dock to minimize it. Rest the pointer in the top-left corner, or swipe up with four
+open; move the pointer to the bottom edge to reveal it), and translucent title bars with
+minimize/maximize/close buttons on the right. Click a focused app in the
+dock to minimize it. Super+Space and the dock's grid button open the same app
+grid (type to search). Clicking the Wi-Fi, Bluetooth or volume icon opens
+Control Center; clicking the clock opens notifications. KDE Connect sits in the
+menu-bar tray. An empty workspace shows clock, weather and calendar widgets. Rest the pointer in the top-left corner, or swipe up with four
 fingers, for Mission Control (overview); swipe with three fingers between
 workspaces. Two-finger click opens context menus.
 
@@ -76,8 +79,8 @@ horizontal strip. Only floating windows can be minimized.
 | Mod+Shift+arrows | Focus another monitor |
 | Mod+Q / Mod+O | Close / overview |
 
-Sloppy focus activates a window when the pointer enters it, but keeps the
-last window focused when hovering over empty desktop space.
+Focus changes only on click, keybind or activation; hovering over a window does
+not focus it.
 Mouse resizing and snapping are built into Umbriel.
 
 ## Capture

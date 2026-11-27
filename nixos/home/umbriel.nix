@@ -23,7 +23,11 @@ in
     package = null;
     settings = {
       # No independent palette: Noctalia owns colors; native defaults before rendering.
-      include.optional.files = [ "${config.xdg.stateHome}/noctalia/theme/umbriel.toml" ];
+      # Translucent title bars follow the palette; listed after it so they win.
+      include.optional.files = [
+        "${config.xdg.stateHome}/noctalia/theme/umbriel.toml"
+        "${config.xdg.stateHome}/noctalia/theme/umbriel-title-bar.toml"
+      ];
       general = {
         autostart = [ "noctalia" ];
         mod_key = "Super";
@@ -47,7 +51,8 @@ in
         };
         mouse.accel_profile = "flat";
         focus = {
-          follows_mouse = "sloppy";
+          # Regular desktop focus: clicks, keybinds and activation only.
+          follows_mouse = "off";
         };
         cursor = {
           theme = config.home.pointerCursor.name;
@@ -97,17 +102,17 @@ in
       };
       appearance = {
         prefer_no_csd = true;
-        # macOS-style title bar: centered title, traffic lights on the left
+        # Centered title with red/yellow/green buttons on the right
         # (listed from the title outward, so close sits at the edge).
         title_bar = {
           mode = "on";
           height = 32;
           font = "Inter Medium 10";
           title_align = "center";
-          button_position = "left";
+          button_position = "right";
           buttons = [
-            "maximize"
             "minimize"
+            "maximize"
             "close"
           ];
           button_size = 12;
@@ -373,6 +378,13 @@ in
         "Mod+Ctrl+Alt+T" = once "spawn otd-gui";
       };
       window_rule = [
+        # Cheap wallpaper-only blur behind every window, so translucent title
+        # bars frost; later rules refine it per application.
+        {
+          match.app_id = ".*";
+          blur = true;
+          blur_optimized = true;
+        }
         {
           match.app_id = "^scratchpad-terminal$";
           default_scratchpad = "terminal";

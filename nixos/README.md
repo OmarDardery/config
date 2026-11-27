@@ -85,8 +85,8 @@ Reboot after applying the display-manager change; do not restart
 switch to a TTY and choose the prior NixOS generation from the boot menu.
 
 Umbriel starts Noctalia directly. Stacking (floating, macOS-style) is the
-default layout, with Super+D switching to niri-like scrolling. Sloppy focus follows
-the pointer while retaining focus over empty desktop space. Stacking supports
+default layout, with Super+D switching to niri-like scrolling. Focus changes on
+click, not on hover. Stacking supports
 edge/corner resizing and modifier-dragging. KDE Connect runs without Plasma, with discovery and transfer firewall
 ports opened by its NixOS module. Noctalia handles its own runtime state,
 wallpaper colors and Kitty/Umbriel palettes. There is no `desktop-config`

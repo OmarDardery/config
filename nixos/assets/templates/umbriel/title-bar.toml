@@ -1,0 +1,5 @@
+# Translucent, palette-following title bars (macOS vibrancy). Rendered by
+# Noctalia and included after its Umbriel palette; windows blur behind them.
+[colors.title_bar]
+background = "#{{colors.surface_container.default.hex_stripped}}D9"
+background_unfocused = "#{{colors.surface.default.hex_stripped}}CC"

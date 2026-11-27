@@ -7,9 +7,9 @@ configs; Noctalia writes runtime state and rendered palette files itself.
 The desktop is styled after macOS. `home/noctalia-settings.nix` sets the
 edge-to-edge translucent top menu bar, the floating magnifying dock, the
 Spotlight-style launcher and the icon app switcher. `home/umbriel.nix` sets
-floating (stacking) windows by default, centered title bars with traffic-light
-buttons on the left (fixed red/yellow/green; bar and text colors still follow the
-palette), vibrant blur, deep soft shadows, the top-left Mission Control hot
+floating (stacking) windows by default, centered, translucent title bars with
+red/yellow/green buttons on the right (button colors are fixed; bar and text
+colors follow the palette through `assets/templates/umbriel/title-bar.toml`), vibrant blur, deep soft shadows, the top-left Mission Control hot
 corner and 160% laptop scaling. GTK and the shell use Inter.
 
 The dock uses smart auto-hide: it shows on an empty desktop, hides while windows
