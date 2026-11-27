@@ -10,7 +10,8 @@ The desktop follows macOS conventions: a translucent menu bar at the top (⌘
 menu/Spotlight and the focused app on the left, Now Playing in the middle while
 media plays, then privacy dots, tray, keyboard layout, volume, Bluetooth, Wi-Fi,
 battery, notifications, Control Center and the clock on the right), a magnifying dock at the
-bottom with running-app dots and a Launchpad button (it hides while windows are
+bottom (Launchpad, then Luciole, Zen, Discord, Zed, Kitty, Writer and Steam,
+followed by other running apps) with running-app dots (it hides while windows are
 open; move the pointer to the bottom edge to reveal it), and translucent title bars with
 minimize/maximize/close buttons on the right. Click a focused app in the
 dock to minimize it. Super+Space and the dock's grid button open the same app

@@ -199,16 +199,18 @@
     smart_auto_hide = true;
     auto_hide_reveal_delay_ms = 150;
     reserve_space = false;
-    launcher_position = "end";
+    # Launchpad first, as on macOS.
+    launcher_position = "start";
     launcher_icon = "grid-dots";
+    # Grouped by task: files | web, chat | development | office | games.
     pinned = [
       "dev.noctalia.luciole"
       "zen"
-      "kitty"
-      "dev.zed.Zed"
-      "steam"
       "com.discordapp.Discord"
+      "dev.zed.Zed"
+      "kitty"
       "libreoffice-writer"
+      "steam"
     ];
   };
   notification = {
