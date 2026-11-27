@@ -72,6 +72,7 @@
       "clock"
     ];
   };
+  # Tiles in macOS Control Center order; sliders and tabs are built in.
   control_center = {
     show_shortcut_labels = true;
     shortcuts = [
@@ -82,19 +83,89 @@
         type = "bluetooth";
       }
       {
-        type = "nightlight";
+        type = "notification";
       }
       {
-        type = "notification";
+        type = "dark_mode";
+      }
+      {
+        type = "nightlight";
       }
       {
         type = "caffeine";
       }
+      {
+        type = "power_profile";
+      }
+      {
+        type = "keyboard_layout";
+      }
     ];
   };
-  desktop_widgets = {
-    enabled = false;
+  # Weather and night light use this location.
+  location = {
+    auto_locate = false;
+    address = "Cairo, Egypt";
   };
+  weather = {
+    enabled = true;
+    unit = "metric";
+  };
+  # macOS Sonoma-style widget column on the laptop panel (logical 1600x1000),
+  # visible on an empty workspace.
+  desktop_widgets =
+    let
+      card = {
+        background = true;
+        background_color = "surface";
+        background_opacity = 0.45;
+        background_radius = 22.0;
+        background_padding = 14.0;
+        shadow = true;
+      };
+      widget = type: cx: cy: settings: {
+        inherit type cx cy;
+        output = "NE140QDM-NX7";
+        box_width = 0.0;
+        box_height = 0.0;
+        rotation = 0.0;
+        inherit settings;
+      };
+    in
+    {
+      enabled = true;
+      schema_version = 2;
+      widget_order = [
+        "desktop-clock"
+        "desktop-weather"
+        "desktop-calendar"
+      ];
+      widget = {
+        desktop-clock = widget "clock" 150.0 160.0 (
+          card
+          // {
+            clock_style = "analog";
+            circle = true;
+            show_seconds = false;
+          }
+        );
+        desktop-weather = widget "weather" 150.0 340.0 (
+          card
+          // {
+            show_forecast = true;
+            forecast_days = 3;
+          }
+        );
+        # The calendar draws no text shadow.
+        desktop-calendar = widget "calendar" 190.0 580.0 (
+          builtins.removeAttrs card [ "shadow" ]
+          // {
+            show_events = false;
+            show_week_numbers = false;
+          }
+        );
+      };
+    };
   # Floating, magnifying dock with running-app dots and a Launchpad button.
   dock = {
     enabled = true;
@@ -290,10 +361,17 @@
       floating_offset = 12;
     };
     # Spotlight: a compact, centered search field.
+    # One launcher for Spotlight (Super+Space, type to search) and Launchpad
+    # (dock grid button): an app grid with search on top.
     launcher = {
-      layout = "simple";
-      categories = false;
+      layout = "full";
+      app_grid = true;
+      default_view = "all";
       search_position = "top";
+      width = 1000;
+      show_navigation_labels = false;
+      show_settings_button = false;
+      show_session_button = false;
     };
     # Cmd+Tab: a row of app icons in most-recently-used order.
     window_switcher = {
@@ -320,8 +398,10 @@
       max_length = 260;
       title_scroll = "none";
     };
+    # Clicking the clock opens Notification Center, as on macOS.
     clock = {
       format = "{:%a %d %b  %H:%M}";
+      actions.left = "panel-toggle notifications";
     };
     notifications = {
       hide_when_no_unread = true;
@@ -334,15 +414,19 @@
       hide_when_no_media = true;
       title_scroll = "on_hover";
     };
+    # Status icons open Control Center on click.
     network = {
       show_label = false;
+      actions.left = "panel-toggle control-center";
     };
     bluetooth = {
       show_label = false;
       hide_when_no_connected_device = true;
+      actions.left = "panel-toggle control-center";
     };
     volume = {
       show_label = false;
+      actions.left = "panel-toggle control-center";
     };
     privacy = {
       hide_inactive = true;

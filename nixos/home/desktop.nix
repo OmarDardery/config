@@ -8,10 +8,17 @@
   # package from the system's stable Nixpkgs.
   home.packages = [
     inputs.noctalia.inputs.nixpkgs.legacyPackages.${pkgs.stdenv.hostPlatform.system}.winboat
+    # Claude Code CLI (`claude`); the package disables its self-updater, so
+    # updates arrive with `up`.
+    pkgs.claude-code
   ];
 
   services.mpris-proxy.enable = true;
-  services.kdeconnect.enable = true;
+  services.kdeconnect = {
+    enable = true;
+    # Tray icon in the menu bar for pairing, sharing and phone actions.
+    indicator = true;
+  };
   home.pointerCursor = {
     enable = true;
     name = "Bibata-Modern-Classic";
