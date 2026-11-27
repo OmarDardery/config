@@ -52,21 +52,22 @@
     hover_highlight = true;
     capsule = false;
 
-    # Menu (Spotlight) and focused app | status icons and clock.
+    # macOS order: menu and focused app | Now Playing (only while media
+    # plays) | transient indicators, then persistent status, Control Center
+    # and the clock at the far right.
     start = [
       "launcher"
       "active_window"
     ];
-    center = [ ];
+    center = [ "media" ];
     end = [
-      "media"
-      "tray"
       "privacy"
+      "tray"
       "keyboard_layout"
-      "battery"
+      "volume"
       "bluetooth"
       "network"
-      "volume"
+      "battery"
       "notifications"
       "control-center"
       "clock"
@@ -409,7 +410,7 @@
     media = {
       peek = true;
       min_length = 0;
-      max_length = 150;
+      max_length = 260;
       hide_artist = true;
       hide_when_no_media = true;
       title_scroll = "on_hover";
