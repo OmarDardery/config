@@ -52,21 +52,22 @@
     hover_highlight = true;
     capsule = false;
 
-    # Menu (Spotlight) and focused app | status icons and clock.
+    # macOS order: menu and focused app | Now Playing (only while media
+    # plays) | transient indicators, then persistent status, Control Center
+    # and the clock at the far right.
     start = [
       "launcher"
       "active_window"
     ];
-    center = [ ];
+    center = [ "media" ];
     end = [
-      "media"
-      "tray"
       "privacy"
+      "tray"
       "keyboard_layout"
-      "battery"
+      "volume"
       "bluetooth"
       "network"
-      "volume"
+      "battery"
       "notifications"
       "control-center"
       "clock"
@@ -198,16 +199,18 @@
     smart_auto_hide = true;
     auto_hide_reveal_delay_ms = 150;
     reserve_space = false;
-    launcher_position = "end";
+    # Launchpad first, as on macOS.
+    launcher_position = "start";
     launcher_icon = "grid-dots";
+    # Grouped by task: files | web, chat | development | office | games.
     pinned = [
       "dev.noctalia.luciole"
       "zen"
-      "kitty"
-      "dev.zed.Zed"
-      "steam"
       "com.discordapp.Discord"
+      "dev.zed.Zed"
+      "kitty"
       "libreoffice-writer"
+      "steam"
     ];
   };
   notification = {
@@ -409,7 +412,7 @@
     media = {
       peek = true;
       min_length = 0;
-      max_length = 150;
+      max_length = 260;
       hide_artist = true;
       hide_when_no_media = true;
       title_scroll = "on_hover";
